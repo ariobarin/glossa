@@ -5,6 +5,9 @@ This package publishes the `glossa` executable.
 ```bash
 npm install --global @ariobarin/glossa
 glossa login
+glossa status
+glossa whoami
+glossa logout
 ```
 
-This handoff contains an initial Device Authorization Flow implementation. The local workspace worker is implemented during milestone M1 from the current Glossa specifications and tests.
+Login uses Auth0 Device Authorization Flow and opens the complete verification URL when Auth0 provides one. Refresh credentials use the operating-system credential store. If that store is unavailable, Glossa prints a warning before using its mode-0600 credential-file fallback.

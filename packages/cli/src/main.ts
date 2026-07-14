@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 import { deleteCredentials, loadCredentials } from "./config-store.js";
+import { loadUserProfile } from "./auth-session.js";
 import { loginWithDeviceFlow } from "./device-flow.js";
 import { runLocalSession } from "./worker/local-session.js";
 import { selectExposureRoot } from "./worker/root-selection.js";
@@ -63,26 +64,51 @@ async function main(): Promise<void> {
       console.log(VERSION);
       return;
     case "login":
-      await loginWithDeviceFlow({
-        issuer: requiredEnvironment("GLOSSA_AUTH0_ISSUER"),
-        clientId: requiredEnvironment("GLOSSA_AUTH0_CLI_CLIENT_ID"),
-        audience: requiredEnvironment("GLOSSA_AUTH0_AUDIENCE"),
-        scope: "openid profile offline_access glossa:device",
-      });
+      {
+        const controller = new AbortController();
+        const cancel = () => controller.abort();
+        process.once("SIGINT", cancel);
+        try {
+          await loginWithDeviceFlow({
+            issuer: requiredEnvironment("GLOSSA_AUTH0_ISSUER"),
+            clientId: requiredEnvironment("GLOSSA_AUTH0_CLI_CLIENT_ID"),
+            audience: requiredEnvironment("GLOSSA_AUTH0_AUDIENCE"),
+            scope: "openid profile offline_access glossa:device",
+            signal: controller.signal,
+          });
+        } finally {
+          process.removeListener("SIGINT", cancel);
+        }
+      }
       return;
     case "logout":
       await deleteCredentials();
       console.log("Signed out of Glossa.");
       return;
-    case "status":
-    case "whoami": {
-      const credentials = await loadCredentials();
-      if (!credentials) {
+    case "status": {
+      const loaded = await loadCredentials();
+      if (!loaded) {
         console.log("Not signed in. Run: glossa login");
         process.exitCode = 1;
         return;
       }
-      console.log(`Signed in; access token expires ${credentials.expiresAt}.`);
+      console.log(
+        `Signed in with ${loaded.backend} credentials; access token expires ${loaded.credentials.expiresAt}.`,
+      );
+      return;
+    }
+    case "whoami": {
+      const loaded = await loadCredentials();
+      if (!loaded) {
+        console.log("Not signed in. Run: glossa login");
+        process.exitCode = 1;
+        return;
+      }
+      const { credentials, profile } = await loadUserProfile(loaded.credentials);
+      const account = profile.email ?? profile.name ?? profile.sub;
+      console.log(
+        `Signed in as ${account} (${profile.sub}); access token expires ${credentials.expiresAt}.`,
+      );
       return;
     }
     case "expose":
