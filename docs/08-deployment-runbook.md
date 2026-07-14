@@ -9,6 +9,22 @@
 - CI is green.
 - One relay replica is configured.
 
+## Configure Auth0
+
+Use these public identifiers for the MVP tenant:
+
+- Issuer: `https://dev-fl2h5xhp6umeh74m.us.auth0.com/`
+- API audience: `https://mcp.glossa.sh/`
+- Native application client ID: `9mwnK9nTAd8q1kxnKIZxC1wodxzfWHg5`
+
+The `Glossa CLI` Native application enables only Device Code and Refresh Token grants. Refresh token rotation is enabled with a 30 day maximum lifetime. The `Glossa API` uses the Auth0 token profile, RS256 signing, per-application authorization, and offline access.
+
+Define `glossa:device` and `glossa:access` permissions on the API. Grant the CLI user-delegated access to only `glossa:device`. The relay requires `glossa:access` for MCP requests. GitHub is the only login connection enabled for the CLI during the private beta.
+
+The GitHub connection currently uses Auth0 development keys and requests only the required basic profile. This is suitable for MVP testing, but replace it with a dedicated GitHub OAuth application before a production launch.
+
+The CLI embeds these public identifiers and needs no local Auth0 configuration. The same environment names remain available as development overrides. The relay still receives its issuer and audience through `GLOSSA_AUTH0_ISSUER` and `GLOSSA_AUTH0_AUDIENCE`.
+
 ## Provision Heroku
 
 ```bash

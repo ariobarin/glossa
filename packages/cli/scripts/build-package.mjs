@@ -6,5 +6,6 @@ await build({
   bundle: true,
   platform: "node",
   format: "esm",
+  external: ["@napi-rs/keyring"],
   sourcemap: true,
 });

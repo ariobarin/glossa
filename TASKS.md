@@ -33,16 +33,16 @@ This file contains only core work. Do not pull tasks from `optional/` until all 
 
 ## M2 — Auth0 CLI login
 
-- [ ] Create an Auth0 Native application for the CLI.
-- [ ] Enable Device Authorization Grant and refresh-token rotation.
-- [ ] Enable GitHub as the only social login connection for the private beta.
-- [ ] Configure API audience and scopes.
-- [ ] Implement `glossa login`, `logout`, `status`, and `whoami`.
-- [ ] Open `verification_uri_complete` automatically and retain copyable fallback text.
-- [ ] Store refresh credentials in an operating-system credential store where available.
-- [ ] Permit a mode-0600 file fallback only with an explicit warning.
-- [ ] Never embed a client secret in the CLI.
-- [ ] Add expiry, refresh, revocation, and interrupted-login tests.
+- [x] Create an Auth0 Native application for the CLI.
+- [x] Enable Device Authorization Grant and refresh-token rotation.
+- [x] Enable GitHub as the only social login connection for the private beta.
+- [x] Configure API audience and scopes.
+- [x] Implement `glossa login`, `logout`, `status`, and `whoami`.
+- [x] Open `verification_uri_complete` automatically and retain copyable fallback text.
+- [x] Store refresh credentials in an operating-system credential store where available.
+- [x] Permit a mode-0600 file fallback only with an explicit warning.
+- [x] Never embed a client secret in the CLI.
+- [x] Add expiry, refresh, revocation, and interrupted-login tests.
 
 **Exit:** a fresh installation can sign in from a terminal without copying a bearer token.
 
