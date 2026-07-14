@@ -1,17 +1,12 @@
 #!/usr/bin/env node
 import { deleteCredentials, loadCredentials } from "./config-store.js";
 import { loadUserProfile } from "./auth-session.js";
+import { loadAuthConfig } from "./auth-config.js";
 import { loginWithDeviceFlow } from "./device-flow.js";
 import { runLocalSession } from "./worker/local-session.js";
 import { selectExposureRoot } from "./worker/root-selection.js";
 
 const VERSION = "prototype";
-
-function requiredEnvironment(name: string): string {
-  const value = process.env[name];
-  if (!value) throw new Error(`${name} is required in this implementation scaffold.`);
-  return value;
-}
 
 function usage(): void {
   console.log(`Glossa ${VERSION}
@@ -65,15 +60,13 @@ async function main(): Promise<void> {
       return;
     case "login":
       {
+        const authConfig = loadAuthConfig();
         const controller = new AbortController();
         const cancel = () => controller.abort();
         process.once("SIGINT", cancel);
         try {
           await loginWithDeviceFlow({
-            issuer: requiredEnvironment("GLOSSA_AUTH0_ISSUER"),
-            clientId: requiredEnvironment("GLOSSA_AUTH0_CLI_CLIENT_ID"),
-            audience: requiredEnvironment("GLOSSA_AUTH0_AUDIENCE"),
-            scope: "openid profile offline_access glossa:device",
+            ...authConfig,
             signal: controller.signal,
           });
         } finally {
