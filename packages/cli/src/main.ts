@@ -1,6 +1,8 @@
 #!/usr/bin/env node
 import { deleteCredentials, loadCredentials } from "./config-store.js";
 import { loginWithDeviceFlow } from "./device-flow.js";
+import { runLocalSession } from "./worker/local-session.js";
+import { selectExposureRoot } from "./worker/root-selection.js";
 
 const VERSION = "prototype";
 
@@ -18,11 +20,33 @@ Usage:
   glossa logout
   glossa status
   glossa whoami
-  glossa expose [path]
+  glossa expose [path] --local [--allow-broad-root]
   glossa --version
   glossa --help
 
-The expose worker is implemented during milestone M1.`);
+Local mode reads newline-delimited worker jobs from stdin and writes results to stdout.`);
+}
+
+function exposeOptions(args: string[]): {
+  path?: string;
+  local: boolean;
+  allowBroadRoot: boolean;
+} {
+  let selectedPath: string | undefined;
+  let local = false;
+  let allowBroadRoot = false;
+  for (const argument of args) {
+    if (argument === "--local") local = true;
+    else if (argument === "--allow-broad-root") allowBroadRoot = true;
+    else if (argument.startsWith("-")) throw new Error(`Unknown expose option: ${argument}`);
+    else if (selectedPath) throw new Error("Expose accepts at most one directory.");
+    else selectedPath = argument;
+  }
+  return {
+    ...(selectedPath ? { path: selectedPath } : {}),
+    local,
+    allowBroadRoot,
+  };
 }
 
 async function main(): Promise<void> {
@@ -62,9 +86,17 @@ async function main(): Promise<void> {
       return;
     }
     case "expose":
-      throw new Error(
-        "The worker is not yet implemented in this scaffold. Complete milestone M1 before using glossa expose.",
-      );
+      {
+        const options = exposeOptions(process.argv.slice(3));
+        if (!options.local) {
+          throw new Error(
+            "Managed relay connection requires device enrollment. Use --local during M1 development.",
+          );
+        }
+        const root = await selectExposureRoot(options.path, options.allowBroadRoot);
+        await runLocalSession(root, options.allowBroadRoot);
+        return;
+      }
     default:
       throw new Error(`Unknown command: ${command}`);
   }

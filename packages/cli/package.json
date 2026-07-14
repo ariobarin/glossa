@@ -11,20 +11,22 @@
     "glossa": "dist/main.js"
   },
   "main": "dist/main.js",
-  "types": "dist/main.d.ts",
   "files": [
-    "dist",
+    "dist/main.js",
+    "dist/main.js.map",
     "README.md",
     "LICENSE"
   ],
   "scripts": {
-    "build": "tsc -p tsconfig.json",
+    "build": "tsc -p tsconfig.json && node scripts/build-package.mjs",
     "test": "node --test dist/**/*.test.js",
     "prepack": "npm run build"
   },
   "dependencies": {},
   "devDependencies": {
+    "@glossa/protocol": "*",
     "@types/node": "24.10.1",
+    "esbuild": "0.28.1",
     "typescript": "5.9.3"
   },
   "license": "MIT",

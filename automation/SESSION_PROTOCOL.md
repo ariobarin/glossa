@@ -28,7 +28,7 @@ Do not narrate every shell command.
 
 Use:
 
-> **Login required — [service]**  
+> **Login required: [service]**
 > I opened the official [service] login page so I can [purpose]. Please sign in and complete MFA yourself, then tell me when the account dashboard is visible. I will not ask for or handle your credentials.
 
 After confirmation, continue configuration without asking the user to transcribe settings that the agent can read from the browser.
