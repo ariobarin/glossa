@@ -9,6 +9,14 @@
 - CI is green.
 - One relay replica is configured.
 
+## Temporary RackNerd staging
+
+While Heroku student verification is pending, merged Glossa revisions can be staged through the private `ariobarin/relay` repository. External MCP clients use `https://veronica.ariobarin.com/mcp`, but protected-resource metadata advertises the final Glossa API audience `https://mcp.glossa.sh/`. The staging hostname is not a compatibility promise, and the final managed endpoint remains `https://mcp.glossa.sh/mcp` on Heroku.
+
+The VPS binds the relay only to its private WireGuard address. Caddy publishes `/mcp`, `/v1/*`, `/healthz`, and protected-resource metadata. Worker `/device/*` traffic stays on WireGuard and public requests to those paths return `404`. The Relay repository owns the temporary deployment workflow, systemd unit, Caddy routing, rollback, and reboot checks. See the [Relay staging operator procedure](https://github.com/ariobarin/relay/blob/main/docs/glossa-operations.md).
+
+Do not mark this milestone complete from the staging deployment. Heroku credit, Postgres, DNS, ACM, restart recovery, and cost verification below remain required before the MVP endpoint is final.
+
 ## Configure Auth0
 
 Use these public identifiers for the MVP tenant:
