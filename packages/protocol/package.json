@@ -7,7 +7,7 @@
   "types": "dist/index.d.ts",
   "scripts": {
     "build": "tsc -p tsconfig.json",
-    "test": "node --test dist/**/*.test.js"
+    "test": "node ../../scripts/run-compiled-tests.mjs dist"
   },
   "dependencies": {
     "zod": "4.1.12"
