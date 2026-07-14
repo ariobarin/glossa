@@ -4,7 +4,6 @@ import type { WorkerJob, WorkerResult } from "@glossa/protocol";
 interface ConnectedDevice {
   accountId: string;
   deviceId: string;
-  rootLabel: string;
   generation: string;
   pendingJobs: WorkerJob[];
   pollWaiter?: (job: WorkerJob | null) => void;
@@ -21,14 +20,13 @@ export class RouterState {
   readonly #devices = new Map<string, ConnectedDevice>();
   readonly #results = new Map<string, ResultWaiter>();
 
-  register(accountId: string, deviceId: string, rootLabel: string): string {
+  register(accountId: string, deviceId: string): string {
     const generation = randomUUID();
     const previous = this.#devices.get(deviceId);
     previous?.pollWaiter?.(null);
     this.#devices.set(deviceId, {
       accountId,
       deviceId,
-      rootLabel,
       generation,
       pendingJobs: [],
     });
@@ -125,13 +123,13 @@ export class RouterState {
 
   listDevices(accountId: string): Array<{
     deviceId: string;
-    rootLabel: string;
+    path: ".";
   }> {
     return [...this.#devices.values()]
       .filter((device) => device.accountId === accountId)
       .map((device) => ({
         deviceId: device.deviceId,
-        rootLabel: device.rootLabel,
+        path: ".",
       }));
   }
 }

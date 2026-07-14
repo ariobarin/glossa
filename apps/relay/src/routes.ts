@@ -13,9 +13,7 @@ const enrollSchema = z.object({
   platform: z.string().trim().min(1).max(80).nullable().optional(),
 });
 
-const registerSchema = z.object({
-  rootLabel: z.string().trim().min(1).max(120),
-});
+const registerSchema = z.object({}).strict();
 
 const pollSchema = z.object({
   generation: z.string().uuid(),
@@ -121,12 +119,8 @@ export function buildRoutes(
       response.status(401).json({ error: "invalid_device" });
       return;
     }
-    const input = registerSchema.parse(request.body);
-    const generation = state.register(
-      device.accountId,
-      device.id,
-      input.rootLabel,
-    );
+    registerSchema.parse(request.body ?? {});
+    const generation = state.register(device.accountId, device.id);
     response.json({ deviceId: device.id, generation });
   });
 
