@@ -35,7 +35,7 @@ This file contains only core work. Do not pull tasks from `optional/` until all 
 
 - [x] Create an Auth0 Native application for the CLI.
 - [x] Enable Device Authorization Grant and refresh-token rotation.
-- [ ] Enable GitHub as the only social login connection for the private beta.
+- [x] Enable GitHub as the only social login connection for the private beta.
 - [x] Configure API audience and scopes.
 - [x] Implement `glossa login`, `logout`, `status`, and `whoami`.
 - [x] Open `verification_uri_complete` automatically and retain copyable fallback text.

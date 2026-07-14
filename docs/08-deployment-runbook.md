@@ -21,6 +21,8 @@ The `Glossa CLI` Native application enables only Device Code and Refresh Token g
 
 Define `glossa:device` and `glossa:access` permissions on the API. Grant the CLI user-delegated access to only `glossa:device`. The relay requires `glossa:access` for MCP requests. GitHub is the only login connection enabled for the CLI during the private beta.
 
+The GitHub connection currently uses Auth0 development keys and requests only the required basic profile. This is suitable for MVP testing, but replace it with a dedicated GitHub OAuth application before a production launch.
+
 The CLI embeds these public identifiers and needs no local Auth0 configuration. The same environment names remain available as development overrides. The relay still receives its issuer and audience through `GLOSSA_AUTH0_ISSUER` and `GLOSSA_AUTH0_AUDIENCE`.
 
 ## Provision Heroku
