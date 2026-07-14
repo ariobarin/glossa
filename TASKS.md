@@ -63,22 +63,22 @@ This file contains only core work. Do not pull tasks from `optional/` until all 
 
 ## M4 — Multi-tenant relay and MCP OAuth
 
-- [ ] Configure Auth0 Auth for MCP.
-- [ ] Serve protected-resource metadata.
-- [ ] Validate issuer, audience, expiry, and required scopes for `/mcp`.
-- [ ] Reject valid but uninvited identities before device, workspace, or job lookup.
-- [ ] Map the Auth0 `sub` claim to only that account's devices.
-- [ ] Thread `accountId` through devices, workspaces, jobs, and audit events.
-- [ ] Implement the MCP tools: list devices, open/close workspace, read/write file, and run command.
-- [ ] Make `run_command` return a command ID after worker acceptance.
-- [ ] Add command status/result and cancellation tools with transient worker-owned state.
-- [ ] Allow `get_command` to wait up to 15 seconds before returning current status.
-- [ ] Keep the core command lifecycle independent of native MCP Tasks support.
-- [ ] Register MCP tools with accurate read-only and destructive annotations.
-- [ ] Enforce a 15 minute default and 60 minute hard maximum command runtime independently of hosted request limits.
-- [ ] Inherit the complete worker process environment for commands without automatically enumerating, persisting, or logging it.
-- [ ] Keep worker polls below 20 seconds with jittered reconnects.
-- [ ] Add exhaustive tenant-isolation tests.
+- [x] Configure Auth0 Auth for MCP.
+- [x] Serve protected-resource metadata.
+- [x] Validate issuer, audience, expiry, and required scopes for `/mcp`.
+- [x] Reject valid but uninvited identities before device, workspace, or job lookup.
+- [x] Map the Auth0 `sub` claim to only that account's devices.
+- [x] Thread `accountId` through devices, workspaces, jobs, and audit events.
+- [x] Implement the MCP tools: list devices, open/close workspace, read/write file, and run command.
+- [x] Make `run_command` return a command ID after worker acceptance.
+- [x] Add command status/result and cancellation tools with transient worker-owned state.
+- [x] Allow `get_command` to wait up to 15 seconds before returning current status.
+- [x] Keep the core command lifecycle independent of native MCP Tasks support.
+- [x] Register MCP tools with accurate read-only and destructive annotations.
+- [x] Enforce a 15 minute default and 60 minute hard maximum command runtime independently of hosted request limits.
+- [x] Inherit the complete worker process environment for commands without automatically enumerating, persisting, or logging it.
+- [x] Keep worker polls below 20 seconds with jittered reconnects.
+- [x] Add exhaustive tenant-isolation tests.
 
 **Exit:** two test accounts cannot observe or operate each other's devices, even with guessed identifiers.
 

@@ -11,7 +11,7 @@ const state = new RouterState();
 const app = express();
 app.disable("x-powered-by");
 app.set("trust proxy", 1);
-app.use(express.json({ limit: "1mb" }));
+app.use(express.json({ limit: "2mb" }));
 app.use(buildRoutes(config, store, state));
 
 const server = app.listen(config.PORT, config.GLOSSA_BIND_HOST, () => {

@@ -5,7 +5,7 @@ export const DEFAULT_COMMAND_TIMEOUT_MS = 15 * 60 * 1000;
 export const MAX_COMMAND_TIMEOUT_MS = 60 * 60 * 1000;
 export const MAX_COMMAND_STATUS_WAIT_MS = 15_000;
 export const DEFAULT_WORKER_POLL_MS = 15_000;
-export const MAX_WORKER_POLL_MS = 20_000;
+export const MAX_WORKER_POLL_MS = 18_000;
 
 export const deviceNameSchema = z
   .string()

@@ -7,6 +7,9 @@ import express, {
   type Request,
   type Response as ExpressResponse,
 } from "express";
+import { Client } from "@modelcontextprotocol/sdk/client/index.js";
+import { StreamableHTTPClientTransport } from "@modelcontextprotocol/sdk/client/streamableHttp.js";
+import type { Transport } from "@modelcontextprotocol/sdk/shared/transport.js";
 import { loadConfig } from "../src/config.js";
 import type { RelayConfig } from "../src/config.js";
 import type { AuthenticatedRequest } from "../src/auth.js";
@@ -208,6 +211,66 @@ test("unadmitted identities cannot create accounts or devices", async (context) 
   assert.deepEqual(await response.json(), { error: "account_not_admitted" });
   assert.equal(store.admittedAccounts.size, 0);
   assert.equal(store.enrollmentCalls, 0);
+});
+
+test("protected resource metadata uses the Auth0 API identifier", async (context) => {
+  const store = new MemoryStore();
+  const origin = await startRelay(context, store);
+
+  const response = await fetch(`${origin}/.well-known/oauth-protected-resource`);
+
+  assert.equal(response.status, 200);
+  const metadata = (await response.json()) as {
+    resource: string;
+    scopes_supported: string[];
+  };
+  assert.equal(metadata.resource, "https://mcp.glossa.sh/");
+  assert.deepEqual(metadata.scopes_supported, ["glossa:access"]);
+});
+
+test("unadmitted identities are rejected before MCP dispatch", async (context) => {
+  const store = new MemoryStore();
+  const origin = await startRelay(context, store);
+
+  const response = await jsonRequest(
+    origin,
+    "/mcp",
+    "POST",
+    "Bearer subject-uninvited",
+    {
+      jsonrpc: "2.0",
+      id: 1,
+      method: "initialize",
+      params: {
+        protocolVersion: "2025-11-25",
+        capabilities: {},
+        clientInfo: { name: "test", version: "0.0.0" },
+      },
+    },
+  );
+
+  assert.equal(response.status, 403);
+  assert.deepEqual(await response.json(), { error: "account_not_admitted" });
+});
+
+test("streamable HTTP serves the registered MCP tools", async (context) => {
+  const store = new MemoryStore();
+  store.admit("subject-a");
+  const origin = await startRelay(context, store);
+  const client = new Client({ name: "http-test", version: "0.0.0" });
+  const transport = new StreamableHTTPClientTransport(new URL(`${origin}/mcp`), {
+    requestInit: { headers: { authorization: "Bearer subject-a" } },
+  });
+  try {
+    await client.connect(transport as unknown as Transport);
+    const tools = await client.listTools();
+
+    assert.equal(tools.tools.length, 8);
+    assert.ok(tools.tools.some((tool) => tool.name === "run_command"));
+    assert.ok(tools.tools.some((tool) => tool.name === "write_file"));
+  } finally {
+    await client.close();
+  }
 });
 
 test("enrollment returns a stable rate limit response", async (context) => {

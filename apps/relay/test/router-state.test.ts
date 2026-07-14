@@ -34,3 +34,30 @@ test("routing rejects a job from another account", async () => {
     /device_offline/,
   );
 });
+
+test("disconnect rejects in-flight jobs and removes routed resources", async () => {
+  const state = new RouterState();
+  const accountId = randomUUID();
+  const deviceId = randomUUID();
+  state.register(accountId, deviceId);
+  const workspaceId = randomUUID();
+  const commandId = randomUUID();
+  state.rememberWorkspace(accountId, deviceId, workspaceId);
+  state.rememberCommand(accountId, deviceId, commandId);
+  const pending = state.enqueue(
+    accountId,
+    deviceId,
+    {
+      type: "open_workspace",
+      requestId: randomUUID(),
+      path: ".",
+    },
+    10_000,
+  );
+
+  state.unregister(deviceId);
+
+  await assert.rejects(pending, /device_offline/);
+  assert.equal(state.deviceForWorkspace(accountId, workspaceId), null);
+  assert.equal(state.deviceForCommand(accountId, commandId), null);
+});
