@@ -11,33 +11,59 @@ export interface DeviceRecord {
   lastSeenAt: Date | null;
 }
 
-export class Store {
+export interface RelayStore {
+  admittedAccountIdForSubject(subject: string): Promise<string | null>;
+  enrollDevice(
+    accountId: string,
+    name: string,
+    platform: string | null,
+  ): Promise<{ device: DeviceRecord; token: string }>;
+  listDevices(accountId: string): Promise<DeviceRecord[]>;
+  renameDevice(
+    accountId: string,
+    deviceId: string,
+    name: string,
+  ): Promise<DeviceRecord | null>;
+  revokeDevice(accountId: string, deviceId: string): Promise<boolean>;
+  authenticateDevice(
+    deviceId: string,
+    secret: string,
+  ): Promise<DeviceRecord | null>;
+}
+
+const DUMMY_TOKEN_SALT = Buffer.alloc(16);
+const DUMMY_TOKEN_HASH = Buffer.alloc(32);
+
+export class Store implements RelayStore {
   readonly #pool: Pool;
 
-  constructor(databaseUrl: string) {
-    this.#pool = new Pool({
-      connectionString: databaseUrl,
-      ssl: process.env.NODE_ENV === "production" ? { rejectUnauthorized: false } : undefined,
-      max: 5,
-    });
+  constructor(databaseUrl: string, pool?: Pool) {
+    this.#pool =
+      pool ??
+      new Pool({
+        connectionString: databaseUrl,
+        ssl:
+          process.env.NODE_ENV === "production"
+            ? { rejectUnauthorized: false }
+            : undefined,
+        max: 5,
+      });
   }
 
   async close(): Promise<void> {
     await this.#pool.end();
   }
 
-  async accountIdForSubject(subject: string): Promise<string> {
+  async admittedAccountIdForSubject(subject: string): Promise<string | null> {
     const result = await this.#pool.query<{ id: string }>(
-      `INSERT INTO accounts (id, auth0_subject)
-       VALUES ($1, $2)
-       ON CONFLICT (auth0_subject)
-       DO UPDATE SET auth0_subject = EXCLUDED.auth0_subject
-       RETURNING id`,
-      [randomUUID(), subject],
+      `SELECT id
+       FROM accounts
+       WHERE auth0_subject = $1
+         AND admitted_at IS NOT NULL
+         AND disabled_at IS NULL`,
+      [subject],
     );
-    const row = result.rows[0];
-    if (!row) throw new Error("Failed to resolve account.");
-    return row.id;
+    return result.rows[0]?.id ?? null;
   }
 
   async enrollDevice(
@@ -46,40 +72,48 @@ export class Store {
     platform: string | null,
   ): Promise<{ device: DeviceRecord; token: string }> {
     const generated = await generateDeviceToken();
-    const result = await this.#pool.query<{
-      id: string;
-      account_id: string;
-      name: string;
-      platform: string | null;
-      revoked_at: Date | null;
-      last_seen_at: Date | null;
-    }>(
-      `INSERT INTO devices (
-         id, account_id, name, platform, token_salt, token_hash, token_version
-       ) VALUES ($1, $2, $3, $4, $5, $6, 1)
-       RETURNING id, account_id, name, platform, revoked_at, last_seen_at`,
-      [
-        generated.deviceId,
-        accountId,
-        name,
-        platform,
-        generated.salt,
-        generated.hash,
-      ],
-    );
-    const row = result.rows[0];
-    if (!row) throw new Error("Failed to enroll device.");
-    return {
-      device: {
-        id: row.id,
-        accountId: row.account_id,
-        name: row.name,
-        platform: row.platform,
-        revokedAt: row.revoked_at,
-        lastSeenAt: row.last_seen_at,
-      },
-      token: generated.token,
-    };
+    return await this.transaction(async (client) => {
+      const result = await client.query<{
+        id: string;
+        account_id: string;
+        name: string;
+        platform: string | null;
+        revoked_at: Date | null;
+        last_seen_at: Date | null;
+      }>(
+        `INSERT INTO devices (
+           id, account_id, name, platform, token_salt, token_hash, token_version
+         ) VALUES ($1, $2, $3, $4, $5, $6, 1)
+         RETURNING id, account_id, name, platform, revoked_at, last_seen_at`,
+        [
+          generated.deviceId,
+          accountId,
+          name,
+          platform,
+          generated.salt,
+          generated.hash,
+        ],
+      );
+      const row = result.rows[0];
+      if (!row) throw new Error("Failed to enroll device.");
+      await client.query(
+        `INSERT INTO audit_events (
+           id, account_id, device_id, event_type, outcome
+         ) VALUES ($1, $2, $3, 'device_enrolled', 'success')`,
+        [randomUUID(), accountId, generated.deviceId],
+      );
+      return {
+        device: {
+          id: row.id,
+          accountId: row.account_id,
+          name: row.name,
+          platform: row.platform,
+          revokedAt: row.revoked_at,
+          lastSeenAt: row.last_seen_at,
+        },
+        token: generated.token,
+      };
+    });
   }
 
   async listDevices(accountId: string): Promise<DeviceRecord[]> {
@@ -107,14 +141,56 @@ export class Store {
     }));
   }
 
-  async revokeDevice(accountId: string, deviceId: string): Promise<boolean> {
-    const result = await this.#pool.query(
+  async renameDevice(
+    accountId: string,
+    deviceId: string,
+    name: string,
+  ): Promise<DeviceRecord | null> {
+    const result = await this.#pool.query<{
+      id: string;
+      account_id: string;
+      name: string;
+      platform: string | null;
+      revoked_at: Date | null;
+      last_seen_at: Date | null;
+    }>(
       `UPDATE devices
-       SET revoked_at = COALESCE(revoked_at, now())
-       WHERE account_id = $1 AND id = $2`,
-      [accountId, deviceId],
+       SET name = $3
+       WHERE account_id = $1 AND id = $2 AND revoked_at IS NULL
+       RETURNING id, account_id, name, platform, revoked_at, last_seen_at`,
+      [accountId, deviceId, name],
     );
-    return (result.rowCount ?? 0) === 1;
+    const row = result.rows[0];
+    return row
+      ? {
+          id: row.id,
+          accountId: row.account_id,
+          name: row.name,
+          platform: row.platform,
+          revokedAt: row.revoked_at,
+          lastSeenAt: row.last_seen_at,
+        }
+      : null;
+  }
+
+  async revokeDevice(accountId: string, deviceId: string): Promise<boolean> {
+    return await this.transaction(async (client) => {
+      const result = await client.query<{ id: string }>(
+        `UPDATE devices
+         SET revoked_at = now()
+         WHERE account_id = $1 AND id = $2 AND revoked_at IS NULL
+         RETURNING id`,
+        [accountId, deviceId],
+      );
+      if (!result.rows[0]) return false;
+      await client.query(
+        `INSERT INTO audit_events (
+           id, account_id, device_id, event_type, outcome
+         ) VALUES ($1, $2, $3, 'device_revoked', 'success')`,
+        [randomUUID(), accountId, deviceId],
+      );
+      return true;
+    });
   }
 
   async authenticateDevice(
@@ -138,18 +214,37 @@ export class Store {
       [deviceId],
     );
     const row = result.rows[0];
-    if (!row || row.revoked_at) return null;
-    if (!(await verifyDeviceSecret(secret, row.token_salt, row.token_hash))) return null;
-    await this.#pool.query(`UPDATE devices SET last_seen_at = now() WHERE id = $1`, [
-      deviceId,
-    ]);
+    const secretMatches = await verifyDeviceSecret(
+      secret,
+      row?.token_salt ?? DUMMY_TOKEN_SALT,
+      row?.token_hash ?? DUMMY_TOKEN_HASH,
+    );
+    if (!row) return null;
+    if (row.revoked_at || !secretMatches) {
+      await this.#pool.query(
+        `INSERT INTO audit_events (
+           id, account_id, device_id, event_type, outcome
+         ) VALUES ($1, $2, $3, 'device_auth', 'failure')`,
+        [randomUUID(), row.account_id, row.id],
+      );
+      return null;
+    }
+    const updated = await this.#pool.query<{ last_seen_at: Date }>(
+      `UPDATE devices
+       SET last_seen_at = now()
+       WHERE id = $1 AND revoked_at IS NULL
+       RETURNING last_seen_at`,
+      [deviceId],
+    );
+    const lastSeenAt = updated.rows[0]?.last_seen_at;
+    if (!lastSeenAt) return null;
     return {
       id: row.id,
       accountId: row.account_id,
       name: row.name,
       platform: row.platform,
       revokedAt: row.revoked_at,
-      lastSeenAt: new Date(),
+      lastSeenAt,
     };
   }
 

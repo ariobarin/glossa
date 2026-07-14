@@ -26,6 +26,15 @@
     "GLOSSA_DEVICE_ENROLL_SCOPE": {
       "value": "glossa:device"
     },
+    "GLOSSA_RATE_LIMIT_WINDOW_MS": {
+      "value": "60000"
+    },
+    "GLOSSA_ENROLL_RATE_LIMIT": {
+      "value": "10"
+    },
+    "GLOSSA_DEVICE_AUTH_RATE_LIMIT": {
+      "value": "120"
+    },
     "GLOSSA_WORKER_POLL_MS": {
       "value": "15000"
     },

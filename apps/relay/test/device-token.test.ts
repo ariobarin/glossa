@@ -23,4 +23,9 @@ test("generated device tokens verify without storing the plaintext", async () =>
 
 test("malformed tokens are rejected", () => {
   assert.equal(parseDeviceToken("not-a-device-token"), null);
+  assert.equal(parseDeviceToken(`gld_${"-".repeat(36)}_${"a".repeat(43)}`), null);
+  assert.equal(
+    parseDeviceToken("gld_00000000-0000-4000-8000-000000000000_short"),
+    null,
+  );
 });

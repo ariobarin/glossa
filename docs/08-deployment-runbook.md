@@ -25,6 +25,19 @@ The GitHub connection currently uses Auth0 development keys and requests only th
 
 The CLI embeds these public identifiers and needs no local Auth0 configuration. The same environment names remain available as development overrides. The relay still receives its issuer and audience through `GLOSSA_AUTH0_ISSUER` and `GLOSSA_AUTH0_AUDIENCE`.
 
+## Admit a private beta account
+
+Authentication never creates an account row. After verifying the immutable Auth0 `sub` value, admit it with an explicit database operation:
+
+```sql
+INSERT INTO accounts (id, auth0_subject, admitted_at)
+VALUES (gen_random_uuid(), '<exact-auth0-subject>', now())
+ON CONFLICT (auth0_subject) DO UPDATE
+SET admitted_at = now(), disabled_at = NULL;
+```
+
+Do not use an email address or GitHub username in place of the exact Auth0 subject. A row with a null `admitted_at` or non-null `disabled_at` remains unable to enroll or manage devices.
+
 ## Provision Heroku
 
 ```bash
@@ -36,6 +49,8 @@ heroku addons:create heroku-postgresql:essential-0
 Configure settings and secrets through Heroku config vars. Do not paste them into issues, commits, or chat transcripts.
 
 Required vars are documented in `.env.example`.
+
+The default fixed-window limits are 10 device enrollments per Auth0 subject and 120 device-authenticated requests per source address per minute. Override `GLOSSA_RATE_LIMIT_WINDOW_MS`, `GLOSSA_ENROLL_RATE_LIMIT`, or `GLOSSA_DEVICE_AUTH_RATE_LIMIT` only after reviewing expected worker counts and poll frequency.
 
 Set `GLOSSA_BIND_HOST=0.0.0.0` on Heroku so the router can reach the web process. Local and private-interface deployments should bind only to the interface that is intended to receive relay traffic.
 

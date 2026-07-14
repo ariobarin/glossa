@@ -48,16 +48,16 @@ This file contains only core work. Do not pull tasks from `optional/` until all 
 
 ## M3 — Per-device enrollment and worker authentication
 
-- [ ] Add authenticated `POST /v1/devices/enroll`.
-- [ ] Generate a unique 256-bit device secret and return it once.
-- [ ] Store only a salted scrypt hash in Postgres.
-- [ ] Add list, rename, revoke, and last-seen operations.
-- [ ] Authenticate `/device/*` by device ID and secret over TLS.
-- [ ] Scope every device to the Auth0 subject that enrolled it.
-- [ ] Require an explicitly admitted account before device enrollment, and never create accounts automatically from authenticated requests.
-- [ ] Add rate limits and constant-time token comparison.
-- [ ] Remove any shared worker token.
-- [ ] Add cross-account and revoked-device tests.
+- [x] Add authenticated `POST /v1/devices/enroll`.
+- [x] Generate a unique 256-bit device secret and return it once.
+- [x] Store only a salted scrypt hash in Postgres.
+- [x] Add list, rename, revoke, and last-seen operations.
+- [x] Authenticate `/device/*` by device ID and secret over TLS.
+- [x] Scope every device to the Auth0 subject that enrolled it.
+- [x] Require an explicitly admitted account before device enrollment, and never create accounts automatically from authenticated requests.
+- [x] Add rate limits and constant-time token comparison.
+- [x] Remove any shared worker token.
+- [x] Add cross-account and revoked-device tests.
 
 **Exit:** revoking one device immediately prevents its next poll without affecting other devices.
 

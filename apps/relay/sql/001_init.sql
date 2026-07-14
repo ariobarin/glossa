@@ -4,8 +4,11 @@ CREATE TABLE IF NOT EXISTS accounts (
   id uuid PRIMARY KEY,
   auth0_subject text NOT NULL UNIQUE,
   created_at timestamptz NOT NULL DEFAULT now(),
+  admitted_at timestamptz,
   disabled_at timestamptz
 );
+
+ALTER TABLE accounts ADD COLUMN IF NOT EXISTS admitted_at timestamptz;
 
 CREATE TABLE IF NOT EXISTS devices (
   id uuid PRIMARY KEY,

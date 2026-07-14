@@ -1,23 +1,36 @@
-import type { Request, Response } from "express";
+import type { Request, RequestHandler, Response } from "express";
 import { Router } from "express";
 import { z } from "zod";
 import { deviceNameSchema, workerResultSchema } from "@glossa/protocol";
 import type { RelayConfig } from "./config.js";
 import { requireAuth, type AuthenticatedRequest } from "./auth.js";
 import { parseDeviceToken } from "./device-token.js";
-import type { Store, DeviceRecord } from "./store.js";
+import { FixedWindowRateLimiter } from "./rate-limit.js";
+import type { DeviceRecord, RelayStore } from "./store.js";
 import type { RouterState } from "./router-state.js";
 
-const enrollSchema = z.object({
-  name: deviceNameSchema,
-  platform: z.string().trim().min(1).max(80).nullable().optional(),
-});
+const enrollSchema = z
+  .object({
+    name: deviceNameSchema,
+    platform: z.string().trim().min(1).max(80).nullable().optional(),
+  })
+  .strict();
 
+const renameSchema = z.object({ name: deviceNameSchema }).strict();
+const deviceIdSchema = z.string().uuid();
 const registerSchema = z.object({}).strict();
+const pollSchema = z.object({ generation: z.string().uuid() }).strict();
 
-const pollSchema = z.object({
-  generation: z.string().uuid(),
-});
+type AuthFactory = (
+  config: RelayConfig,
+  requiredScope?: string,
+) => RequestHandler;
+
+export interface RouteDependencies {
+  authFactory?: AuthFactory;
+  enrollmentRateLimiter?: FixedWindowRateLimiter;
+  deviceRateLimiter?: FixedWindowRateLimiter;
+}
 
 function publicDevice(device: DeviceRecord) {
   return {
@@ -29,24 +42,104 @@ function publicDevice(device: DeviceRecord) {
   };
 }
 
+function parseDeviceId(request: Request): string | null {
+  const rawDeviceId = request.params.deviceId;
+  const deviceId = Array.isArray(rawDeviceId) ? rawDeviceId[0] : rawDeviceId;
+  const parsed = deviceIdSchema.safeParse(deviceId);
+  return parsed.success ? parsed.data : null;
+}
+
+function rejectInvalidInput(response: Response): void {
+  response.status(400).json({ error: "invalid_request" });
+}
+
+function rejectRateLimit(
+  response: Response,
+  limiter: FixedWindowRateLimiter,
+  key: string,
+): boolean {
+  const result = limiter.consume(key);
+  if (result.allowed) return false;
+  response.setHeader("Retry-After", String(result.retryAfterSeconds));
+  response.status(429).json({ error: "rate_limited" });
+  return true;
+}
+
+async function admittedAccountId(
+  request: AuthenticatedRequest,
+  response: Response,
+  store: RelayStore,
+): Promise<string | null> {
+  const accountId = await store.admittedAccountIdForSubject(
+    request.auth!.subject,
+  );
+  if (accountId) return accountId;
+  response.status(403).json({ error: "account_not_admitted" });
+  return null;
+}
+
 async function authenticatedDevice(
   request: Request,
-  store: Store,
+  response: Response,
+  store: RelayStore,
+  limiter: FixedWindowRateLimiter,
 ): Promise<DeviceRecord | null> {
+  const source = request.ip || request.socket.remoteAddress || "unknown";
+  if (rejectRateLimit(response, limiter, source)) return null;
+
   const header = request.header("authorization");
   const [scheme, token] = header?.split(/\s+/, 2) ?? [];
-  if (scheme?.toLowerCase() !== "device" || !token) return null;
+  if (scheme?.toLowerCase() !== "device" || !token) {
+    response.status(401).json({ error: "invalid_device" });
+    return null;
+  }
   const parsed = parseDeviceToken(token);
-  if (!parsed) return null;
-  return await store.authenticateDevice(parsed.deviceId, parsed.secret);
+  if (!parsed) {
+    response.status(401).json({ error: "invalid_device" });
+    return null;
+  }
+  const device = await store.authenticateDevice(parsed.deviceId, parsed.secret);
+  if (!device) response.status(401).json({ error: "invalid_device" });
+  return device;
+}
+
+function isUniqueViolation(error: unknown): boolean {
+  return (
+    typeof error === "object" &&
+    error !== null &&
+    "code" in error &&
+    error.code === "23505"
+  );
 }
 
 export function buildRoutes(
   config: RelayConfig,
-  store: Store,
+  store: RelayStore,
   state: RouterState,
+  dependencies: RouteDependencies = {},
 ): Router {
   const router = Router();
+  const authFactory = dependencies.authFactory ?? requireAuth;
+  const enrollmentRateLimiter =
+    dependencies.enrollmentRateLimiter ??
+    new FixedWindowRateLimiter(
+      config.GLOSSA_ENROLL_RATE_LIMIT,
+      config.GLOSSA_RATE_LIMIT_WINDOW_MS,
+    );
+  const deviceRateLimiter =
+    dependencies.deviceRateLimiter ??
+    new FixedWindowRateLimiter(
+      config.GLOSSA_DEVICE_AUTH_RATE_LIMIT,
+      config.GLOSSA_RATE_LIMIT_WINDOW_MS,
+    );
+
+  router.use((request, response, next) => {
+    if (config.NODE_ENV === "production" && !request.secure) {
+      response.status(400).json({ error: "https_required" });
+      return;
+    }
+    next();
+  });
 
   router.get("/healthz", (_request, response) => {
     response.json({ ok: true, service: "glossa-relay" });
@@ -66,43 +159,93 @@ export function buildRoutes(
 
   router.post(
     "/v1/devices/enroll",
-    requireAuth(config, config.GLOSSA_DEVICE_ENROLL_SCOPE),
+    authFactory(config, config.GLOSSA_DEVICE_ENROLL_SCOPE),
     async (request: AuthenticatedRequest, response: Response) => {
-      const input = enrollSchema.parse(request.body);
-      const accountId = await store.accountIdForSubject(request.auth!.subject);
-      const enrolled = await store.enrollDevice(
-        accountId,
-        input.name,
-        input.platform ?? null,
-      );
-      response.status(201).json({
-        device: publicDevice(enrolled.device),
-        device_token: enrolled.token,
-      });
+      if (
+        rejectRateLimit(
+          response,
+          enrollmentRateLimiter,
+          request.auth!.subject,
+        )
+      ) {
+        return;
+      }
+      const parsed = enrollSchema.safeParse(request.body);
+      if (!parsed.success) {
+        rejectInvalidInput(response);
+        return;
+      }
+      const accountId = await admittedAccountId(request, response, store);
+      if (!accountId) return;
+      try {
+        const enrolled = await store.enrollDevice(
+          accountId,
+          parsed.data.name,
+          parsed.data.platform ?? null,
+        );
+        response.status(201).json({
+          device: publicDevice(enrolled.device),
+          device_token: enrolled.token,
+        });
+      } catch (error) {
+        if (!isUniqueViolation(error)) throw error;
+        response.status(409).json({ error: "device_name_conflict" });
+      }
     },
   );
 
   router.get(
     "/v1/devices",
-    requireAuth(config, config.GLOSSA_DEVICE_ENROLL_SCOPE),
+    authFactory(config, config.GLOSSA_DEVICE_ENROLL_SCOPE),
     async (request: AuthenticatedRequest, response: Response) => {
-      const accountId = await store.accountIdForSubject(request.auth!.subject);
+      const accountId = await admittedAccountId(request, response, store);
+      if (!accountId) return;
       const devices = await store.listDevices(accountId);
       response.json({ devices: devices.map(publicDevice) });
     },
   );
 
-  router.delete(
+  router.patch(
     "/v1/devices/:deviceId",
-    requireAuth(config, config.GLOSSA_DEVICE_ENROLL_SCOPE),
+    authFactory(config, config.GLOSSA_DEVICE_ENROLL_SCOPE),
     async (request: AuthenticatedRequest, response: Response) => {
-      const accountId = await store.accountIdForSubject(request.auth!.subject);
-      const rawDeviceId = request.params.deviceId;
-      const deviceId = Array.isArray(rawDeviceId) ? rawDeviceId[0] : rawDeviceId;
-      if (!deviceId) {
-        response.status(400).json({ error: "invalid_device_id" });
+      const deviceId = parseDeviceId(request);
+      const parsed = renameSchema.safeParse(request.body);
+      if (!deviceId || !parsed.success) {
+        rejectInvalidInput(response);
         return;
       }
+      const accountId = await admittedAccountId(request, response, store);
+      if (!accountId) return;
+      try {
+        const device = await store.renameDevice(
+          accountId,
+          deviceId,
+          parsed.data.name,
+        );
+        if (!device) {
+          response.status(404).json({ error: "device_not_found" });
+          return;
+        }
+        response.json({ device: publicDevice(device) });
+      } catch (error) {
+        if (!isUniqueViolation(error)) throw error;
+        response.status(409).json({ error: "device_name_conflict" });
+      }
+    },
+  );
+
+  router.delete(
+    "/v1/devices/:deviceId",
+    authFactory(config, config.GLOSSA_DEVICE_ENROLL_SCOPE),
+    async (request: AuthenticatedRequest, response: Response) => {
+      const deviceId = parseDeviceId(request);
+      if (!deviceId) {
+        rejectInvalidInput(response);
+        return;
+      }
+      const accountId = await admittedAccountId(request, response, store);
+      if (!accountId) return;
       const revoked = await store.revokeDevice(accountId, deviceId);
       if (!revoked) {
         response.status(404).json({ error: "device_not_found" });
@@ -114,28 +257,40 @@ export function buildRoutes(
   );
 
   router.post("/device/register", async (request, response) => {
-    const device = await authenticatedDevice(request, store);
-    if (!device) {
-      response.status(401).json({ error: "invalid_device" });
+    const device = await authenticatedDevice(
+      request,
+      response,
+      store,
+      deviceRateLimiter,
+    );
+    if (!device) return;
+    const parsed = registerSchema.safeParse(request.body ?? {});
+    if (!parsed.success) {
+      rejectInvalidInput(response);
       return;
     }
-    registerSchema.parse(request.body ?? {});
     const generation = state.register(device.accountId, device.id);
     response.json({ deviceId: device.id, generation });
   });
 
   router.post("/device/poll", async (request, response) => {
-    const device = await authenticatedDevice(request, store);
-    if (!device) {
-      response.status(401).json({ error: "invalid_device" });
+    const device = await authenticatedDevice(
+      request,
+      response,
+      store,
+      deviceRateLimiter,
+    );
+    if (!device) return;
+    const parsed = pollSchema.safeParse(request.body);
+    if (!parsed.success) {
+      rejectInvalidInput(response);
       return;
     }
-    const input = pollSchema.parse(request.body);
     try {
       const job = await state.poll(
         device.accountId,
         device.id,
-        input.generation,
+        parsed.data.generation,
         config.GLOSSA_WORKER_POLL_MS,
       );
       if (!job) {
@@ -149,19 +304,25 @@ export function buildRoutes(
   });
 
   router.post("/device/result", async (request, response) => {
-    const device = await authenticatedDevice(request, store);
-    if (!device) {
-      response.status(401).json({ error: "invalid_device" });
+    const device = await authenticatedDevice(
+      request,
+      response,
+      store,
+      deviceRateLimiter,
+    );
+    if (!device) return;
+    const parsed = workerResultSchema.safeParse(request.body);
+    if (!parsed.success) {
+      rejectInvalidInput(response);
       return;
     }
-    const result = workerResultSchema.parse(request.body);
-    const accepted = state.complete(device.accountId, device.id, result);
+    const accepted = state.complete(device.accountId, device.id, parsed.data);
     response.status(accepted ? 202 : 410).json({ accepted });
   });
 
   router.post(
     "/mcp",
-    requireAuth(config, config.GLOSSA_MCP_REQUIRED_SCOPE),
+    authFactory(config, config.GLOSSA_MCP_REQUIRED_SCOPE),
     (_request, response) => {
       response.status(501).json({
         error: "mcp_adapter_not_implemented",
