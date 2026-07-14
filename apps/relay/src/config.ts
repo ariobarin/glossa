@@ -8,6 +8,7 @@ import {
 
 const environmentSchema = z.object({
   NODE_ENV: z.enum(["development", "test", "production"]).default("development"),
+  GLOSSA_BIND_HOST: z.string().trim().min(1).max(255).default("127.0.0.1"),
   PORT: z.coerce.number().int().positive().max(65535).default(39100),
   DATABASE_URL: z.string().min(1),
   GLOSSA_PUBLIC_ORIGIN: z.string().url(),

@@ -13,8 +13,10 @@ app.disable("x-powered-by");
 app.use(express.json({ limit: "1mb" }));
 app.use(buildRoutes(config, store, state));
 
-const server = app.listen(config.PORT, () => {
-  console.log(`Glossa relay listening on port ${config.PORT}.`);
+const server = app.listen(config.PORT, config.GLOSSA_BIND_HOST, () => {
+  console.log(
+    `Glossa relay listening on ${config.GLOSSA_BIND_HOST}:${config.PORT}.`,
+  );
 });
 
 async function shutdown(signal: string): Promise<void> {

@@ -21,6 +21,8 @@ Configure settings and secrets through Heroku config vars. Do not paste them int
 
 Required vars are documented in `.env.example`.
 
+Set `GLOSSA_BIND_HOST=0.0.0.0` on Heroku so the router can reach the web process. Local and private-interface deployments should bind only to the interface that is intended to receive relay traffic.
+
 ## Deploy
 
 Use GitHub integration or protected Git deploy after CI. The `release` process applies migrations. Before the first numbered release, schema changes do not need rolling backward compatibility: use coordinated deploys or a maintenance window. Never destroy non-disposable account/device data without explicit owner approval and a verified backup.
