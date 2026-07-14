@@ -6,7 +6,7 @@ All production endpoints use HTTPS.
 
 ### `GET /.well-known/oauth-protected-resource`
 
-Advertise the MCP resource and Auth0 authorization server.
+Advertise the Auth0 API identifier `https://mcp.glossa.sh/` as the protected resource, the Auth0 authorization server, and the `glossa:access` scope. The protected-resource identifier is the OAuth audience. It is intentionally not the request URL `https://mcp.glossa.sh/mcp`.
 
 ### `GET /healthz`
 
@@ -65,7 +65,7 @@ Registers an active worker generation. The request does not include the canonica
 
 ### `POST /device/poll`
 
-Waits no more than 20 seconds. Returns one job or `204 No Content`. A worker has at most one delivered active job.
+Waits no more than 18 seconds. Returns one job or `204 No Content`. A worker has at most one delivered active job. Worker HTTP requests use a 19 second client timeout and reconnect with bounded exponential jitter.
 
 ### `POST /device/result`
 

@@ -1,8 +1,6 @@
 import { z } from "zod";
 import {
-  DEFAULT_COMMAND_TIMEOUT_MS,
   DEFAULT_WORKER_POLL_MS,
-  MAX_COMMAND_TIMEOUT_MS,
   MAX_WORKER_POLL_MS,
 } from "@glossa/protocol";
 
@@ -36,12 +34,12 @@ const environmentSchema = z
       .positive()
       .max(MAX_WORKER_POLL_MS)
       .default(DEFAULT_WORKER_POLL_MS),
-    GLOSSA_COMMAND_TIMEOUT_MS: z.coerce
+    GLOSSA_RELAY_REQUEST_TIMEOUT_MS: z.coerce
       .number()
       .int()
       .positive()
-      .max(MAX_COMMAND_TIMEOUT_MS)
-      .default(DEFAULT_COMMAND_TIMEOUT_MS),
+      .max(28_000)
+      .default(25_000),
   })
   .superRefine((environment, context) => {
     if (

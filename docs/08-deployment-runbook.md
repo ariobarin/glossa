@@ -17,9 +17,15 @@ Use these public identifiers for the MVP tenant:
 - API audience: `https://mcp.glossa.sh/`
 - Native application client ID: `9mwnK9nTAd8q1kxnKIZxC1wodxzfWHg5`
 
-The `Glossa CLI` Native application enables only Device Code and Refresh Token grants. Refresh token rotation is enabled with a 30 day maximum lifetime. The `Glossa API` uses the Auth0 token profile, RS256 signing, per-application authorization, and offline access.
+The `Glossa CLI` Native application enables only Device Code and Refresh Token grants. Refresh token rotation is enabled with a 30 day maximum lifetime. The `Glossa API` uses the RFC 9068 token profile, RS256 signing, per-application authorization, and offline access.
 
 Define `glossa:device` and `glossa:access` permissions on the API. Grant the CLI user-delegated access to only `glossa:device`. The relay requires `glossa:access` for MCP requests. GitHub is the only login connection enabled for the CLI during the private beta.
+
+Enable Dynamic Client Registration, Client ID Metadata Document registration, and the Resource Parameter Compatibility Profile in the tenant's Advanced settings. The authorization-server metadata must publish an `/oidc/register` endpoint. Dynamic Client Registration is open, so any MCP client can register an application, but registration does not admit an identity to Glossa.
+
+For the Glossa API, keep user-delegated and client access set to per-application authorization. Set the default third-party user-delegated policy to `Authorized` with only `glossa:access` selected. Keep default third-party client access unauthorized. Do not grant `glossa:device` to dynamically registered MCP clients.
+
+Promote the GitHub social connection to domain level so dynamically registered third-party applications can use it. The tenant's explicit Glossa account admission still rejects valid but uninvited GitHub identities before any device or workspace lookup.
 
 The GitHub connection currently uses Auth0 development keys and requests only the required basic profile. This is suitable for MVP testing, but replace it with a dedicated GitHub OAuth application before a production launch.
 
@@ -80,6 +86,8 @@ The same relay hostname serves:
 - `/v1/*`
 - `/healthz`
 - protected-resource metadata
+
+Protected-resource metadata advertises the API audience `https://mcp.glossa.sh/` as its `resource` value. MCP clients still send protocol requests to `https://mcp.glossa.sh/mcp`.
 
 Authorization, not hidden paths, protects routes.
 

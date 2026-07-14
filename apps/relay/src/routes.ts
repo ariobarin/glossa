@@ -6,6 +6,7 @@ import type { RelayConfig } from "./config.js";
 import { requireAuth, type AuthenticatedRequest } from "./auth.js";
 import { parseDeviceToken } from "./device-token.js";
 import { FixedWindowRateLimiter } from "./rate-limit.js";
+import { handleMcpRequest } from "./mcp.js";
 import type { DeviceRecord, RelayStore } from "./store.js";
 import type { RouterState } from "./router-state.js";
 
@@ -147,12 +148,9 @@ export function buildRoutes(
 
   router.get("/.well-known/oauth-protected-resource", (_request, response) => {
     response.json({
-      resource: `${config.GLOSSA_PUBLIC_ORIGIN}/mcp`,
+      resource: config.GLOSSA_AUTH0_AUDIENCE,
       authorization_servers: [config.GLOSSA_AUTH0_ISSUER],
-      scopes_supported: [
-        config.GLOSSA_MCP_REQUIRED_SCOPE,
-        config.GLOSSA_DEVICE_ENROLL_SCOPE,
-      ],
+      scopes_supported: [config.GLOSSA_MCP_REQUIRED_SCOPE],
       bearer_methods_supported: ["header"],
     });
   });
@@ -320,14 +318,13 @@ export function buildRoutes(
     response.status(accepted ? 202 : 410).json({ accepted });
   });
 
-  router.post(
+  router.all(
     "/mcp",
     authFactory(config, config.GLOSSA_MCP_REQUIRED_SCOPE),
-    (_request, response) => {
-      response.status(501).json({
-        error: "mcp_adapter_not_implemented",
-        next: "Complete milestones M1 and M4 by implementing the Glossa MCP adapter.",
-      });
+    async (request: AuthenticatedRequest, response: Response) => {
+      const accountId = await admittedAccountId(request, response, store);
+      if (!accountId) return;
+      await handleMcpRequest(request, response, config, state, accountId);
     },
   );
 

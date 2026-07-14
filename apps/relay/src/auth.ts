@@ -22,6 +22,20 @@ function scopes(payload: JWTPayload): Set<string> {
   return new Set(claim.split(/\s+/).filter(Boolean));
 }
 
+function authenticationChallenge(
+  config: RelayConfig,
+  error?: "invalid_token" | "insufficient_scope",
+  requiredScope?: string,
+): string {
+  const origin = config.GLOSSA_PUBLIC_ORIGIN.replace(/\/$/, "");
+  const parameters = [
+    `resource_metadata="${origin}/.well-known/oauth-protected-resource"`,
+    ...(error ? [`error="${error}"`] : []),
+    ...(requiredScope ? [`scope="${requiredScope}"`] : []),
+  ];
+  return `Bearer ${parameters.join(", ")}`;
+}
+
 export function requireAuth(config: RelayConfig, requiredScope?: string) {
   const issuer = config.GLOSSA_AUTH0_ISSUER.endsWith("/")
     ? config.GLOSSA_AUTH0_ISSUER
@@ -37,7 +51,7 @@ export function requireAuth(config: RelayConfig, requiredScope?: string) {
     if (!token) {
       response.setHeader(
         "WWW-Authenticate",
-        `Bearer resource_metadata="${config.GLOSSA_PUBLIC_ORIGIN}/.well-known/oauth-protected-resource"`,
+        authenticationChallenge(config),
       );
       response.status(401).json({ error: "authentication_required" });
       return;
@@ -51,6 +65,10 @@ export function requireAuth(config: RelayConfig, requiredScope?: string) {
       if (!verified.payload.sub) throw new Error("Missing subject.");
       const grantedScopes = scopes(verified.payload);
       if (requiredScope && !grantedScopes.has(requiredScope)) {
+        response.setHeader(
+          "WWW-Authenticate",
+          authenticationChallenge(config, "insufficient_scope", requiredScope),
+        );
         response.status(403).json({ error: "insufficient_scope" });
         return;
       }
@@ -61,6 +79,10 @@ export function requireAuth(config: RelayConfig, requiredScope?: string) {
       };
       next();
     } catch {
+      response.setHeader(
+        "WWW-Authenticate",
+        authenticationChallenge(config, "invalid_token"),
+      );
       response.status(401).json({ error: "invalid_token" });
     }
   };

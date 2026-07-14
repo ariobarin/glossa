@@ -13,17 +13,27 @@ interface ResultWaiter {
   accountId: string;
   deviceId: string;
   resolve: (result: WorkerResult) => void;
+  reject: (error: Error) => void;
   expiresAt: number;
+  timer: NodeJS.Timeout;
+}
+
+interface RoutedResource {
+  accountId: string;
+  deviceId: string;
 }
 
 export class RouterState {
   readonly #devices = new Map<string, ConnectedDevice>();
   readonly #results = new Map<string, ResultWaiter>();
+  readonly #workspaces = new Map<string, RoutedResource>();
+  readonly #commands = new Map<string, RoutedResource>();
 
   register(accountId: string, deviceId: string): string {
     const generation = randomUUID();
     const previous = this.#devices.get(deviceId);
     previous?.pollWaiter?.(null);
+    this.#rejectDeviceWaiters(deviceId);
     this.#devices.set(deviceId, {
       accountId,
       deviceId,
@@ -37,6 +47,8 @@ export class RouterState {
     const device = this.#devices.get(deviceId);
     device?.pollWaiter?.(null);
     this.#devices.delete(deviceId);
+    this.#rejectDeviceWaiters(deviceId);
+    this.#deleteDeviceResources(deviceId);
   }
 
   async poll(
@@ -88,18 +100,21 @@ export class RouterState {
 
     return new Promise((resolve, reject) => {
       const expiresAt = Date.now() + timeoutMs;
-      this.#results.set(job.requestId, {
-        accountId,
-        deviceId,
-        resolve,
-        expiresAt,
-      });
-      setTimeout(() => {
+      const timer = setTimeout(() => {
         const pending = this.#results.get(job.requestId);
         if (!pending || pending.expiresAt !== expiresAt) return;
         this.#results.delete(job.requestId);
         reject(new Error("job_timeout"));
       }, timeoutMs);
+      timer.unref();
+      this.#results.set(job.requestId, {
+        accountId,
+        deviceId,
+        resolve,
+        reject,
+        expiresAt,
+        timer,
+      });
     });
   }
 
@@ -117,8 +132,41 @@ export class RouterState {
       return false;
     }
     this.#results.delete(result.requestId);
+    clearTimeout(waiter.timer);
     waiter.resolve(result);
     return true;
+  }
+
+  rememberWorkspace(
+    accountId: string,
+    deviceId: string,
+    workspaceId: string,
+  ): void {
+    this.#workspaces.set(workspaceId, { accountId, deviceId });
+  }
+
+  deviceForWorkspace(accountId: string, workspaceId: string): string | null {
+    const workspace = this.#workspaces.get(workspaceId);
+    return workspace?.accountId === accountId ? workspace.deviceId : null;
+  }
+
+  forgetWorkspace(accountId: string, workspaceId: string): boolean {
+    const workspace = this.#workspaces.get(workspaceId);
+    if (!workspace || workspace.accountId !== accountId) return false;
+    return this.#workspaces.delete(workspaceId);
+  }
+
+  rememberCommand(
+    accountId: string,
+    deviceId: string,
+    commandId: string,
+  ): void {
+    this.#commands.set(commandId, { accountId, deviceId });
+  }
+
+  deviceForCommand(accountId: string, commandId: string): string | null {
+    const command = this.#commands.get(commandId);
+    return command?.accountId === accountId ? command.deviceId : null;
   }
 
   listDevices(accountId: string): Array<{
@@ -131,5 +179,23 @@ export class RouterState {
         deviceId: device.deviceId,
         path: ".",
       }));
+  }
+
+  #rejectDeviceWaiters(deviceId: string): void {
+    for (const [requestId, waiter] of this.#results) {
+      if (waiter.deviceId !== deviceId) continue;
+      clearTimeout(waiter.timer);
+      this.#results.delete(requestId);
+      waiter.reject(new Error("device_offline"));
+    }
+  }
+
+  #deleteDeviceResources(deviceId: string): void {
+    for (const [workspaceId, workspace] of this.#workspaces) {
+      if (workspace.deviceId === deviceId) this.#workspaces.delete(workspaceId);
+    }
+    for (const [commandId, command] of this.#commands) {
+      if (command.deviceId === deviceId) this.#commands.delete(commandId);
+    }
   }
 }
