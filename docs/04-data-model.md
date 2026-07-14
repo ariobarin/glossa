@@ -7,7 +7,7 @@
 | id | uuid | Internal immutable identifier |
 | auth0_subject | text unique | External identity, e.g. `auth0|...` |
 | created_at | timestamptz | |
-| admitted_at | timestamptz | Explicit private beta admission time |
+| admitted_at | timestamptz nullable | Non-null only after explicit private beta admission |
 | disabled_at | timestamptz nullable | |
 
 An authenticated Auth0 subject must match an explicitly admitted account row. API requests must not create account rows automatically.

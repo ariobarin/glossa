@@ -20,7 +20,10 @@ export interface ParsedDeviceToken {
 }
 
 export function parseDeviceToken(token: string): ParsedDeviceToken | null {
-  const match = /^gld_([0-9a-f-]{36})_([A-Za-z0-9_-]{40,})$/.exec(token);
+  const match =
+    /^gld_([0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12})_([A-Za-z0-9_-]{43})$/.exec(
+      token,
+    );
   if (!match?.[1] || !match[2]) return null;
   return { deviceId: match[1], secret: match[2] };
 }

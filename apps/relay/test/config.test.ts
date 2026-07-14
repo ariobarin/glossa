@@ -20,3 +20,10 @@ test("relay accepts an explicit private interface address", () => {
   environment.GLOSSA_BIND_HOST = "10.0.0.1";
   assert.equal(loadConfig(environment).GLOSSA_BIND_HOST, "10.0.0.1");
 });
+
+test("production requires an HTTPS public origin", () => {
+  const environment = requiredEnvironment();
+  environment.NODE_ENV = "production";
+  environment.GLOSSA_PUBLIC_ORIGIN = "http://mcp.glossa.sh";
+  assert.throws(() => loadConfig(environment), /must use HTTPS/);
+});

@@ -10,6 +10,7 @@ const state = new RouterState();
 
 const app = express();
 app.disable("x-powered-by");
+app.set("trust proxy", 1);
 app.use(express.json({ limit: "1mb" }));
 app.use(buildRoutes(config, store, state));
 
