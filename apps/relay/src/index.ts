@@ -1,0 +1,30 @@
+import express from "express";
+import { loadConfig } from "./config.js";
+import { Store } from "./store.js";
+import { RouterState } from "./router-state.js";
+import { buildRoutes } from "./routes.js";
+
+const config = loadConfig();
+const store = new Store(config.DATABASE_URL);
+const state = new RouterState();
+
+const app = express();
+app.disable("x-powered-by");
+app.use(express.json({ limit: "1mb" }));
+app.use(buildRoutes(config, store, state));
+
+const server = app.listen(config.PORT, () => {
+  console.log(`Glossa relay listening on port ${config.PORT}.`);
+});
+
+async function shutdown(signal: string): Promise<void> {
+  console.log(`Received ${signal}; shutting down.`);
+  server.close(async () => {
+    await store.close();
+    process.exit(0);
+  });
+  setTimeout(() => process.exit(1), 10_000).unref();
+}
+
+process.on("SIGTERM", () => void shutdown("SIGTERM"));
+process.on("SIGINT", () => void shutdown("SIGINT"));

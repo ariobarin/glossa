@@ -1,0 +1,36 @@
+{
+  "name": "@ariobarin/glossa",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Connect an explicitly exposed local coding workspace to the Glossa MCP relay.",
+  "type": "module",
+  "engines": {
+    "node": ">=20"
+  },
+  "bin": {
+    "glossa": "dist/main.js"
+  },
+  "main": "dist/main.js",
+  "types": "dist/main.d.ts",
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "test": "node --test dist/**/*.test.js",
+    "prepack": "npm run build"
+  },
+  "dependencies": {},
+  "devDependencies": {
+    "@types/node": "24.10.1",
+    "typescript": "5.9.3"
+  },
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ariobarin/glossa.git"
+  },
+  "homepage": "https://glossa.sh"
+}

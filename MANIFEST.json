@@ -1,0 +1,47 @@
+{
+  "package": "glossa-mvp-handoff",
+  "updated_at": "2026-07-14",
+  "product": "Glossa",
+  "domain": "glossa.sh",
+  "domain_context": {
+    "registrar_control_plane": "Vercel Domains",
+    "existing_apex_site_must_be_preserved": true,
+    "core_subdomain": "mcp.glossa.sh"
+  },
+  "cli_binary": "glossa",
+  "npm_package": "@ariobarin/glossa",
+  "target_repository": "ariobarin/glossa",
+  "core_stack": {
+    "repository_ci": "GitHub and GitHub Actions",
+    "compute": "Heroku Basic dyno",
+    "database": "Heroku Postgres Essential-0",
+    "identity": "Auth0 Free",
+    "domain_dns": "Vercel Domains",
+    "distribution": "npm trusted publishing"
+  },
+  "optional_scope_path": "optional/",
+  "status": "unversioned implementation scaffold, not a completed MVP",
+  "entrypoint": "START_HERE.md",
+  "scope_separation": {
+    "core_files": [
+      "TASKS.md",
+      "LOGIN_CHECKPOINTS.md",
+      "docs/01-prd.md",
+      "docs/09-acceptance-tests.md"
+    ],
+    "optional_directory": "optional/",
+    "optional_is_definition_of_done": false
+  },
+  "validation": {
+    "npm_ci": "passed",
+    "npm_run_check": "passed",
+    "preflight": "passed"
+  },
+  "lifecycle": {
+    "stage": "unversioned prototype",
+    "first_numbered_release_establishes_compatibility_baseline": true,
+    "backward_compatibility_required_before_first_release": false,
+    "stale_repository_is_reference_only": true,
+    "git_history_preservation_required": false
+  }
+}

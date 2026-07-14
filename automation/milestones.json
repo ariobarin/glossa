@@ -1,0 +1,12 @@
+{
+  "milestones": [
+    {"id": "M0", "name": "Repository and rebrand", "depends_on": []},
+    {"id": "M1", "name": "Worker and gateway implementation", "depends_on": ["M0"]},
+    {"id": "M2", "name": "Auth0 CLI login", "depends_on": ["M1"]},
+    {"id": "M3", "name": "Per-device enrollment", "depends_on": ["M2"]},
+    {"id": "M4", "name": "Tenant-aware MCP relay", "depends_on": ["M3"]},
+    {"id": "M5", "name": "Heroku deployment and Vercel Domains routing", "depends_on": ["M4"]},
+    {"id": "M6", "name": "Core operations and supply chain", "depends_on": ["M5"]},
+    {"id": "M7", "name": "Core safety UX and private beta", "depends_on": ["M6"]}
+  ]
+}

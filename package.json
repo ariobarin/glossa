@@ -1,0 +1,22 @@
+{
+  "name": "glossa",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Managed MCP relay for explicitly exposed local coding workspaces.",
+  "type": "module",
+  "engines": {
+    "node": ">=20"
+  },
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "build": "npm run build --workspace @glossa/protocol && npm run build --workspace @ariobarin/glossa && npm run build --workspace @glossa/relay",
+    "test": "npm run test --workspaces --if-present",
+    "check": "npm run build && npm test && node scripts/check-rebrand.mjs",
+    "dev": "npm run dev --workspace @glossa/relay",
+    "preflight": "node scripts/preflight.mjs"
+  },
+  "license": "MIT"
+}
