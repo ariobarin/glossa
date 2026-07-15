@@ -70,13 +70,14 @@ export class SecureStore<T> {
   async load(): Promise<{ value: T; backend: StorageBackend } | null> {
     const entry = await this.#entry();
     if (entry) {
+      let serialized: string | undefined;
       try {
-        const serialized = await entry.getPassword();
-        if (serialized) {
-          return { value: this.#options.parse(serialized), backend: "keyring" };
-        }
+        serialized = await entry.getPassword();
       } catch {
         // An existing file can still provide the warned fallback.
+      }
+      if (serialized) {
+        return { value: this.#options.parse(serialized), backend: "keyring" };
       }
     }
 
