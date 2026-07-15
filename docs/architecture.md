@@ -1,47 +1,44 @@
-# Core MVP architecture
+# Core architecture
 
 ## Topology
 
 ```text
 OAuth-capable MCP client
-        │
-        │ HTTPS + Auth0 access token
-        ▼
-mcp.glossa.sh
-Heroku Basic dyno
-  ├─ Auth0 JWT verification
-  ├─ MCP adapter
-  ├─ account/device routing
-  ├─ in-memory jobs
-  └─ metadata persistence ─── Heroku Postgres
-        ▲
-        │ HTTPS + per-device credential
-        │ repeated outbound polling (≤20 s)
-        │
+        |
+        | HTTPS + OAuth access token
+        v
+hosted relay
+  +-- OAuth token verification
+  +-- MCP adapter
+  +-- account and device routing
+  +-- in-memory jobs
+  +-- metadata persistence in Postgres
+        ^
+        | HTTPS + per-device credential
+        | repeated outbound polling (20 seconds or less)
+        |
 glossa process on user device
-  ├─ canonical root
-  ├─ path/symlink enforcement
-  ├─ atomic file operations
-  └─ bounded one-shot commands
+  +-- canonical root
+  +-- path and symlink enforcement
+  +-- atomic file operations
+  +-- bounded one-shot commands
 ```
 
-`glossa.sh` is registered through Vercel Domains. Vercel DNS routes only `mcp.glossa.sh` to the Heroku custom-domain target; the existing apex website remains where it is.
+## Why the relay stays small
 
-## Why this is the minimum hosted shape
+The relay must be publicly reachable, while the user's computer makes outbound connections only. One hosted relay process supplies the rendezvous point and OAuth-protected MCP endpoint. Postgres stores identity and lifecycle metadata. Active routing state remains in memory.
 
-The relay must be publicly reachable, but the user's computer should make outbound connections only. A single Heroku web process supplies the rendezvous point and OAuth-protected MCP endpoint. Postgres stores only identity and lifecycle metadata. All active routing state remains in memory.
-
-The user does not operate a VPS. Heroku is the operator's shared managed service.
+Users do not operate networking, identity, or database infrastructure.
 
 ## Identity planes
 
 ### MCP client identity
 
-Auth0 handles OAuth discovery, login, consent, and access tokens. The relay validates issuer, audience, expiry, and `glossa:access` scope. The relay atomically creates an account for a new authenticated subject and rejects accounts marked disabled.
+The authorization server handles discovery, login, consent, and access tokens. The relay validates issuer, audience, expiry, and the `glossa:access` scope. It atomically creates an account for a new authenticated subject and rejects accounts marked disabled.
 
 ### CLI user identity
 
-The published CLI is one Auth0 Native application using Device Authorization Flow. The embedded client ID is public. The CLI requests `openid profile offline_access glossa:device`.
+The published CLI uses OAuth Device Authorization Flow. Its embedded client ID is public. The CLI requests `openid profile offline_access glossa:device`.
 
 ### Worker device identity
 
@@ -81,13 +78,13 @@ The canonical database schema is [`apps/relay/sql/001_init.sql`](../apps/relay/s
 - complete inherited local environment and developer credentials
 - temporary active command state
 
-## Hosted request timeout constraint
+## Hosted request deadlines
 
-Heroku's router requires an initial response within its request window. Therefore:
+The hosting layer imposes a bounded request window. Therefore:
 
 - worker long polls return within 20 seconds;
 - worker poll wait time is reduced by authentication time so the complete request remains bounded;
-- `run_command` returns promptly after the worker accepts the command and supplies a command ID;
+- `run_command` returns after the worker accepts the command and supplies a command ID;
 - command execution continues locally beyond the initiating request;
 - `get_command` may wait up to 15 seconds, and `cancel_command` uses a separate bounded request;
 - no hosted request remains open for the lifetime of a command.
@@ -96,8 +93,8 @@ The core protocol uses ordinary MCP tools for command start, status, result, and
 
 ## Deployment scale
 
-Use exactly one web dyno for MVP because active routing state is process-local. Do not scale horizontally as part of the core MVP.
+Use exactly one relay process while active routing state is process-local. Do not scale horizontally until routing has an external coordination design.
 
 ## Local development
 
-Local development may use loopback relay and worker origins. It must still exercise Auth0 authentication and the same account and device ownership checks as production.
+Local development may use loopback relay and worker origins. It must still exercise OAuth authentication and the same account and device ownership checks as production.

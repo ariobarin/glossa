@@ -6,7 +6,7 @@ All production endpoints use HTTPS.
 
 ### `GET /.well-known/oauth-protected-resource`
 
-Advertise the Auth0 API identifier `https://mcp.glossa.sh/` as the protected resource, the Auth0 authorization server, and the `glossa:access` scope. The protected-resource identifier is the OAuth audience. It is intentionally not the request URL `https://mcp.glossa.sh/mcp`.
+Advertise `https://mcp.glossa.sh/` as the protected resource, along with the authorization server and the `glossa:access` scope. The protected-resource identifier is the OAuth audience. It is intentionally not the request URL `https://mcp.glossa.sh/mcp`.
 
 ### `GET /healthz`
 
@@ -14,7 +14,7 @@ No secret data. Suitable for uptime checks.
 
 ## User-authenticated control API
 
-Auth0 bearer token required. Audience must match the Glossa API. Routes check scopes and derive account ownership from `sub`.
+OAuth bearer token required. Audience must match the Glossa API. Routes check scopes and derive account ownership from `sub`.
 
 ### `POST /v1/devices/enroll`
 
@@ -75,9 +75,9 @@ Posts a structured result for the delivered job. Late results after caller timeo
 
 ### `POST /mcp`
 
-Auth0 OAuth required. The token's account can route only to devices owned by that account.
+OAuth required. The token's account can route only to devices owned by that account.
 
-The origin route `POST /` serves the same authenticated transport for MCP clients that use their configured transport URL as the OAuth resource. This keeps the OAuth resource equal to the Auth0 API identifier `https://mcp.glossa.sh/`. The canonical protocol endpoint remains `https://mcp.glossa.sh/mcp`.
+The origin route `POST /` serves the same authenticated transport for MCP clients that use their configured transport URL as the OAuth resource. This keeps the OAuth resource equal to the protected resource identifier `https://mcp.glossa.sh/`. The canonical protocol endpoint remains `https://mcp.glossa.sh/mcp`.
 
 Tools:
 
@@ -129,6 +129,8 @@ An active worker executes valid `write_file` and bounded `run_command` jobs with
 Command processes inherit the complete environment of the Glossa worker process. Glossa does not enumerate or transmit that environment unless a user-authorized command explicitly reads or prints part of it.
 
 `run_command` returns a command ID and status once the worker accepts the job. `get_command` may wait up to 15 seconds, then reports `running`, `succeeded`, `failed`, `canceled`, or `timed_out`, and includes bounded output after completion. Public MCP results omit worker-local lifecycle timestamps because clients do not need them to manage a command. `cancel_command` terminates the process tree. Disconnecting the worker rejects new jobs and terminates an active command. Command state and output remain transient and are never persisted by the relay.
+
+Text file content and each captured command stream are limited to 1 MiB. Command output beyond that limit is truncated. One command may run at a time per worker; another `run_command` request returns `command_busy` until the active command finishes or is canceled.
 
 The requested command timeout defaults to 900,000 milliseconds and must be between 1 millisecond and the 3,600,000 millisecond hard maximum.
 

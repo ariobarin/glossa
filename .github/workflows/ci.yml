@@ -44,8 +44,7 @@ jobs:
             package-lock.json \
             scripts/clean.mjs \
             tsconfig.base.json \
-            Procfile \
-            app.json; then
+            Procfile; then
             echo "relay=false" >> "$GITHUB_OUTPUT"
           else
             echo "relay=true" >> "$GITHUB_OUTPUT"

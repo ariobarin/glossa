@@ -8,7 +8,7 @@ Set-Location C:\path\to\a\repository
 glossa
 ```
 
-Glossa opens browser login automatically when needed using Auth0 Device Authorization Flow. Public tenant, client, and API identifiers are built in, so testers do not configure OAuth values.
+Glossa opens browser login automatically when needed using OAuth Device Authorization Flow. Public client and resource identifiers are built in, so testers do not configure OAuth values.
 
 OAuth and device credentials use the operating-system credential store. If it is unavailable, Glossa warns before using a restricted credential file.
 

@@ -6,11 +6,11 @@ Glossa executes commands with the permissions and environment of the local accou
 
 ## Trust assumptions
 
-- The Glossa operator controls the hosted relay and Auth0 tenant.
+- The Glossa operator controls the hosted relay and identity provider.
 - The authenticated user intends to authorize the connected MCP client.
 - The local computer and operating-system account are trusted.
 - There is no hostile multi-tenant execution on one worker.
-- TLS termination and Auth0 token validation are correctly configured.
+- TLS termination and OAuth token validation are correctly configured.
 
 ## Primary assets
 
@@ -124,7 +124,7 @@ Glossa executes commands with the permissions and environment of the local accou
 Durably retain only what is needed for account/device operation and security:
 
 - device ID, name, platform, created, last seen, and revoked timestamps;
-- Auth0 subject identifier;
+- OAuth subject identifier;
 - metadata-only audit event type, status, and timestamp.
 
 Do not durably retain:
