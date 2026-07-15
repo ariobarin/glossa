@@ -1,4 +1,12 @@
-import { cp, mkdir, readFile, rm, stat, writeFile } from "node:fs/promises";
+import {
+  cp,
+  mkdtemp,
+  readFile,
+  rename,
+  rm,
+  stat,
+  writeFile,
+} from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -45,8 +53,14 @@ if (await exists(target)) {
   await rm(target, { recursive: true, force: false });
 }
 
-await mkdir(target, { recursive: false });
-await cp(templateRoot, target, { recursive: true });
-await writeFile(path.join(target, markerName), markerContent, "utf8");
+const staging = await mkdtemp(path.join(repositoryRoot, ".review-workspace-"));
+try {
+  await cp(templateRoot, staging, { recursive: true });
+  await writeFile(path.join(staging, markerName), markerContent, "utf8");
+  await rename(staging, target);
+} catch (error) {
+  await rm(staging, { recursive: true, force: true });
+  throw error;
+}
 
 console.log(`Prepared Glossa plugin review workspace at ${target}`);
