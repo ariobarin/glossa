@@ -52,22 +52,13 @@ Keep `GLOSSA_RELAY_REQUEST_TIMEOUT_MS` at 18,000 milliseconds and never above 19
 
 ## Admit a tester
 
-After the tester signs in once, copy the exact Auth0 user ID from Auth0 User Management. Open Postgres:
+After the tester signs in once, copy the exact Auth0 user ID from Auth0 User Management. From this repository, run:
 
 ```powershell
-heroku pg:psql --app ariobarin-glossa
+heroku run --app ariobarin-glossa "npm run admit --workspace @glossa/relay -- '<exact-auth0-user-id>'"
 ```
 
-Then run:
-
-```sql
-INSERT INTO accounts (id, auth0_subject, admitted_at)
-VALUES (gen_random_uuid(), '<exact-auth0-user-id>', now())
-ON CONFLICT (auth0_subject) DO UPDATE
-SET admitted_at = now(), disabled_at = NULL;
-```
-
-Use the immutable Auth0 user ID, not an email address.
+Use the immutable Auth0 user ID, not an email address. The one-off dyno admits a new account or restores an existing disabled account without exposing database credentials.
 
 ## Verify
 

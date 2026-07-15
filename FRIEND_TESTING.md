@@ -32,22 +32,13 @@ They should create their Auth0 account and finish the browser login. Authenticat
 2. Go to User Management, then Users.
 3. Open your friend's new user.
 4. Copy the exact User ID. It usually starts with `auth0|`.
-5. Open the production database:
+5. Run the admission command from this repository:
 
 ```powershell
-heroku pg:psql --app ariobarin-glossa
+heroku run --app ariobarin-glossa "npm run admit --workspace @glossa/relay -- '<exact-auth0-user-id>'"
 ```
 
-6. Insert the immutable Auth0 User ID:
-
-```sql
-INSERT INTO accounts (id, auth0_subject, admitted_at)
-VALUES (gen_random_uuid(), '<exact-auth0-user-id>', now())
-ON CONFLICT (auth0_subject) DO UPDATE
-SET admitted_at = now(), disabled_at = NULL;
-```
-
-Do not use their email address in this row.
+Use the immutable Auth0 User ID, not their email address. The command admits a new account or restores an existing disabled account without exposing database credentials.
 
 ## 4. Have them start a safe worker
 
@@ -97,7 +88,7 @@ Only test writes and commands in a disposable repository and on a ChatGPT plan t
 
 ## Troubleshooting
 
-- `account_not_admitted`: repeat the Postgres admission step with the exact Auth0 User ID.
+- `account_not_admitted`: repeat the admission command with the exact Auth0 User ID.
 - No online devices: confirm the `glossa` terminal is still running.
 - App creation cannot scan tools: verify `https://mcp.glossa.sh/healthz` returns `{"ok":true,"service":"glossa-relay"}`.
 - OAuth loops or expires: reopen the existing Glossa app and authorize it again. Do not create duplicate app names.
