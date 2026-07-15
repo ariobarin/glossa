@@ -8,8 +8,7 @@
     "dev": "tsx src/index.ts",
     "build": "tsc -p tsconfig.json",
     "start": "node dist/src/index.js",
-    "migrate": "node dist/src/migrate.js",
-    "admit": "node dist/src/admit.js"
+    "migrate": "node dist/src/migrate.js"
   },
   "dependencies": {
     "@glossa/protocol": "*",

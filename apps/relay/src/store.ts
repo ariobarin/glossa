@@ -12,7 +12,7 @@ export interface DeviceRecord {
 }
 
 export interface RelayStore {
-  admittedAccountIdForSubject(subject: string): Promise<string | null>;
+  accountIdForSubject(subject: string): Promise<string | null>;
   enrollDevice(
     accountId: string,
     name: string,
@@ -57,14 +57,15 @@ export class Store implements RelayStore {
     await this.#pool.end();
   }
 
-  async admittedAccountIdForSubject(subject: string): Promise<string | null> {
+  async accountIdForSubject(subject: string): Promise<string | null> {
     const result = await this.#pool.query<{ id: string }>(
-      `SELECT id
-       FROM accounts
-       WHERE auth0_subject = $1
-         AND admitted_at IS NOT NULL
-         AND disabled_at IS NULL`,
-      [subject],
+      `INSERT INTO accounts (id, auth0_subject, admitted_at)
+       VALUES ($1, $2, now())
+       ON CONFLICT (auth0_subject) DO UPDATE
+       SET admitted_at = COALESCE(accounts.admitted_at, EXCLUDED.admitted_at)
+       WHERE accounts.disabled_at IS NULL
+       RETURNING accounts.id`,
+      [randomUUID(), subject],
     );
     return result.rows[0]?.id ?? null;
   }

@@ -2,7 +2,7 @@
 
 ## Objective
 
-A private beta tester can:
+An open beta user can:
 
 1. Install the CLI from the GitHub repository.
 2. Sign in through Auth0.
@@ -13,12 +13,11 @@ A private beta tester can:
 
 The tester does not manage a VPS, VPN, reverse proxy, TLS certificate, OAuth server, or database.
 
-## Admission
+## Access
 
-- Auth0 database signup is open so a tester can create an identity.
-- Authentication alone does not grant Glossa access.
-- The operator must admit the tester's immutable Auth0 subject in Postgres.
-- An unadmitted identity receives no account, device, workspace, or job details.
+- Auth0 database signup is open so anyone can create a Glossa identity.
+- The first valid authenticated request creates or activates the account record.
+- A disabled identity receives no account, device, workspace, or job details.
 
 ## Device and exposure lifecycle
 

@@ -72,8 +72,8 @@ interface EnrollmentResponse {
 
 function enrollmentError(status: number, data: EnrollmentResponse): Error {
   if (status === 401) return new Error("Glossa login was rejected. Run: glossa login");
-  if (status === 403 && data.error === "account_not_admitted") {
-    return new Error("This account has not been admitted to the Glossa private beta.");
+  if (status === 403 && data.error === "account_disabled") {
+    return new Error("This Glossa account is disabled.");
   }
   if (status === 409 && data.error === "device_name_conflict") {
     return new Error("A Glossa device with this computer name already exists and must be revoked before reenrollment.");

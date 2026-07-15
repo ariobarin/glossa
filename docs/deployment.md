@@ -11,7 +11,7 @@
 - Auth0 issuer: `https://dev-fl2h5xhp6umeh74m.us.auth0.com/`
 - Auth0 audience: `https://mcp.glossa.sh/`
 
-Auth0 has one `Glossa CLI` Native application, one current ChatGPT third-party client, and one `Glossa API`. Client ID Metadata Document registration is enabled. Dynamic Client Registration is disabled. Public database signup is enabled, while Glossa account admission remains explicit in Postgres.
+Auth0 has one `Glossa CLI` Native application, one current ChatGPT third-party client, and one `Glossa API`. Client ID Metadata Document registration is enabled. Dynamic Client Registration is disabled. Public database signup and automatic Glossa account activation are enabled.
 
 ## Deploy
 
@@ -50,15 +50,9 @@ The Heroku release process applies database migrations before the web release be
 Keep values in Heroku config. Never copy secret values into commits, issues, or logs.
 Keep `GLOSSA_RELAY_REQUEST_TIMEOUT_MS` at 18,000 milliseconds and never above 19,000 so hosted requests finish within 20 seconds.
 
-## Admit a tester
+## Open beta access
 
-After the tester signs in once, copy the exact Auth0 user ID from Auth0 User Management. From this repository, run:
-
-```powershell
-heroku run --app ariobarin-glossa "npm run admit --workspace @glossa/relay -- '<exact-auth0-user-id>'"
-```
-
-Use the immutable Auth0 user ID, not an email address. The one-off dyno admits a new account or restores an existing disabled account without exposing database credentials.
+A valid Auth0 access token creates or activates its Glossa account automatically. Accounts with `disabled_at` set remain blocked.
 
 ## Verify
 

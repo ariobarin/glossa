@@ -13,9 +13,9 @@ Glossa is an execution bridge, not an agent. ChatGPT owns the model, conversatio
 
 ## Status
 
-Glossa is a Windows-first private beta. The managed relay is live at `https://mcp.glossa.sh/mcp`. Tester accounts require explicit operator admission.
+Glossa is a Windows-first open beta. The managed relay is live at `https://mcp.glossa.sh/mcp`. A valid Glossa login activates access automatically.
 
-Install the private-beta CLI from npm:
+Install the open-beta CLI from npm:
 
 ```powershell
 npm install --global @ariobarin/glossa@beta
@@ -33,13 +33,11 @@ Starting `glossa` authorizes connected clients to modify files inside that root 
 
 ## ChatGPT
 
-Create a custom app in ChatGPT developer mode with this MCP URL:
+Install the Glossa plugin in ChatGPT:
 
-```text
-https://mcp.glossa.sh/mcp
-```
+[Install Glossa Live](https://chatgpt.com/plugins/plugin_asdk_app_6a5702618d3081919dfdd643c18aba0c)
 
-See [FRIEND_TESTING.md](FRIEND_TESTING.md) for the exact owner and tester workflow.
+See [FRIEND_TESTING.md](FRIEND_TESTING.md) for the complete setup workflow.
 
 ## Documentation
 
