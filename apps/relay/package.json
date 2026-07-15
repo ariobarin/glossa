@@ -8,7 +8,9 @@
     "dev": "node --env-file-if-exists=../../.env --import tsx src/index.ts",
     "build": "tsc -p tsconfig.json",
     "start": "node --env-file-if-exists=../../.env dist/src/index.js",
-    "migrate": "node --env-file-if-exists=../../.env dist/src/migrate.js"
+    "migrate": "node --env-file-if-exists=../../.env dist/src/migrate.js",
+    "test": "npm run build --workspace @glossa/protocol && npm run test:run",
+    "test:run": "node -e \"require('node:fs').rmSync('dist-test',{recursive:true,force:true})\" && tsc -p tsconfig.test.json && node ../../scripts/run-compiled-tests.mjs dist-test"
   },
   "dependencies": {
     "@glossa/protocol": "*",
