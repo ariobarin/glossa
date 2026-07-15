@@ -5,10 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta
       name="description"
-      content="Connect ChatGPT to one explicitly exposed local coding workspace with Glossa."
+      content="Glossa is the thin execution bridge between ChatGPT and one local coding workspace."
     />
     <meta name="theme-color" content="#0b0d12" />
-    <title>Glossa | Connect ChatGPT to your computer</title>
+    <title>Glossa | ChatGPT is the agent. Glossa is the wire.</title>
     <link rel="stylesheet" href="/styles.css" />
   </head>
   <body>
@@ -23,11 +23,54 @@
 
     <main>
       <section class="hero" aria-labelledby="hero-title">
-        <p class="eyebrow">Open beta</p>
-        <h1 id="hero-title">Connect ChatGPT to your computer.</h1>
-        <p class="lede">
-          Glossa connects ChatGPT to one local coding workspace that you choose.
-        </p>
+        <div class="hero-copy">
+          <p class="eyebrow">Windows-first open beta</p>
+          <h1 id="hero-title">ChatGPT is the agent. <span>Glossa is the wire.</span></h1>
+          <p class="lede">
+            Connect one local coding workspace to a ChatGPT conversation. Your files,
+            shell, and credentials stay on your computer.
+          </p>
+          <div class="hero-actions">
+            <a class="button" href="/get-started">Get started</a>
+            <a href="https://github.com/ariobarin/glossa">Read the code</a>
+          </div>
+        </div>
+
+        <div class="wire" aria-label="ChatGPT connects through Glossa to one local workspace">
+          <div class="wire-node">
+            <span class="wire-label">ChatGPT</span>
+            <p>Run the tests and fix what broke.</p>
+          </div>
+          <div class="wire-link"><span>OAuth + MCP</span></div>
+          <div class="wire-node wire-relay">
+            <span class="wire-label">Glossa relay</span>
+            <p>Authentication and routing. Nothing more.</p>
+          </div>
+          <div class="wire-link"><span>Outbound HTTPS</span></div>
+          <div class="wire-node wire-local">
+            <span class="wire-label">Your computer</span>
+            <p><code>PS C:\project&gt; glossa</code></p>
+          </div>
+        </div>
+      </section>
+
+      <section class="why" aria-labelledby="why-title">
+        <div>
+          <p class="eyebrow">Why Glossa</p>
+          <h2 id="why-title">Keep working from Chat.</h2>
+        </div>
+        <div class="why-copy">
+          <p>
+            Codex and ChatGPT Work share usage. Glossa connects the regular Chat surface
+            to your local workspace without putting another model, planner, or agent in
+            the middle.
+          </p>
+          <p class="availability">
+            Personal Pro currently supports custom MCP read and fetch access. Full write
+            and command access requires eligible Business, Enterprise, or Edu access.
+            <a href="https://help.openai.com/en/articles/12584461-developer-mode-and-mcp-apps-in-chatgpt">Check current availability</a>.
+          </p>
+        </div>
       </section>
 
       <section class="quickstart" aria-labelledby="quickstart-title">
@@ -46,10 +89,7 @@ Set-Location C:\path\to\your\project
 glossa</code></pre>
 
           <div class="actions">
-            <a
-              class="button"
-              href="/get-started"
-            >Get started</a>
+            <a class="button" href="/get-started">Get started</a>
             <a href="https://github.com/ariobarin/glossa/blob/main/docs/open-beta.md">Read the full guide</a>
           </div>
         </div>

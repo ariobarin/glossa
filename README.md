@@ -11,6 +11,12 @@ ChatGPT
 
 Glossa is an execution bridge, not an agent. ChatGPT owns the model, conversation, planning, and approvals. The local worker owns file containment and command execution.
 
+## Why Glossa
+
+Codex and ChatGPT Work share usage. Glossa connects the regular Chat surface to one local workspace without putting another model, planner, or agent in the middle.
+
+Personal Pro currently supports custom MCP read and fetch access. Full write and command access requires eligible Business, Enterprise, or Edu access. See OpenAI's [current MCP availability](https://help.openai.com/en/articles/12584461-developer-mode-and-mcp-apps-in-chatgpt).
+
 ## Status
 
 Glossa is a Windows-first open beta. The managed relay is live at `https://mcp.glossa.sh/mcp`. A valid Glossa login activates access automatically.
