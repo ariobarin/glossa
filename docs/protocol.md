@@ -130,6 +130,8 @@ Command processes inherit the complete environment of the Glossa worker process.
 
 `run_command` returns a command ID and status once the worker accepts the job. `get_command` may wait up to 15 seconds, then reports `running`, `succeeded`, `failed`, `canceled`, or `timed_out`, and includes bounded output after completion. Public MCP results omit worker-local lifecycle timestamps because clients do not need them to manage a command. `cancel_command` terminates the process tree. Disconnecting the worker rejects new jobs and terminates an active command. Command state and output remain transient and are never persisted by the relay.
 
+Text file content and each captured command stream are limited to 1 MiB. Command output beyond that limit is truncated. One command may run at a time per worker; another `run_command` request returns `command_busy` until the active command finishes or is canceled.
+
 The requested command timeout defaults to 900,000 milliseconds and must be between 1 millisecond and the 3,600,000 millisecond hard maximum.
 
 These are ordinary MCP tools so clients do not need native MCP Tasks support. Native task negotiation may be added after target client support is dependable, but it is not part of the core MVP contract.
