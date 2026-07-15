@@ -5,29 +5,29 @@ import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/
 import type { Transport } from "@modelcontextprotocol/sdk/shared/transport.js";
 import { z } from "zod";
 import {
-  DEFAULT_COMMAND_TIMEOUT_MS,
-  MAX_COMMAND_STATUS_WAIT_MS,
-  MAX_COMMAND_TIMEOUT_MS,
-  MAX_TEXT_BYTES,
+  cancelCommandRequestSchema,
+  getCommandRequestSchema,
+  readFileRequestSchema,
+  runCommandRequestSchema,
+  writeFileRequestSchema,
   type WorkerJob,
   type WorkerResult,
 } from "@glossa/protocol";
 import type { RelayConfig } from "./config.js";
 import type { RouterState } from "./router-state.js";
 
-const relativePathSchema = z.string().max(4096);
-const workspaceResultSchema = z.object({
-  workspaceId: z.string().uuid(),
-  path: z.string(),
-  expiresAt: z.string(),
-});
+const deviceIdSchema = z.object({ deviceId: z.string().uuid() }).strict();
+const readFileInputSchema = readFileRequestSchema.extend(deviceIdSchema.shape);
+const writeFileInputSchema = writeFileRequestSchema.extend(deviceIdSchema.shape);
+const runCommandInputSchema = runCommandRequestSchema.safeExtend(
+  deviceIdSchema.shape,
+);
 const commandResultSchema = z.object({ commandId: z.string().uuid() }).passthrough();
 
 const safeWorkerMessages: Record<string, string> = {
   path_not_found: "The requested path does not exist.",
   path_escape: "The requested path escapes the exposed root.",
-  not_directory: "The requested workspace is not a directory.",
-  workspace_expired: "The workspace lease has expired.",
+  not_directory: "The requested path is not a directory.",
   not_file: "The requested path is not a file.",
   file_too_large: "The request exceeds the text size limit.",
   not_text: "The file is not valid UTF-8 text.",
@@ -128,62 +128,11 @@ function registerTools(
   );
 
   server.registerTool(
-    "open_workspace",
-    {
-      title: "Open Workspace",
-      description: "Open a root-relative workspace on a connected device.",
-      inputSchema: z
-        .object({
-          deviceId: z.string().uuid(),
-          path: relativePathSchema.default("."),
-        })
-        .strict(),
-      _meta: toolMetadata,
-      annotations: {
-        readOnlyHint: true,
-        destructiveHint: false,
-        idempotentHint: false,
-        openWorldHint: false,
-      },
-    },
-    async ({ deviceId, path }) => {
-      const job: WorkerJob = {
-        type: "open_workspace",
-        requestId: randomUUID(),
-        path,
-      };
-      try {
-        const result = await executeJob(
-          state,
-          config,
-          accountId,
-          deviceId,
-          job,
-        );
-        if (!result.ok) return workerError(result);
-        const parsed = workspaceResultSchema.safeParse(result.value);
-        if (!parsed.success) {
-          return errorResult("invalid_worker_result", "The worker returned an invalid workspace.");
-        }
-        state.rememberWorkspace(accountId, deviceId, parsed.data.workspaceId);
-        return textResult(parsed.data);
-      } catch (error) {
-        return routedError(error);
-      }
-    },
-  );
-
-  server.registerTool(
     "read_file",
     {
       title: "Read File",
-      description: "Read one UTF-8 text file within an open workspace.",
-      inputSchema: z
-        .object({
-          workspaceId: z.string().uuid(),
-          path: relativePathSchema,
-        })
-        .strict(),
+      description: "Read one UTF-8 text file within a connected device root.",
+      inputSchema: readFileInputSchema,
       _meta: toolMetadata,
       annotations: {
         readOnlyHint: true,
@@ -192,16 +141,11 @@ function registerTools(
         openWorldHint: false,
       },
     },
-    async ({ workspaceId, path }) => {
-      const deviceId = state.deviceForWorkspace(accountId, workspaceId);
-      if (!deviceId) {
-        return errorResult("workspace_expired", "The workspace lease has expired.");
-      }
+    async ({ deviceId, path }) => {
       try {
         const result = await executeJob(state, config, accountId, deviceId, {
           type: "read_file",
           requestId: randomUUID(),
-          workspaceId,
           path,
         });
         return result.ok ? textResult(result.value) : workerError(result);
@@ -215,17 +159,8 @@ function registerTools(
     "write_file",
     {
       title: "Write File",
-      description: "Atomically write one UTF-8 text file within an open workspace.",
-      inputSchema: z
-        .object({
-          workspaceId: z.string().uuid(),
-          path: relativePathSchema,
-          content: z
-            .string()
-            .refine((value) => Buffer.byteLength(value, "utf8") <= MAX_TEXT_BYTES),
-          expectedSha256: z.string().regex(/^[a-f0-9]{64}$/).optional(),
-        })
-        .strict(),
+      description: "Atomically write one UTF-8 text file within a connected device root.",
+      inputSchema: writeFileInputSchema,
       _meta: toolMetadata,
       annotations: {
         readOnlyHint: false,
@@ -234,15 +169,10 @@ function registerTools(
         openWorldHint: false,
       },
     },
-    async ({ workspaceId, path, content, expectedSha256 }) => {
-      const deviceId = state.deviceForWorkspace(accountId, workspaceId);
-      if (!deviceId) {
-        return errorResult("workspace_expired", "The workspace lease has expired.");
-      }
+    async ({ deviceId, path, content, expectedSha256 }) => {
       const job: WorkerJob = {
         type: "write_file",
         requestId: randomUUID(),
-        workspaceId,
         path,
         content,
         ...(expectedSha256 ? { expectedSha256 } : {}),
@@ -267,31 +197,7 @@ function registerTools(
     {
       title: "Run Command",
       description: "Start a bounded command with the full authority of the worker account.",
-      inputSchema: z
-        .object({
-          workspaceId: z.string().uuid(),
-          argv: z.array(z.string()).min(1).max(256).optional(),
-          shellCommand: z.string().max(64 * 1024).optional(),
-          stdin: z
-            .string()
-            .refine((value) => Buffer.byteLength(value, "utf8") <= MAX_TEXT_BYTES)
-            .optional(),
-          timeoutMs: z
-            .number()
-            .int()
-            .min(1)
-            .max(MAX_COMMAND_TIMEOUT_MS)
-            .default(DEFAULT_COMMAND_TIMEOUT_MS),
-        })
-        .strict()
-        .superRefine((value, context) => {
-          if ((value.argv ? 1 : 0) + (value.shellCommand ? 1 : 0) !== 1) {
-            context.addIssue({
-              code: "custom",
-              message: "Exactly one of argv or shellCommand is required.",
-            });
-          }
-        }),
+      inputSchema: runCommandInputSchema,
       _meta: toolMetadata,
       annotations: {
         readOnlyHint: false,
@@ -300,15 +206,10 @@ function registerTools(
         openWorldHint: false,
       },
     },
-    async ({ workspaceId, argv, shellCommand, stdin, timeoutMs }) => {
-      const deviceId = state.deviceForWorkspace(accountId, workspaceId);
-      if (!deviceId) {
-        return errorResult("workspace_expired", "The workspace lease has expired.");
-      }
+    async ({ deviceId, argv, shellCommand, stdin, timeoutMs }) => {
       const job: WorkerJob = {
         type: "run_command",
         requestId: randomUUID(),
-        workspaceId,
         ...(argv ? { argv } : {}),
         ...(shellCommand ? { shellCommand } : {}),
         ...(stdin !== undefined ? { stdin } : {}),
@@ -340,17 +241,7 @@ function registerTools(
     {
       title: "Get Command",
       description: "Get current or completed command state, optionally waiting up to 15 seconds.",
-      inputSchema: z
-        .object({
-          commandId: z.string().uuid(),
-          waitMs: z
-            .number()
-            .int()
-            .min(0)
-            .max(MAX_COMMAND_STATUS_WAIT_MS)
-            .optional(),
-        })
-        .strict(),
+      inputSchema: getCommandRequestSchema,
       _meta: toolMetadata,
       annotations: {
         readOnlyHint: true,
@@ -383,7 +274,7 @@ function registerTools(
     {
       title: "Cancel Command",
       description: "Terminate a running command and its process tree.",
-      inputSchema: z.object({ commandId: z.string().uuid() }).strict(),
+      inputSchema: cancelCommandRequestSchema,
       _meta: toolMetadata,
       annotations: {
         readOnlyHint: false,
@@ -410,39 +301,6 @@ function registerTools(
     },
   );
 
-  server.registerTool(
-    "close_workspace",
-    {
-      title: "Close Workspace",
-      description: "Close a transient workspace lease.",
-      inputSchema: z.object({ workspaceId: z.string().uuid() }).strict(),
-      _meta: toolMetadata,
-      annotations: {
-        readOnlyHint: false,
-        destructiveHint: false,
-        idempotentHint: false,
-        openWorldHint: false,
-      },
-    },
-    async ({ workspaceId }) => {
-      const deviceId = state.deviceForWorkspace(accountId, workspaceId);
-      if (!deviceId) {
-        return errorResult("workspace_expired", "The workspace lease has expired.");
-      }
-      try {
-        const result = await executeJob(state, config, accountId, deviceId, {
-          type: "close_workspace",
-          requestId: randomUUID(),
-          workspaceId,
-        });
-        if (!result.ok) return workerError(result);
-        state.forgetWorkspace(accountId, workspaceId);
-        return textResult(result.value);
-      } catch (error) {
-        return routedError(error);
-      }
-    },
-  );
 }
 
 export function createMcpServer(

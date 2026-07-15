@@ -76,14 +76,6 @@ export class PathPolicy {
     return canonical;
   }
 
-  async resolveDirectory(relativePath: string): Promise<string> {
-    const resolved = await this.resolveExisting(relativePath);
-    if (!(await stat(resolved)).isDirectory()) {
-      throw new WorkerError("not_directory", "The requested workspace is not a directory.");
-    }
-    return resolved;
-  }
-
   async resolveWritableFile(relativePath: string): Promise<string> {
     const lexical = this.resolveLexical(relativePath);
     const parent = path.dirname(lexical);

@@ -26,7 +26,6 @@ interface RoutedResource {
 export class RouterState {
   readonly #devices = new Map<string, ConnectedDevice>();
   readonly #results = new Map<string, ResultWaiter>();
-  readonly #workspaces = new Map<string, RoutedResource>();
   readonly #commands = new Map<string, RoutedResource>();
 
   register(accountId: string, deviceId: string): string {
@@ -137,25 +136,6 @@ export class RouterState {
     return true;
   }
 
-  rememberWorkspace(
-    accountId: string,
-    deviceId: string,
-    workspaceId: string,
-  ): void {
-    this.#workspaces.set(workspaceId, { accountId, deviceId });
-  }
-
-  deviceForWorkspace(accountId: string, workspaceId: string): string | null {
-    const workspace = this.#workspaces.get(workspaceId);
-    return workspace?.accountId === accountId ? workspace.deviceId : null;
-  }
-
-  forgetWorkspace(accountId: string, workspaceId: string): boolean {
-    const workspace = this.#workspaces.get(workspaceId);
-    if (!workspace || workspace.accountId !== accountId) return false;
-    return this.#workspaces.delete(workspaceId);
-  }
-
   rememberCommand(
     accountId: string,
     deviceId: string,
@@ -191,9 +171,6 @@ export class RouterState {
   }
 
   #deleteDeviceResources(deviceId: string): void {
-    for (const [workspaceId, workspace] of this.#workspaces) {
-      if (workspace.deviceId === deviceId) this.#workspaces.delete(workspaceId);
-    }
     for (const [commandId, command] of this.#commands) {
       if (command.deviceId === deviceId) this.#commands.delete(commandId);
     }

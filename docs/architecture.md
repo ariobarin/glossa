@@ -12,7 +12,7 @@ Heroku Basic dyno
   ├─ Auth0 JWT verification
   ├─ MCP adapter
   ├─ account/device routing
-  ├─ in-memory jobs/workspaces
+  ├─ in-memory jobs
   └─ metadata persistence ─── Heroku Postgres
         ▲
         │ HTTPS + per-device credential
@@ -70,7 +70,6 @@ The canonical database schema is [`apps/relay/sql/001_init.sql`](../apps/relay/s
 - active worker connections
 - device IDs and connection generations, without local absolute paths
 - pending jobs
-- workspace leases
 - request waiters
 - recent nonces and bounded rate-limit counters
 
@@ -97,7 +96,7 @@ The core protocol uses ordinary MCP tools for command start, status, result, and
 
 ## Deployment scale
 
-Use exactly one web dyno for MVP because active jobs and workspaces are process-local. Do not scale horizontally as part of the core MVP.
+Use exactly one web dyno for MVP because active routing state is process-local. Do not scale horizontally as part of the core MVP.
 
 ## Local development
 

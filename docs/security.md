@@ -25,7 +25,7 @@ Glossa executes commands with the permissions and environment of the local accou
 
 ### Cross-account routing
 
-**Threat:** an authenticated account guesses another device/workspace/job ID.
+**Threat:** an authenticated account guesses another device or job ID.
 
 **Controls:**
 
@@ -75,7 +75,7 @@ Glossa executes commands with the permissions and environment of the local accou
 - enforce canonicalization, realpath, symlink, and junction checks from the current Glossa requirements;
 - validate existing paths and nearest writable ancestors locally;
 - reject absolute paths and lexical parent escapes;
-- revalidate workspace-relative paths for every operation;
+- revalidate root-relative paths for every operation;
 - treat Windows path, junction, and reparse-point behavior as the launch security baseline;
 - verify Windows junction and reparse-point behavior when path enforcement changes.
 
