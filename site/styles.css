@@ -1,99 +1,339 @@
 :root {
   color-scheme: dark;
   --background: #0b0d12;
+  --surface: #12161d;
+  --surface-raised: #171c24;
   --text: #f5f2ea;
   --muted: #a7afbd;
   --accent: #b7ff5a;
+  --accent-dark: #101707;
+  --border: #29303b;
 }
 
 * {
   box-sizing: border-box;
 }
 
+html {
+  scroll-behavior: smooth;
+}
+
 body {
-  display: grid;
   min-height: 100svh;
   margin: 0;
-  grid-template-rows: auto 1fr;
-  overflow: hidden;
   background:
-    radial-gradient(circle at 78% 18%, rgba(183, 255, 90, 0.13), transparent 32rem),
+    radial-gradient(circle at 78% 8%, rgba(183, 255, 90, 0.12), transparent 34rem),
     var(--background);
   color: var(--text);
   font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
 }
 
-header {
-  display: flex;
-  width: min(calc(100% - 48px), 1180px);
-  min-height: 88px;
-  align-items: center;
-  justify-content: space-between;
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+header,
+main,
+footer {
+  width: min(calc(100% - 48px), 1120px);
   margin-inline: auto;
 }
 
-a {
-  color: inherit;
-  font-size: 14px;
-  font-weight: 700;
-  text-decoration: none;
+header {
+  display: flex;
+  min-height: 88px;
+  align-items: center;
+  justify-content: space-between;
 }
 
 .brand {
   font-size: 18px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
 }
 
-.github {
+nav {
+  display: flex;
+  gap: 24px;
+}
+
+nav a,
+footer a {
   color: var(--muted);
+  font-size: 14px;
+  font-weight: 700;
 }
 
-.github:hover {
+nav a:hover,
+footer a:hover {
   color: var(--text);
 }
 
-main {
+.hero {
   display: flex;
-  width: min(calc(100% - 48px), 1180px);
-  justify-content: center;
-  margin-inline: auto;
+  min-height: calc(100svh - 88px);
+  max-width: 1040px;
   flex-direction: column;
-  padding-bottom: 9vh;
+  align-items: flex-start;
+  justify-content: center;
+  padding: 44px 0 12vh;
 }
 
-p {
-  margin: 0 0 22px;
+.eyebrow {
+  margin: 0 0 20px;
   color: var(--accent);
   font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
   font-size: 12px;
-  font-weight: 700;
+  font-weight: 800;
   letter-spacing: 0.14em;
   text-transform: uppercase;
 }
 
-h1 {
-  max-width: 1000px;
-  margin: 0;
-  font-size: clamp(58px, 9.4vw, 132px);
-  font-weight: 760;
-  letter-spacing: -0.075em;
-  line-height: 0.92;
+h1,
+h2,
+h3,
+p {
+  margin-top: 0;
 }
 
-@media (max-width: 600px) {
+h1 {
+  max-width: 1000px;
+  margin-bottom: 30px;
+  font-size: clamp(58px, 9vw, 124px);
+  font-weight: 780;
+  letter-spacing: -0.075em;
+  line-height: 0.91;
+}
+
+.lede {
+  max-width: 650px;
+  margin-bottom: 34px;
+  color: var(--muted);
+  font-size: clamp(19px, 2.2vw, 25px);
+  line-height: 1.5;
+}
+
+.button {
+  display: inline-flex;
+  min-height: 48px;
+  align-items: center;
+  justify-content: center;
+  padding: 0 20px;
+  border: 1px solid var(--accent);
+  border-radius: 8px;
+  background: var(--accent);
+  color: var(--accent-dark);
+  font-size: 14px;
+  font-weight: 800;
+}
+
+.button:hover {
+  filter: brightness(1.08);
+}
+
+.button-secondary {
+  border-color: var(--border);
+  background: var(--text);
+  color: var(--background);
+}
+
+.quickstart {
+  padding: 112px 0 96px;
+  scroll-margin-top: 24px;
+}
+
+.section-heading {
+  max-width: 720px;
+  margin-bottom: 52px;
+}
+
+.section-heading h2 {
+  margin-bottom: 20px;
+  font-size: clamp(40px, 6vw, 72px);
+  letter-spacing: -0.055em;
+  line-height: 0.98;
+}
+
+.section-heading > p:last-child,
+.step-content > p {
+  color: var(--muted);
+  font-size: 17px;
+  line-height: 1.65;
+}
+
+.steps {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.step {
+  display: grid;
+  padding: 44px 0;
+  border-top: 1px solid var(--border);
+  grid-template-columns: 76px minmax(0, 760px);
+}
+
+.step-number {
+  color: var(--accent);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 14px;
+  font-weight: 800;
+}
+
+.step-content h3 {
+  margin-bottom: 12px;
+  font-size: clamp(25px, 3vw, 34px);
+  letter-spacing: -0.035em;
+}
+
+.step-content > p {
+  margin-bottom: 22px;
+}
+
+.step-content code:not(pre code) {
+  color: var(--text);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 0.9em;
+}
+
+.code-block {
+  position: relative;
+  overflow: hidden;
+  margin: 24px 0 18px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--surface);
+}
+
+.code-block::before {
+  display: block;
+  padding: 11px 16px;
+  border-bottom: 1px solid var(--border);
+  color: var(--muted);
+  content: "PowerShell";
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 11px;
+}
+
+.code-block-prompt::before {
+  content: "Prompt";
+}
+
+pre {
+  overflow-x: auto;
+  margin: 0;
+  padding: 22px 92px 22px 20px;
+}
+
+pre code {
+  color: #e8ebef;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 14px;
+  line-height: 1.75;
+}
+
+.copy-button {
+  position: absolute;
+  top: 8px;
+  right: 9px;
+  min-width: 62px;
+  min-height: 28px;
+  padding: 0 10px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--surface-raised);
+  color: var(--text);
+  cursor: pointer;
+  font: 700 11px/1 ui-sans-serif, system-ui, sans-serif;
+}
+
+.copy-button:hover,
+.copy-button:focus-visible {
+  border-color: var(--accent);
+}
+
+.copy-button.copied {
+  color: var(--accent);
+}
+
+.step-content .note {
+  margin-bottom: 0;
+  color: #c6ccd5;
+  font-size: 13px;
+}
+
+.safety {
+  max-width: 836px;
+  margin: 12px 0 0 76px;
+  padding: 20px 22px;
+  border-left: 3px solid var(--accent);
+  background: rgba(183, 255, 90, 0.07);
+  color: #dce2d4;
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+footer {
+  display: flex;
+  min-height: 100px;
+  align-items: center;
+  justify-content: space-between;
+  border-top: 1px solid var(--border);
+  color: var(--muted);
+  font-size: 13px;
+}
+
+@media (max-width: 700px) {
   header,
-  main {
-    width: min(calc(100% - 30px), 1180px);
+  main,
+  footer {
+    width: min(calc(100% - 30px), 1120px);
   }
 
   header {
     min-height: 72px;
   }
 
-  main {
-    padding-bottom: 6vh;
+  nav {
+    gap: 16px;
+  }
+
+  .hero {
+    min-height: calc(100svh - 72px);
+    padding-bottom: 10vh;
   }
 
   h1 {
-    font-size: clamp(52px, 18vw, 86px);
+    font-size: clamp(52px, 17vw, 80px);
+  }
+
+  .quickstart {
+    padding: 80px 0 72px;
+  }
+
+  .step {
+    grid-template-columns: 38px minmax(0, 1fr);
+  }
+
+  .safety {
+    margin-left: 38px;
+  }
+
+  pre {
+    padding-right: 20px;
+  }
+
+  pre code {
+    font-size: 12px;
+  }
+
+  footer {
+    min-height: 120px;
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: center;
+    gap: 10px;
   }
 }
