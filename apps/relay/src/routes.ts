@@ -21,7 +21,27 @@ const renameSchema = z.object({ name: deviceNameSchema }).strict();
 const deviceIdSchema = z.string().uuid();
 const registerSchema = z.object({}).strict();
 const pollSchema = z.object({ generation: z.string().uuid() }).strict();
-const MAX_WORKER_POLL_REQUEST_MS = 18_000;
+
+class RequestDeadlineError extends Error {}
+
+async function beforeDeadline<T>(
+  operation: Promise<T>,
+  deadlineAt: number,
+): Promise<T> {
+  const remainingMs = deadlineAt - Date.now();
+  if (remainingMs <= 0) throw new RequestDeadlineError();
+  let timer: NodeJS.Timeout | undefined;
+  try {
+    return await Promise.race([
+      operation,
+      new Promise<never>((_resolve, reject) => {
+        timer = setTimeout(() => reject(new RequestDeadlineError()), remainingMs);
+      }),
+    ]);
+  } finally {
+    if (timer) clearTimeout(timer);
+  }
+}
 
 type AuthFactory = (
   config: RelayConfig,
@@ -85,6 +105,7 @@ async function authenticatedDevice(
   response: Response,
   store: RelayStore,
   limiter: FixedWindowRateLimiter,
+  deadlineAt: number,
 ): Promise<DeviceRecord | null> {
   const source = request.ip || request.socket.remoteAddress || "unknown";
   if (rejectRateLimit(response, limiter, source)) return null;
@@ -100,7 +121,17 @@ async function authenticatedDevice(
     response.status(401).json({ error: "invalid_device" });
     return null;
   }
-  const device = await store.authenticateDevice(parsed.deviceId, parsed.secret);
+  let device: DeviceRecord | null;
+  try {
+    device = await beforeDeadline(
+      store.authenticateDevice(parsed.deviceId, parsed.secret),
+      deadlineAt,
+    );
+  } catch (error) {
+    if (!(error instanceof RequestDeadlineError)) throw error;
+    response.status(503).json({ error: "request_timeout" });
+    return null;
+  }
   if (!device) response.status(401).json({ error: "invalid_device" });
   return device;
 }
@@ -256,11 +287,13 @@ export function buildRoutes(
   );
 
   router.post("/device/register", async (request, response) => {
+    const deadlineAt = Date.now() + config.GLOSSA_RELAY_REQUEST_TIMEOUT_MS;
     const device = await authenticatedDevice(
       request,
       response,
       store,
       deviceRateLimiter,
+      deadlineAt,
     );
     if (!device) return;
     const parsed = registerSchema.safeParse(request.body ?? {});
@@ -273,12 +306,13 @@ export function buildRoutes(
   });
 
   router.post("/device/poll", async (request, response) => {
-    const requestStartedAt = Date.now();
+    const deadlineAt = Date.now() + config.GLOSSA_RELAY_REQUEST_TIMEOUT_MS;
     const device = await authenticatedDevice(
       request,
       response,
       store,
       deviceRateLimiter,
+      deadlineAt,
     );
     if (!device) return;
     const parsed = pollSchema.safeParse(request.body);
@@ -289,7 +323,7 @@ export function buildRoutes(
     try {
       const remainingRequestMs = Math.max(
         0,
-        MAX_WORKER_POLL_REQUEST_MS - (Date.now() - requestStartedAt),
+        deadlineAt - Date.now(),
       );
       if (remainingRequestMs === 0) {
         response.status(204).end();
@@ -312,11 +346,13 @@ export function buildRoutes(
   });
 
   router.post("/device/result", async (request, response) => {
+    const deadlineAt = Date.now() + config.GLOSSA_RELAY_REQUEST_TIMEOUT_MS;
     const device = await authenticatedDevice(
       request,
       response,
       store,
       deviceRateLimiter,
+      deadlineAt,
     );
     if (!device) return;
     const parsed = workerResultSchema.safeParse(request.body);
