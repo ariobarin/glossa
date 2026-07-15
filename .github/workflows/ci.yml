@@ -42,6 +42,7 @@ jobs:
             packages/protocol \
             package.json \
             package-lock.json \
+            scripts/clean.mjs \
             tsconfig.base.json \
             Procfile \
             app.json; then
