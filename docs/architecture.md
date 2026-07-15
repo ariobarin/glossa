@@ -63,6 +63,8 @@ The database stores the device ID, account ID, salt, and scrypt hash. Worker req
 - schema migrations
 - metadata-only audit events
 
+The canonical database schema is [`apps/relay/sql/001_init.sql`](../apps/relay/sql/001_init.sql). Every resource lookup includes the authenticated account ID.
+
 ### Relay memory
 
 - active worker connections
