@@ -93,6 +93,7 @@ Tools:
 `list_devices` identifies an active root by device ID and reports `path: "."`. `open_workspace` accepts the device ID and a root-relative path, with `.` as the default. Local absolute paths are never transmitted to or returned by the hosted relay.
 
 Tool annotations must describe actual behavior. `write_file` and `run_command` are non-read-only and destructive-capable.
+Every tool advertises the `glossa:access` OAuth scheme in descriptor metadata, is visible to the model, and declares `openWorldHint: false` because operations stay within the authenticated user's connected Glossa devices.
 
 ## Worker job union
 
