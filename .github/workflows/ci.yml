@@ -19,3 +19,34 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npm run check
+
+  deploy:
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    needs: check
+    runs-on: ubuntu-latest
+    concurrency:
+      group: heroku-production
+      cancel-in-progress: false
+    environment:
+      name: production
+      url: https://mcp.glossa.sh/healthz
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Deploy tested commit to Heroku
+        env:
+          HEROKU_API_KEY: ${{ secrets.HEROKU_API_KEY }}
+        run: |
+          git config --global credential.helper store
+          printf '%s\n' "https://heroku:${HEROKU_API_KEY}@git.heroku.com" > ~/.git-credentials
+          trap 'rm -f ~/.git-credentials' EXIT
+          git push https://git.heroku.com/ariobarin-glossa.git HEAD:main
+      - name: Verify production health
+        run: |
+          curl --fail --silent --show-error \
+            --retry 12 \
+            --retry-delay 5 \
+            --retry-all-errors \
+            --max-time 10 \
+            https://mcp.glossa.sh/healthz
