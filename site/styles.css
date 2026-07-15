@@ -106,3 +106,23 @@ h1 {
     font-size: clamp(52px, 18vw, 86px);
   }
 }
+
+@media (max-width: 360px) {
+  header {
+    min-height: 104px;
+    align-items: flex-start;
+    flex-direction: column;
+    justify-content: center;
+    gap: 12px;
+  }
+
+  header nav {
+    width: 100%;
+    justify-content: space-between;
+    gap: 6px;
+  }
+
+  header nav a {
+    font-size: 12px;
+  }
+}
