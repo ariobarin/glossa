@@ -21,10 +21,9 @@ Install the open-beta CLI with Node 24:
 npm install --global @ariobarin/glossa@beta
 ```
 
-Then sign in and expose one workspace:
+Then expose one workspace. Glossa opens browser login automatically when needed:
 
 ```powershell
-glossa login
 Set-Location C:\path\to\a\project
 glossa
 ```

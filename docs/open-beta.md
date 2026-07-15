@@ -10,13 +10,12 @@ Glossa is currently a Windows-first open beta. Start with a disposable Git repos
 
 Available actions depend on the current ChatGPT plan and plugin permissions. See OpenAI's [developer mode and MCP apps guide](https://help.openai.com/en/articles/12584461-developer-mode-and-mcp-apps-in-chatgpt) and [Apps in ChatGPT guide](https://help.openai.com/en/articles/11487775-connector).
 
-## Install and sign in
+## Install and connect
 
-Install the beta CLI and complete the browser login:
+Install the beta CLI:
 
 ```powershell
 npm install --global @ariobarin/glossa@beta
-glossa login
 ```
 
 ## Start a worker
@@ -28,7 +27,7 @@ Set-Location C:\path\to\a\test-repo
 glossa
 ```
 
-The terminal prints the exposed root, device name, and security warning. Leave that terminal open while using Glossa. Press Ctrl+C to disconnect.
+Glossa opens browser login automatically when needed. After sign-in, the terminal prints the exposed root, device name, and security warning. Leave that terminal open while using Glossa. Press Ctrl+C to disconnect.
 
 Starting Glossa authorizes connected clients to modify files inside the exposed root and run commands with the full environment and permissions of your Windows account. Do not expose your home directory, a drive root, or a repository containing credentials.
 
@@ -38,7 +37,7 @@ Starting Glossa authorizes connected clients to modify files inside the exposed 
 2. Choose **Install plugin**.
 3. Complete the Auth0 authorization using the same account as the CLI.
 
-You do not need a client ID, client secret, redirect URL, Heroku account, Auth0 tenant, VPN, or VPS.
+You do not need to configure OAuth, networking, or hosted infrastructure.
 
 ## Verify the connection
 
