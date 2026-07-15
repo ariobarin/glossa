@@ -37,7 +37,7 @@ The user does not operate a VPS. Heroku is the operator's shared managed service
 
 ### MCP client identity
 
-Auth0 handles OAuth discovery, login, consent, and access tokens. The relay validates issuer, audience, expiry, and `glossa:access` scope. The relay then requires an existing admitted account for the access-token subject. Authentication never creates or admits an account automatically.
+Auth0 handles OAuth discovery, login, consent, and access tokens. The relay validates issuer, audience, expiry, and `glossa:access` scope. The relay atomically creates an account for a new authenticated subject and rejects accounts marked disabled.
 
 ### CLI user identity
 

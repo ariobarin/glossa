@@ -1,6 +1,6 @@
 # @ariobarin/glossa
 
-This package contains the `glossa` executable. Install the private beta from npm:
+This package contains the `glossa` executable. Install the open beta from npm:
 
 ```powershell
 npm install --global @ariobarin/glossa@beta

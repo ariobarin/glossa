@@ -87,16 +87,14 @@ function rejectRateLimit(
   return true;
 }
 
-async function admittedAccountId(
+async function activeAccountId(
   request: AuthenticatedRequest,
   response: Response,
   store: RelayStore,
 ): Promise<string | null> {
-  const accountId = await store.admittedAccountIdForSubject(
-    request.auth!.subject,
-  );
+  const accountId = await store.accountIdForSubject(request.auth!.subject);
   if (accountId) return accountId;
-  response.status(403).json({ error: "account_not_admitted" });
+  response.status(403).json({ error: "account_disabled" });
   return null;
 }
 
@@ -205,7 +203,7 @@ export function buildRoutes(
         rejectInvalidInput(response);
         return;
       }
-      const accountId = await admittedAccountId(request, response, store);
+      const accountId = await activeAccountId(request, response, store);
       if (!accountId) return;
       try {
         const enrolled = await store.enrollDevice(
@@ -228,7 +226,7 @@ export function buildRoutes(
     "/v1/devices",
     authFactory(config, config.GLOSSA_DEVICE_ENROLL_SCOPE),
     async (request: AuthenticatedRequest, response: Response) => {
-      const accountId = await admittedAccountId(request, response, store);
+      const accountId = await activeAccountId(request, response, store);
       if (!accountId) return;
       const devices = await store.listDevices(accountId);
       response.json({ devices: devices.map(publicDevice) });
@@ -245,7 +243,7 @@ export function buildRoutes(
         rejectInvalidInput(response);
         return;
       }
-      const accountId = await admittedAccountId(request, response, store);
+      const accountId = await activeAccountId(request, response, store);
       if (!accountId) return;
       try {
         const device = await store.renameDevice(
@@ -274,7 +272,7 @@ export function buildRoutes(
         rejectInvalidInput(response);
         return;
       }
-      const accountId = await admittedAccountId(request, response, store);
+      const accountId = await activeAccountId(request, response, store);
       if (!accountId) return;
       const revoked = await store.revokeDevice(accountId, deviceId);
       if (!revoked) {
@@ -368,7 +366,7 @@ export function buildRoutes(
     ["/", "/mcp"],
     authFactory(config, config.GLOSSA_MCP_REQUIRED_SCOPE),
     async (request: AuthenticatedRequest, response: Response) => {
-      const accountId = await admittedAccountId(request, response, store);
+      const accountId = await activeAccountId(request, response, store);
       if (!accountId) return;
       await handleMcpRequest(request, response, config, state, accountId);
     },

@@ -6,7 +6,7 @@ Run one Heroku web process and one Postgres database. Active worker routing rema
 
 ## Auth0 owns identity
 
-Use one Auth0 Native application for the CLI, one custom API, and the current ChatGPT client registered through Client ID Metadata Document metadata. Keep Dynamic Client Registration disabled. Auth0 handles authentication, while Postgres controls private beta admission.
+Use one Auth0 Native application for the CLI, one custom API, and the current ChatGPT client registered through Client ID Metadata Document metadata. Keep Dynamic Client Registration disabled. Auth0 handles authentication, while Postgres creates accounts on first use and preserves operator disabling.
 
 ## Per-device secrets
 
@@ -38,7 +38,7 @@ The full canonical path remains local. MCP clients identify an active root using
 
 ## Windows-first beta
 
-Windows is the supported private beta worker platform. Other operating systems require direct validation of path containment and process termination before support is claimed.
+Windows is the supported open beta worker platform. Other operating systems require direct validation of path containment and process termination before support is claimed.
 
 ## Domain ownership
 
