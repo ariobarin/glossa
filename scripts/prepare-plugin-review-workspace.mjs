@@ -26,6 +26,7 @@ if (args.some((arg) => arg !== "--reset") || args.length > 1) {
 }
 
 const target = path.join(repositoryRoot, ".review-workspace");
+const backup = path.join(repositoryRoot, ".review-workspace.backup");
 
 async function exists(candidate) {
   try {
@@ -37,29 +38,57 @@ async function exists(candidate) {
   }
 }
 
-if (await exists(target)) {
+async function recognizedFixture(candidate) {
+  const marker = await readFile(path.join(candidate, markerName), "utf8").catch(
+    () => "",
+  );
+  return marker === markerContent;
+}
+
+if (await exists(backup)) {
+  if (!(await recognizedFixture(backup))) {
+    throw new Error(`Refusing to use an unrecognized backup: ${backup}`);
+  }
+  if (await exists(target)) {
+    await rm(backup, { recursive: true, force: false });
+  } else {
+    await rename(backup, target);
+  }
+}
+
+const targetExists = await exists(target);
+if (targetExists) {
   if (!reset) {
     throw new Error(
       `Target already exists: ${target}. Pass --reset to replace a recognized fixture.`,
     );
   }
 
-  const marker = await readFile(path.join(target, markerName), "utf8").catch(
-    () => "",
-  );
-  if (marker !== markerContent) {
+  if (!(await recognizedFixture(target))) {
     throw new Error(`Refusing to reset an unrecognized directory: ${target}`);
   }
-  await rm(target, { recursive: true, force: false });
 }
 
 const staging = await mkdtemp(path.join(repositoryRoot, ".review-workspace-"));
 try {
   await cp(templateRoot, staging, { recursive: true });
   await writeFile(path.join(staging, markerName), markerContent, "utf8");
-  await rename(staging, target);
+  if (targetExists) await rename(target, backup);
+  try {
+    await rename(staging, target);
+  } catch (error) {
+    if ((await exists(backup)) && !(await exists(target))) {
+      await rename(backup, target);
+    }
+    throw error;
+  }
+  if (await exists(backup)) {
+    await rm(backup, { recursive: true, force: false });
+  }
 } catch (error) {
-  await rm(staging, { recursive: true, force: true });
+  if (await exists(staging)) {
+    await rm(staging, { recursive: true, force: true });
+  }
   throw error;
 }
 

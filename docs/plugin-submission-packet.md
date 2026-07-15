@@ -54,7 +54,7 @@ Set-Location .review-workspace
 glossa .
 ```
 
-The explicit path prevents Git discovery from selecting an enclosing repository. The reset command targets only `.review-workspace` beside this repository's scripts and deletes it only when it contains the exact Glossa fixture marker. It refuses to replace an unrecognized directory. Keep this worker online throughout review and expose no other workspace.
+The explicit path prevents Git discovery from selecting an enclosing repository. The reset command targets only `.review-workspace` beside this repository's scripts and replaces it only when it contains the exact Glossa fixture marker. It builds the replacement first and uses a recognized backup to recover an interrupted swap. It refuses to replace an unrecognized directory. Keep this worker online throughout review and expose no other workspace.
 
 Before submitting:
 

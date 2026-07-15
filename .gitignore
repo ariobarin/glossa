@@ -10,4 +10,5 @@ dist/
 .vercel/
 .glossa-agent-state.json
 .review-workspace/
+.review-workspace.backup/
 .review-workspace-*/
