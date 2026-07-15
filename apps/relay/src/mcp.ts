@@ -5,17 +5,23 @@ import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/
 import type { Transport } from "@modelcontextprotocol/sdk/shared/transport.js";
 import { z } from "zod";
 import {
-  DEFAULT_COMMAND_TIMEOUT_MS,
-  MAX_COMMAND_STATUS_WAIT_MS,
-  MAX_COMMAND_TIMEOUT_MS,
-  MAX_TEXT_BYTES,
+  cancelCommandRequestSchema,
+  getCommandRequestSchema,
+  readFileRequestSchema,
+  runCommandRequestSchema,
+  writeFileRequestSchema,
   type WorkerJob,
   type WorkerResult,
 } from "@glossa/protocol";
 import type { RelayConfig } from "./config.js";
 import type { RouterState } from "./router-state.js";
 
-const relativePathSchema = z.string().max(4096);
+const deviceIdSchema = z.object({ deviceId: z.string().uuid() }).strict();
+const readFileInputSchema = readFileRequestSchema.extend(deviceIdSchema.shape);
+const writeFileInputSchema = writeFileRequestSchema.extend(deviceIdSchema.shape);
+const runCommandInputSchema = runCommandRequestSchema.safeExtend(
+  deviceIdSchema.shape,
+);
 const commandResultSchema = z.object({ commandId: z.string().uuid() }).passthrough();
 
 const safeWorkerMessages: Record<string, string> = {
@@ -126,12 +132,7 @@ function registerTools(
     {
       title: "Read File",
       description: "Read one UTF-8 text file within a connected device root.",
-      inputSchema: z
-        .object({
-          deviceId: z.string().uuid(),
-          path: relativePathSchema,
-        })
-        .strict(),
+      inputSchema: readFileInputSchema,
       _meta: toolMetadata,
       annotations: {
         readOnlyHint: true,
@@ -159,16 +160,7 @@ function registerTools(
     {
       title: "Write File",
       description: "Atomically write one UTF-8 text file within a connected device root.",
-      inputSchema: z
-        .object({
-          deviceId: z.string().uuid(),
-          path: relativePathSchema,
-          content: z
-            .string()
-            .refine((value) => Buffer.byteLength(value, "utf8") <= MAX_TEXT_BYTES),
-          expectedSha256: z.string().regex(/^[a-f0-9]{64}$/).optional(),
-        })
-        .strict(),
+      inputSchema: writeFileInputSchema,
       _meta: toolMetadata,
       annotations: {
         readOnlyHint: false,
@@ -205,31 +197,7 @@ function registerTools(
     {
       title: "Run Command",
       description: "Start a bounded command with the full authority of the worker account.",
-      inputSchema: z
-        .object({
-          deviceId: z.string().uuid(),
-          argv: z.array(z.string()).min(1).max(256).optional(),
-          shellCommand: z.string().max(64 * 1024).optional(),
-          stdin: z
-            .string()
-            .refine((value) => Buffer.byteLength(value, "utf8") <= MAX_TEXT_BYTES)
-            .optional(),
-          timeoutMs: z
-            .number()
-            .int()
-            .min(1)
-            .max(MAX_COMMAND_TIMEOUT_MS)
-            .default(DEFAULT_COMMAND_TIMEOUT_MS),
-        })
-        .strict()
-        .superRefine((value, context) => {
-          if ((value.argv ? 1 : 0) + (value.shellCommand ? 1 : 0) !== 1) {
-            context.addIssue({
-              code: "custom",
-              message: "Exactly one of argv or shellCommand is required.",
-            });
-          }
-        }),
+      inputSchema: runCommandInputSchema,
       _meta: toolMetadata,
       annotations: {
         readOnlyHint: false,
@@ -273,17 +241,7 @@ function registerTools(
     {
       title: "Get Command",
       description: "Get current or completed command state, optionally waiting up to 15 seconds.",
-      inputSchema: z
-        .object({
-          commandId: z.string().uuid(),
-          waitMs: z
-            .number()
-            .int()
-            .min(0)
-            .max(MAX_COMMAND_STATUS_WAIT_MS)
-            .optional(),
-        })
-        .strict(),
+      inputSchema: getCommandRequestSchema,
       _meta: toolMetadata,
       annotations: {
         readOnlyHint: true,
@@ -316,7 +274,7 @@ function registerTools(
     {
       title: "Cancel Command",
       description: "Terminate a running command and its process tree.",
-      inputSchema: z.object({ commandId: z.string().uuid() }).strict(),
+      inputSchema: cancelCommandRequestSchema,
       _meta: toolMetadata,
       annotations: {
         readOnlyHint: false,

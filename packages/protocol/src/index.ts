@@ -14,27 +14,52 @@ export const deviceNameSchema = z
   .max(80)
   .regex(/^[^\u0000-\u001f\u007f]+$/, "Device name contains control characters");
 
-export const readFileJobSchema = z.object({
+export const relativePathSchema = z.string().max(4096);
+const boundedTextSchema = z
+  .string()
+  .refine((value) => Buffer.byteLength(value, "utf8") <= MAX_TEXT_BYTES);
+
+export const readFileRequestSchema = z.object({
+  path: relativePathSchema,
+}).strict();
+
+export const readFileJobSchema = readFileRequestSchema.extend({
   type: z.literal("read_file"),
   requestId: z.string().uuid(),
-  path: z.string().max(4096),
 });
 
-export const writeFileJobSchema = z.object({
+export const writeFileRequestSchema = z.object({
+  path: relativePathSchema,
+  content: boundedTextSchema,
+  expectedSha256: z.string().regex(/^[a-f0-9]{64}$/).optional(),
+}).strict();
+
+export const writeFileJobSchema = writeFileRequestSchema.extend({
   type: z.literal("write_file"),
   requestId: z.string().uuid(),
-  path: z.string().max(4096),
-  content: z.string(),
-  expectedSha256: z.string().regex(/^[a-f0-9]{64}$/).optional(),
 });
 
-export const runCommandJobSchema = z
+function requireOneCommand(
+  value: {
+    argv?: string[] | undefined;
+    shellCommand?: string | undefined;
+  },
+  context: z.core.$RefinementCtx,
+): void {
+  if ((value.argv ? 1 : 0) + (value.shellCommand ? 1 : 0) !== 1) {
+    context.addIssue({
+      code: "custom",
+      message: "Exactly one of argv or shellCommand is required.",
+      input: value,
+    });
+  }
+}
+
+export const runCommandRequestSchema = z
   .object({
-    type: z.literal("run_command"),
-    requestId: z.string().uuid(),
     argv: z.array(z.string()).min(1).max(256).optional(),
     shellCommand: z.string().max(64 * 1024).optional(),
-    stdin: z.string().max(MAX_TEXT_BYTES).optional(),
+    stdin: boundedTextSchema.optional(),
     timeoutMs: z
       .number()
       .int()
@@ -42,26 +67,31 @@ export const runCommandJobSchema = z
       .max(MAX_COMMAND_TIMEOUT_MS)
       .default(DEFAULT_COMMAND_TIMEOUT_MS),
   })
-  .superRefine((value, context) => {
-    if ((value.argv ? 1 : 0) + (value.shellCommand ? 1 : 0) !== 1) {
-      context.addIssue({
-        code: "custom",
-        message: "Exactly one of argv or shellCommand is required.",
-      });
-    }
-  });
+  .strict()
+  .superRefine(requireOneCommand);
 
-export const getCommandJobSchema = z.object({
-  type: z.literal("get_command"),
+export const runCommandJobSchema = runCommandRequestSchema.safeExtend({
+  type: z.literal("run_command"),
   requestId: z.string().uuid(),
-  commandId: z.string().uuid(),
-  waitMs: z.number().int().min(0).max(MAX_COMMAND_STATUS_WAIT_MS).optional(),
 });
 
-export const cancelCommandJobSchema = z.object({
+export const getCommandRequestSchema = z.object({
+  commandId: z.string().uuid(),
+  waitMs: z.number().int().min(0).max(MAX_COMMAND_STATUS_WAIT_MS).optional(),
+}).strict();
+
+export const getCommandJobSchema = getCommandRequestSchema.extend({
+  type: z.literal("get_command"),
+  requestId: z.string().uuid(),
+});
+
+export const cancelCommandRequestSchema = z.object({
+  commandId: z.string().uuid(),
+}).strict();
+
+export const cancelCommandJobSchema = cancelCommandRequestSchema.extend({
   type: z.literal("cancel_command"),
   requestId: z.string().uuid(),
-  commandId: z.string().uuid(),
 });
 
 export const workerJobSchema = z.discriminatedUnion("type", [
