@@ -8,7 +8,7 @@ Glossa is currently a Windows-first open beta. Start with a disposable Git repos
 - A disposable Git repository
 - ChatGPT on the web with plugin access
 
-Available actions depend on the current ChatGPT plan and plugin permissions. See OpenAI's [developer mode and MCP apps guide](https://help.openai.com/en/articles/12584461-developer-mode-and-mcp-apps-in-chatgpt) and [Apps in ChatGPT guide](https://help.openai.com/en/articles/11487775-connector).
+Glossa is not listed in the public plugin directory yet, so Developer Mode is required during the open beta. Available actions depend on the current ChatGPT plan, workspace role, and plugin permissions. See OpenAI's [Developer Mode and MCP apps guide](https://help.openai.com/en/articles/12584461-developer-mode-apps-and-full-mcp-connectors-in-chatgpt-beta) and [Apps in ChatGPT guide](https://help.openai.com/en/articles/11487775-connector).
 
 ## Install and connect
 
@@ -31,11 +31,12 @@ Glossa opens browser login automatically when needed. After sign-in, the termina
 
 Starting Glossa authorizes connected clients to modify files inside the exposed root and run commands with the full environment and permissions of your Windows account. Do not expose your home directory, a drive root, or a repository containing credentials.
 
-## Install the ChatGPT plugin
+## Enable Developer Mode and install the ChatGPT plugin
 
-1. Open the [Glossa Live plugin](https://chatgpt.com/plugins/plugin_asdk_app_6a5702618d3081919dfdd643c18aba0c).
-2. Choose **Install plugin**.
-3. Complete the authorization using the same account as the CLI.
+1. Follow OpenAI's [Developer Mode guide](https://help.openai.com/en/articles/12584461-developer-mode-apps-and-full-mcp-connectors-in-chatgpt-beta) for your plan and workspace role.
+2. Open the [Glossa Live plugin](https://chatgpt.com/plugins/plugin_asdk_app_6a5702618d3081919dfdd643c18aba0c).
+3. Choose **Install plugin**.
+4. Complete the authorization using the same account as the CLI.
 
 You do not need to configure OAuth, networking, or hosted infrastructure.
 

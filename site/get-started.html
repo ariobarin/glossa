@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="Install Glossa and connect ChatGPT to a local coding workspace." />
+    <meta name="theme-color" content="#0b0d12" />
+    <title>Get started | Glossa</title>
+    <link rel="stylesheet" href="/policy.css" />
+  </head>
+  <body>
+    <header>
+      <a class="brand" href="/">Glossa</a>
+      <a href="/security">Security</a>
+    </header>
+
+    <main>
+      <p class="eyebrow">Get started</p>
+      <h1>Connect a workspace in minutes.</h1>
+      <p class="summary">Glossa is a Windows-first open beta. Use a disposable Git repository for your first connection.</p>
+
+      <h2>1. Install Glossa</h2>
+      <p>Install Node.js 24, then run this command in PowerShell:</p>
+      <pre><code>npm install --global @ariobarin/glossa@beta</code></pre>
+
+      <h2>2. Start the worker</h2>
+      <p>Open a disposable repository and start Glossa. Browser sign-in opens automatically when needed.</p>
+      <pre><code>Set-Location C:\path\to\a\test-repo
+glossa</code></pre>
+      <p>Leave the terminal open while you use Glossa. Press Ctrl+C to disconnect.</p>
+
+      <h2>3. Add Glossa to ChatGPT</h2>
+      <div class="notice">
+        <strong>Developer Mode is required during the open beta.</strong>
+        <p>Glossa is not listed in the public plugin directory yet. Enable Developer Mode in ChatGPT, then install Glossa Live and complete authorization with the same account you used for the CLI.</p>
+      </div>
+      <ol>
+        <li>Follow OpenAI's <a href="https://help.openai.com/en/articles/12584461-developer-mode-apps-and-full-mcp-connectors-in-chatgpt-beta">Developer Mode guide</a> for your plan and workspace role.</li>
+        <li>Open <a href="https://chatgpt.com/plugins/plugin_asdk_app_6a5702618d3081919dfdd643c18aba0c">Glossa Live</a> and choose <strong>Install plugin</strong>.</li>
+        <li>Complete authorization using the same Glossa account as the worker.</li>
+      </ol>
+
+      <h2>4. Verify the connection</h2>
+      <p>Start a ChatGPT conversation with Glossa Live selected and ask:</p>
+      <pre><code>List my connected devices.</code></pre>
+      <p>Then try a harmless read from the disposable repository:</p>
+      <pre><code>Open my connected Glossa workspace and read README.md.</code></pre>
+
+      <div class="notice">
+        <strong>Glossa can modify files and run commands.</strong>
+        <p>Commands run with the full environment and permissions of your Windows account. Do not expose your home directory, a drive root, or a repository containing credentials.</p>
+      </div>
+
+      <p>For troubleshooting and more detail, read the <a href="https://github.com/ariobarin/glossa/blob/main/docs/open-beta.md">open beta guide</a>.</p>
+    </main>
+
+    <footer>
+      <a href="/privacy">Privacy</a>
+      <a href="/terms">Terms</a>
+      <a href="/support">Support</a>
+      <a href="/security">Security</a>
+    </footer>
+  </body>
+</html>

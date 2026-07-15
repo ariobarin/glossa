@@ -96,6 +96,21 @@ p {
   margin: 0 0 18px;
 }
 
+pre {
+  overflow-x: auto;
+  margin: 18px 0 24px;
+  padding: 18px 20px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--panel);
+}
+
+pre code {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 14px;
+  line-height: 1.7;
+}
+
 ul {
   padding-left: 24px;
 }
@@ -116,6 +131,10 @@ li + li {
   border: 1px solid var(--border);
   border-radius: 12px;
   background: var(--panel);
+}
+
+.notice p:last-child {
+  margin-bottom: 0;
 }
 
 code {
