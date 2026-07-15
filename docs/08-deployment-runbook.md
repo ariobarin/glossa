@@ -15,6 +15,16 @@ While Heroku student verification is pending, merged Glossa revisions can be sta
 
 The VPS binds the relay only to its private WireGuard address. Caddy publishes `/mcp`, `/v1/*`, `/healthz`, and protected-resource metadata. Worker `/device/*` traffic stays on WireGuard and public requests to those paths return `404`. The Relay repository owns the temporary deployment workflow, systemd unit, Caddy routing, rollback, and reboot checks. See the [Relay staging operator procedure](https://github.com/ariobarin/relay/blob/main/docs/glossa-operations.md).
 
+Run a staging worker with explicit temporary origins:
+
+```powershell
+$env:GLOSSA_RELAY_ORIGIN = "https://veronica.ariobarin.com"
+$env:GLOSSA_WORKER_ORIGIN = "http://10.0.0.1:39100"
+glossa
+```
+
+The first origin handles OAuth-authenticated device enrollment through Caddy. The second sends the enrolled device credential only over the private WireGuard path.
+
 Do not mark this milestone complete from the staging deployment. Heroku credit, Postgres, DNS, ACM, restart recovery, and cost verification below remain required before the MVP endpoint is final.
 
 ## Configure Auth0
