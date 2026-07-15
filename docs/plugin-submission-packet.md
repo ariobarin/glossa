@@ -42,7 +42,7 @@ Proposed full description:
 | `get_command` | Yes | No | No | Reads status and captured output for a command previously started by the signed-in account. |
 | `cancel_command` | No | Yes | No | Terminates a running local process tree. It does not reverse effects already caused by that command. |
 
-The unrestricted authority of `run_command` remains the primary submission risk. Do not soften this explanation in the portal. Decide whether to remove, narrow, or isolate that authority before submission.
+The table records the target submission metadata. The current base branch still advertises `openWorldHint: false` for `run_command`; deploy the corrected MCP contract before scanning or submitting the plugin. The unrestricted authority of `run_command` remains the primary submission risk. Do not soften this explanation in the portal. Decide whether to remove, narrow, or isolate that authority before submission.
 
 ## Reviewer environment
 
@@ -51,10 +51,10 @@ Create or refresh the deterministic local workspace from the repository root:
 ```powershell
 node scripts/prepare-plugin-review-workspace.mjs --reset
 Set-Location .review-workspace
-glossa
+glossa .
 ```
 
-The reset command deletes only a directory containing the exact Glossa fixture marker. It refuses to replace an unrecognized directory. Keep this worker online throughout review and expose no other workspace.
+The explicit path prevents Git discovery from selecting an enclosing repository. The reset command targets only `.review-workspace` beside this repository's scripts and deletes it only when it contains the exact Glossa fixture marker. It refuses to replace an unrecognized directory. Keep this worker online throughout review and expose no other workspace.
 
 Before submitting:
 

@@ -10,24 +10,14 @@ const templateRoot = path.join(repositoryRoot, "review", "fixture-template");
 
 const args = process.argv.slice(2);
 const reset = args.includes("--reset");
-const positional = args.filter((arg) => arg !== "--reset");
 
-if (positional.length > 1 || positional.some((arg) => arg.startsWith("--"))) {
+if (args.some((arg) => arg !== "--reset") || args.length > 1) {
   throw new Error(
-    "Usage: node scripts/prepare-plugin-review-workspace.mjs [target] [--reset]",
+    "Usage: node scripts/prepare-plugin-review-workspace.mjs [--reset]",
   );
 }
 
-const target = path.resolve(
-  repositoryRoot,
-  positional[0] ?? ".review-workspace",
-);
-
-if (target === repositoryRoot || target === path.parse(target).root) {
-  throw new Error(
-    "Refusing to prepare a review fixture at a filesystem root or repository root.",
-  );
-}
+const target = path.join(repositoryRoot, ".review-workspace");
 
 async function exists(candidate) {
   try {
