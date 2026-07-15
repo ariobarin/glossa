@@ -82,6 +82,7 @@ git push origin cli-v0.1.0-beta.2
 ```
 
 The tag must exactly match the version in `packages/cli/package.json`. Prerelease versions publish under `beta`; stable versions publish under `latest`.
+Keep CLI versions on the `0.1.x` line until the release policy changes.
 
 ## DNS and TLS
 
