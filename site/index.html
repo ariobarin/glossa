@@ -10,16 +10,12 @@
     <meta name="theme-color" content="#0b0d12" />
     <title>Glossa | Your code stays local</title>
     <link rel="stylesheet" href="/styles.css" />
-    <script src="/script.js" defer></script>
   </head>
   <body>
     <header>
       <a class="brand" href="/" aria-label="Glossa home">Glossa</a>
       <nav aria-label="Site navigation">
-        <a href="/privacy">Privacy</a>
-        <a href="/terms">Terms</a>
-        <a href="/support">Support</a>
-        <a href="#quickstart">Quickstart</a>
+        <a href="https://github.com/ariobarin/glossa/blob/main/docs/open-beta.md">Guide</a>
         <a href="https://github.com/ariobarin/glossa">GitHub</a>
       </nav>
     </header>
@@ -31,82 +27,47 @@
         <p class="lede">
           Glossa connects ChatGPT to one local coding workspace that you choose.
         </p>
-        <a class="button" href="#quickstart">Start in 3 steps</a>
       </section>
 
-      <section class="quickstart" id="quickstart" aria-labelledby="quickstart-title">
-        <div class="section-heading">
+      <section class="quickstart" aria-labelledby="quickstart-title">
+        <div>
           <p class="eyebrow">Quickstart</p>
-          <h2 id="quickstart-title">From install to first prompt.</h2>
-          <p>Windows and Node.js 24 are required.</p>
+          <h2 id="quickstart-title">Install once. Run <code>glossa</code>.</h2>
+          <p class="summary">
+            Glossa opens browser sign-in automatically and connects the current Git worktree.
+            Windows and Node.js 24 are required.
+          </p>
         </div>
 
-        <ol class="steps">
-          <li class="step">
-            <div class="step-number" aria-hidden="true">1</div>
-            <div class="step-content">
-              <h3>Connect a workspace</h3>
-              <p>Paste this into PowerShell. Sign in when your browser opens.</p>
-              <div class="code-block">
-                <button
-                  class="copy-button"
-                  type="button"
-                  data-copy-target="connect-commands"
-                  aria-live="polite"
-                >
-                  Copy
-                </button>
-                <pre><code id="connect-commands">npm install --global @ariobarin/glossa@beta
+        <div class="start-panel">
+          <pre><code>npm install --global @ariobarin/glossa@beta
 Set-Location C:\path\to\your\project
 glossa</code></pre>
-              </div>
-              <p class="note">
-                Leave this terminal open. Glossa can modify files in this folder and run commands with your Windows account permissions. Press Ctrl+C to disconnect.
-              </p>
-            </div>
-          </li>
 
-          <li class="step">
-            <div class="step-number" aria-hidden="true">2</div>
-            <div class="step-content">
-              <h3>Install the ChatGPT plugin</h3>
-              <p>Use the same account you chose when Glossa opened your browser.</p>
-              <a
-                class="button button-secondary"
-                href="https://chatgpt.com/plugins/plugin_asdk_app_6a5702618d3081919dfdd643c18aba0c"
-              >Install Glossa Live</a>
-            </div>
-          </li>
-
-          <li class="step">
-            <div class="step-number" aria-hidden="true">3</div>
-            <div class="step-content">
-              <h3>Send your first prompt</h3>
-              <p>Start a ChatGPT chat with Glossa Live enabled, then paste:</p>
-              <div class="code-block code-block-prompt">
-                <button
-                  class="copy-button"
-                  type="button"
-                  data-copy-target="first-prompt"
-                  aria-live="polite"
-                >
-                  Copy
-                </button>
-                <pre><code id="first-prompt">Open my connected Glossa workspace and read README.md.</code></pre>
-              </div>
-            </div>
-          </li>
-        </ol>
+          <div class="actions">
+            <a
+              class="button"
+              href="https://chatgpt.com/plugins/plugin_asdk_app_6a5702618d3081919dfdd643c18aba0c"
+            >Install Glossa Live</a>
+            <a href="https://github.com/ariobarin/glossa/blob/main/docs/open-beta.md">Read the setup guide</a>
+          </div>
+        </div>
 
         <p class="safety">
-          Start with a disposable Git repository. Never expose your home folder, a drive root, or a folder containing credentials.
+          Start with a disposable repository. Glossa can modify files in the exposed workspace
+          and run commands with your Windows account permissions. Press Ctrl+C to disconnect.
         </p>
       </section>
     </main>
 
     <footer>
       <span>Glossa is an execution bridge, not an agent.</span>
-      <a href="https://github.com/ariobarin/glossa/blob/main/docs/security.md">Security model</a>
+      <nav aria-label="Legal and support">
+        <a href="/privacy">Privacy</a>
+        <a href="/terms">Terms</a>
+        <a href="/support">Support</a>
+        <a href="https://github.com/ariobarin/glossa/blob/main/docs/security.md">Security model</a>
+      </nav>
     </footer>
   </body>
 </html>
