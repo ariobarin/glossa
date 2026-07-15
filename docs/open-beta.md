@@ -6,9 +6,10 @@ Glossa is currently a Windows-first open beta. Start with a disposable Git repos
 
 - Windows with Git, Node.js 24, and npm
 - A disposable Git repository
-- ChatGPT on the web with plugin access
+- ChatGPT on the web with full MCP write support
+- Permission to create a custom app in Developer Mode
 
-Glossa is not listed in the public plugin directory yet, so Developer Mode is required during the open beta. Available actions depend on the current ChatGPT plan, workspace role, and plugin permissions. See OpenAI's [Developer Mode and MCP apps guide](https://help.openai.com/en/articles/12584461-developer-mode-apps-and-full-mcp-connectors-in-chatgpt-beta) and [Apps in ChatGPT guide](https://help.openai.com/en/articles/11487775-connector).
+Glossa is not listed in the public plugin directory yet, so Developer Mode is required during the open beta. OpenAI currently limits full MCP write support and custom-app creation to eligible ChatGPT Business and Enterprise/Edu workspace roles. Confirm your access in OpenAI's [Developer Mode and MCP apps guide](https://help.openai.com/en/articles/12584461-developer-mode-apps-and-full-mcp-connectors-in-chatgpt-beta) before installing Glossa.
 
 ## Install and connect
 
@@ -31,18 +32,18 @@ Glossa opens browser login automatically when needed. After sign-in, the termina
 
 Starting Glossa authorizes connected clients to modify files inside the exposed root and run commands with the full environment and permissions of your Windows account. Do not expose your home directory, a drive root, or a repository containing credentials.
 
-## Enable Developer Mode and install the ChatGPT plugin
+## Enable Developer Mode and add Glossa
 
 1. Follow OpenAI's [Developer Mode guide](https://help.openai.com/en/articles/12584461-developer-mode-apps-and-full-mcp-connectors-in-chatgpt-beta) for your plan and workspace role.
-2. Open the [Glossa Live plugin](https://chatgpt.com/plugins/plugin_asdk_app_6a5702618d3081919dfdd643c18aba0c).
-3. Choose **Install plugin**.
-4. Complete the authorization using the same account as the CLI.
+2. In ChatGPT Settings, open **Apps**, choose **Create**, and name the custom app **Glossa**.
+3. Enter `https://mcp.glossa.sh/mcp` as the MCP server endpoint and choose OAuth authentication.
+4. Choose **Scan tools**, complete authorization using the same Glossa account as the worker, then create the app.
 
-You do not need to configure OAuth, networking, or hosted infrastructure.
+You do not need to create OAuth credentials, configure networking, or operate hosted infrastructure.
 
 ## Verify the connection
 
-Start a ChatGPT conversation with Glossa Live selected and ask:
+Start a ChatGPT conversation with the Dev-labeled Glossa app selected and ask:
 
 ```text
 List my connected devices.
@@ -59,8 +60,8 @@ Only test writes and commands inside the disposable repository.
 ## Troubleshooting
 
 - No online devices: confirm the `glossa` terminal is still running.
-- Plugin setup cannot discover tools: confirm `https://mcp.glossa.sh/healthz` returns `{"ok":true,"service":"glossa-relay"}`.
-- OAuth loops or expires: reopen the Glossa Live plugin and authorize it again.
+- App setup cannot discover tools: confirm `https://mcp.glossa.sh/healthz` returns `{"ok":true,"service":"glossa-relay"}`.
+- OAuth loops or expires: reopen the custom Glossa app and authorize it again.
 - Account access fails: open a GitHub issue without including tokens, credentials, or local paths.
 
 ## Disconnect

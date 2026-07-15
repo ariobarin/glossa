@@ -32,9 +32,7 @@ Starting `glossa` authorizes connected clients to modify files inside that root 
 
 ## ChatGPT
 
-Glossa is not listed in the public plugin directory yet, so Developer Mode is required during the open beta. Follow the [Get started](https://glossa.sh/get-started) flow, then install Glossa Live:
-
-[Install Glossa Live](https://chatgpt.com/plugins/plugin_asdk_app_6a5702618d3081919dfdd643c18aba0c)
+Glossa is not listed in the public plugin directory yet, so Developer Mode is required during the open beta. The current setup requires ChatGPT on the web with full MCP write support and permission to create a custom app. Follow [Get started](https://glossa.sh/get-started) to confirm eligibility and connect the managed Glossa endpoint.
 
 See the [open beta guide](docs/open-beta.md) for safe setup, verification, and troubleshooting.
 
