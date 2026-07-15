@@ -97,4 +97,4 @@ Suggested release note after the public execution profile is resolved:
 
 ## Submission gate
 
-Do not submit this packet until the production policy pages are live, the MCP scan matches the documented schemas and annotations, the reviewer account and isolated worker are continuously available, and the unrestricted command-execution decision is resolved.
+Do not submit this packet until the production privacy, terms, and support pages are live, the MCP scan matches the documented schemas and annotations, the reviewer account and isolated worker are continuously available, and the unrestricted command-execution decision is resolved.
