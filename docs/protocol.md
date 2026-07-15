@@ -138,5 +138,5 @@ These are ordinary MCP tools so clients do not need native MCP Tasks support. Na
 
 - Return stable machine-readable codes.
 - Do not include local absolute paths in hosted errors.
-- Distinguish offline, expired workspace, timeout, stale revision, output truncated, and command spawn failure.
+- Distinguish offline, timeout, stale revision, output truncated, and command spawn failure.
 - Authentication errors disclose no device/account existence.

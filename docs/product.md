@@ -17,7 +17,7 @@ The tester does not manage a VPS, VPN, reverse proxy, TLS certificate, OAuth ser
 
 - Auth0 database signup is open so anyone can create a Glossa identity.
 - The first valid authenticated request creates or activates the account record.
-- A disabled identity receives no account, device, workspace, or job details.
+- A disabled identity receives no account, device, or job details.
 
 ## Device and exposure lifecycle
 
@@ -50,6 +50,6 @@ The tester does not manage a VPS, VPN, reverse proxy, TLS certificate, OAuth ser
 
 ## Tenancy and persistence
 
-Every device, workspace, and job is owned by the account derived from the Auth0 subject. Identifier guessing must never cross account boundaries.
+Every device and job is owned by the account derived from the Auth0 subject. Identifier guessing must never cross account boundaries.
 
-Postgres stores account and device metadata. Active workers, workspaces, and jobs remain in relay memory. Source files and command content are never stored durably by the relay.
+Postgres stores account and device metadata. Active workers and jobs remain in relay memory. Source files and command content are never stored durably by the relay.
