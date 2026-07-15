@@ -10,6 +10,7 @@
 - [ ] Running `glossa` in a Git worktree prints the canonical root and connects.
 - [ ] The full canonical path appears locally but never reaches the relay or MCP client.
 - [ ] The stable endpoint is `https://mcp.glossa.sh/mcp`.
+- [ ] An MCP client that uses `https://mcp.glossa.sh/` as both transport and OAuth resource can initialize.
 - [ ] OAuth-capable MCP client completes login and lists only the user's device.
 - [ ] Total setup is under ten minutes.
 

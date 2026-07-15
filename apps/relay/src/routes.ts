@@ -319,7 +319,7 @@ export function buildRoutes(
   });
 
   router.all(
-    "/mcp",
+    ["/", "/mcp"],
     authFactory(config, config.GLOSSA_MCP_REQUIRED_SCOPE),
     async (request: AuthenticatedRequest, response: Response) => {
       const accountId = await admittedAccountId(request, response, store);
