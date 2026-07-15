@@ -262,22 +262,6 @@ h1 span {
   line-height: 1.45;
 }
 
-.availability {
-  margin-bottom: 0;
-  padding-left: 18px;
-  border-left: 3px solid var(--accent);
-  color: var(--muted);
-  font-size: 14px;
-  line-height: 1.65;
-}
-
-.availability a {
-  color: var(--text);
-  text-decoration: underline;
-  text-decoration-color: rgba(183, 255, 90, 0.55);
-  text-underline-offset: 3px;
-}
-
 .quickstart {
   padding: 104px 0 88px;
   border-top: 1px solid var(--border);

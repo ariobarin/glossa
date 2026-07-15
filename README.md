@@ -15,8 +15,6 @@ Glossa is an execution bridge, not an agent. ChatGPT owns the model, conversatio
 
 Codex and ChatGPT Work share usage. Glossa connects the regular Chat surface to one local workspace without putting another model, planner, or agent in the middle.
 
-Personal Pro currently supports custom MCP read and fetch access. Full write and command access requires eligible Business, Enterprise, or Edu access. See OpenAI's [current MCP availability](https://help.openai.com/en/articles/12584461-developer-mode-and-mcp-apps-in-chatgpt).
-
 ## Status
 
 Glossa is a Windows-first open beta. The managed relay is live at `https://mcp.glossa.sh/mcp`. A valid Glossa login activates access automatically.
@@ -38,7 +36,7 @@ Starting `glossa` authorizes connected clients to modify files inside that root 
 
 ## ChatGPT
 
-Glossa is not listed in the public plugin directory yet, so Developer Mode is required during the open beta. The current setup requires ChatGPT on the web with full MCP write support and permission to create a custom app. Follow [Get started](https://glossa.sh/get-started) to confirm eligibility and connect the managed Glossa endpoint.
+Glossa is not listed in the public plugin directory yet, so add it as a custom app in Developer Mode during the open beta. Follow [Get started](https://glossa.sh/get-started) to connect the managed Glossa endpoint.
 
 See the [open beta guide](docs/open-beta.md) for safe setup, verification, and troubleshooting.
 

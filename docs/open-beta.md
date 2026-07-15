@@ -6,10 +6,10 @@ Glossa is currently a Windows-first open beta. Start with a disposable Git repos
 
 - Windows with Git, Node.js 24, and npm
 - A disposable Git repository
-- ChatGPT on the web with full MCP write support
+- ChatGPT on the web
 - Permission to create a custom app in Developer Mode
 
-Glossa is not listed in the public plugin directory yet, so Developer Mode is required during the open beta. OpenAI currently limits full MCP write support and custom-app creation to eligible ChatGPT Business and Enterprise/Edu workspace roles. Confirm your access in OpenAI's [Developer Mode and MCP apps guide](https://help.openai.com/en/articles/12584461-developer-mode-apps-and-full-mcp-connectors-in-chatgpt-beta) before installing Glossa.
+Glossa is not listed in the public plugin directory yet, so add it as a custom app in Developer Mode during the open beta.
 
 ## Install and connect
 
