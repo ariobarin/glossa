@@ -39,7 +39,7 @@
       "value": "15000"
     },
     "GLOSSA_RELAY_REQUEST_TIMEOUT_MS": {
-      "value": "25000"
+      "value": "18000"
     }
   },
   "addons": [
