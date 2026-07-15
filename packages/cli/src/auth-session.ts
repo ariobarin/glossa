@@ -3,6 +3,7 @@ import {
   saveCredentials,
   type StoredCredentials,
 } from "./config-store.js";
+import { grantedScopesSatisfyRequest } from "./auth-scopes.js";
 
 const EXPIRY_BUFFER_MS = 60_000;
 
@@ -94,12 +95,26 @@ export async function refreshCredentials(
     throw new Error(oauthMessage(oauth, response.status));
   }
 
+  const grantedScope = data.scope ?? credentials.scope;
+  if (
+    credentials.requestedScope &&
+    !grantedScopesSatisfyRequest(
+      grantedScope,
+      credentials.requestedScope,
+      Boolean(data.refresh_token ?? credentials.refreshToken),
+    )
+  ) {
+    await remove();
+    throw sessionExpiredError();
+  }
+
   const refreshed: StoredCredentials = {
     ...credentials,
     accessToken: data.access_token,
     refreshToken: data.refresh_token ?? credentials.refreshToken,
     expiresAt: new Date(now() + data.expires_in * 1000).toISOString(),
     tokenType: data.token_type,
+    ...(grantedScope ? { scope: grantedScope } : {}),
   };
   await save(refreshed);
   return refreshed;

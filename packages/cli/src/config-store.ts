@@ -17,6 +17,7 @@ export interface StoredCredentials {
   expiresAt: string;
   tokenType: string;
   scope?: string;
+  requestedScope?: string;
 }
 
 export type CredentialBackend = StorageBackend;
@@ -42,7 +43,8 @@ function parseCredentials(value: string): StoredCredentials {
     !Number.isFinite(Date.parse(parsed.expiresAt)) ||
     typeof parsed.tokenType !== "string" ||
     (parsed.refreshToken !== undefined && typeof parsed.refreshToken !== "string") ||
-    (parsed.scope !== undefined && typeof parsed.scope !== "string")
+    (parsed.scope !== undefined && typeof parsed.scope !== "string") ||
+    (parsed.requestedScope !== undefined && typeof parsed.requestedScope !== "string")
   ) {
     throw new Error("Stored Glossa credentials are invalid.");
   }

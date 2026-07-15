@@ -10,6 +10,10 @@ import {
   loginWithDeviceFlow,
   type LoginOptions,
 } from "./device-flow.js";
+import {
+  grantedScopesSatisfyRequest,
+  scopesMatch,
+} from "./auth-scopes.js";
 
 export interface SignInDependencies {
   loadCredentials?: typeof loadCredentials;
@@ -21,10 +25,6 @@ function normalizedIssuer(value: string): string {
   return value.replace(/\/+$/, "");
 }
 
-function normalizedScopes(value: string | undefined): string[] {
-  return [...new Set(value?.trim().split(/\s+/).filter(Boolean) ?? [])].sort();
-}
-
 export function credentialsMatchLoginOptions(
   credentials: StoredCredentials,
   options: LoginOptions,
@@ -33,8 +33,12 @@ export function credentialsMatchLoginOptions(
     normalizedIssuer(credentials.issuer) === normalizedIssuer(options.issuer) &&
     credentials.clientId === options.clientId &&
     credentials.audience === options.audience &&
-    JSON.stringify(normalizedScopes(credentials.scope)) ===
-      JSON.stringify(normalizedScopes(options.scope))
+    scopesMatch(credentials.requestedScope, options.scope) &&
+    grantedScopesSatisfyRequest(
+      credentials.scope,
+      options.scope,
+      Boolean(credentials.refreshToken),
+    )
   );
 }
 
