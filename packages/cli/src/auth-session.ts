@@ -100,7 +100,6 @@ export async function refreshCredentials(
     refreshToken: data.refresh_token ?? credentials.refreshToken,
     expiresAt: new Date(now() + data.expires_in * 1000).toISOString(),
     tokenType: data.token_type,
-    ...(data.scope ? { scope: data.scope } : {}),
   };
   await save(refreshed);
   return refreshed;

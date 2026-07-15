@@ -141,7 +141,7 @@ export async function loginWithDeviceFlow(
           refreshToken: data.refresh_token,
           expiresAt: new Date(now() + data.expires_in * 1000).toISOString(),
           tokenType: data.token_type,
-          ...(data.scope ? { scope: data.scope } : {}),
+          scope: options.scope,
         });
         log("Signed in to Glossa.");
         return;
