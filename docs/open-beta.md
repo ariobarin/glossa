@@ -35,7 +35,7 @@ Starting Glossa authorizes connected clients to modify files inside the exposed 
 
 1. Open the [Glossa Live plugin](https://chatgpt.com/plugins/plugin_asdk_app_6a5702618d3081919dfdd643c18aba0c).
 2. Choose **Install plugin**.
-3. Complete the Auth0 authorization using the same account as the CLI.
+3. Complete the authorization using the same account as the CLI.
 
 You do not need to configure OAuth, networking, or hosted infrastructure.
 

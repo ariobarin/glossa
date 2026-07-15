@@ -51,9 +51,7 @@ Stop local Postgres with `npm run dev:down`.
 
 ## Documentation
 
-- [Product contract](docs/product.md)
 - [Open beta guide](docs/open-beta.md)
 - [Architecture](docs/architecture.md)
 - [Security model](docs/security.md)
 - [API and protocol](docs/protocol.md)
-- [Deployment](docs/deployment.md)

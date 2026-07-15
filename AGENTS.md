@@ -13,7 +13,7 @@ Read `docs/architecture.md` and `docs/security.md` before changing trust boundar
 - Enforce path and process boundaries on the worker, not only on the relay.
 - Never make home, drive, or filesystem roots the default exposure.
 - Treat command execution as the full authority of the worker account.
-- Keep one Heroku web process and one Postgres database until routing state has an external coordination design.
+- Keep one relay process and one Postgres database until routing state has an external coordination design.
 - Do not persist file contents, command arguments, command output, tokens, or local absolute paths.
 - Keep dependencies exact.
 - Do not commit credentials, browser state, logs, generated runtime state, or local paths.

@@ -6,7 +6,7 @@ All production endpoints use HTTPS.
 
 ### `GET /.well-known/oauth-protected-resource`
 
-Advertise the Auth0 API identifier `https://mcp.glossa.sh/` as the protected resource, the Auth0 authorization server, and the `glossa:access` scope. The protected-resource identifier is the OAuth audience. It is intentionally not the request URL `https://mcp.glossa.sh/mcp`.
+Advertise `https://mcp.glossa.sh/` as the protected resource, along with the authorization server and the `glossa:access` scope. The protected-resource identifier is the OAuth audience. It is intentionally not the request URL `https://mcp.glossa.sh/mcp`.
 
 ### `GET /healthz`
 
@@ -14,7 +14,7 @@ No secret data. Suitable for uptime checks.
 
 ## User-authenticated control API
 
-Auth0 bearer token required. Audience must match the Glossa API. Routes check scopes and derive account ownership from `sub`.
+OAuth bearer token required. Audience must match the Glossa API. Routes check scopes and derive account ownership from `sub`.
 
 ### `POST /v1/devices/enroll`
 
@@ -75,9 +75,9 @@ Posts a structured result for the delivered job. Late results after caller timeo
 
 ### `POST /mcp`
 
-Auth0 OAuth required. The token's account can route only to devices owned by that account.
+OAuth required. The token's account can route only to devices owned by that account.
 
-The origin route `POST /` serves the same authenticated transport for MCP clients that use their configured transport URL as the OAuth resource. This keeps the OAuth resource equal to the Auth0 API identifier `https://mcp.glossa.sh/`. The canonical protocol endpoint remains `https://mcp.glossa.sh/mcp`.
+The origin route `POST /` serves the same authenticated transport for MCP clients that use their configured transport URL as the OAuth resource. This keeps the OAuth resource equal to the protected resource identifier `https://mcp.glossa.sh/`. The canonical protocol endpoint remains `https://mcp.glossa.sh/mcp`.
 
 Tools:
 
