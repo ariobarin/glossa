@@ -1,38 +1,18 @@
 # Deployment
 
-## Canonical production state
+Glossa production uses one Heroku web process and one Postgres database. Active routing state is process-local, so the relay must not scale horizontally until routing has an external coordination design.
 
-- GitHub repository: `ariobarin/glossa`
-- Heroku app: `ariobarin-glossa`
-- Web process count: one
-- Database: one Essential-0 Postgres add-on
-- MCP endpoint: `https://mcp.glossa.sh/mcp`
-- Health endpoint: `https://mcp.glossa.sh/healthz`
-- Auth0 issuer: `https://dev-fl2h5xhp6umeh74m.us.auth0.com/`
-- Auth0 audience: `https://mcp.glossa.sh/`
+Operational inventory, such as platform resource names and Auth0 application counts, belongs in operator records rather than this guide. Public endpoints and required client identifiers remain documented where clients need them.
 
-Auth0 has one `Glossa CLI` Native application, one current ChatGPT third-party client, and one `Glossa API`. Client ID Metadata Document registration is enabled. Dynamic Client Registration is disabled. Public database signup and automatic Glossa account activation are enabled.
+## Automated deployment
 
-## Deploy
+Every push to `main` runs CI. After the build succeeds, relay-affecting changes deploy the same tested commit to Heroku and check `https://mcp.glossa.sh/healthz`. Documentation, website, and CLI-only changes do not restart the relay.
 
-Every push to `main` runs CI. After the build succeeds, relay-affecting changes deploy the same tested commit automatically to Heroku and check `https://mcp.glossa.sh/healthz`. Documentation, website, and CLI-only changes do not restart the relay. GitHub Actions uses the revocable `HEROKU_API_KEY` repository secret.
+The deployment workflow reads its Heroku credential from the `HEROKU_API_KEY` repository secret. The release process applies database migrations before the web release becomes active.
 
-For a manual recovery deployment, build first:
+## Required configuration
 
-```powershell
-npm ci
-npm run check
-```
-
-Then deploy the reviewed `main` commit to Heroku:
-
-```powershell
-git push heroku main
-```
-
-The Heroku release process applies database migrations before the web release becomes active.
-
-## Required Heroku config
+Configure these values in Heroku:
 
 - `DATABASE_URL`
 - `GLOSSA_AUTH0_AUDIENCE`
@@ -49,26 +29,35 @@ The Heroku release process applies database migrations before the web release be
 - `GLOSSA_WORKER_POLL_MS`
 - `NODE_ENV`
 
-Keep values in Heroku config. Never copy secret values into commits, issues, or logs.
-Keep `GLOSSA_RELAY_REQUEST_TIMEOUT_MS` at 18,000 milliseconds and never above 19,000 so hosted requests finish within 20 seconds.
+Never copy secret values into commits, issues, or logs. Keep `GLOSSA_RELAY_REQUEST_TIMEOUT_MS` at 18,000 milliseconds and never above 19,000 so hosted requests finish within 20 seconds.
+
+## Manual recovery deployment
+
+Build and verify the reviewed `main` commit before pushing it to Heroku:
+
+```powershell
+npm ci
+npm run check
+git push heroku main
+```
+
+Check the public health endpoint and the target Heroku app:
+
+```powershell
+Invoke-RestMethod https://mcp.glossa.sh/healthz
+heroku ps --app <app-name>
+heroku releases --app <app-name> --num 3
+```
+
+Also verify that a real worker connects and ChatGPT can list its device.
 
 ## Open beta access
 
 A valid Auth0 access token creates or activates its Glossa account automatically. Accounts with `disabled_at` set remain blocked.
 
-## Verify
-
-```powershell
-Invoke-RestMethod https://mcp.glossa.sh/healthz
-heroku ps --app ariobarin-glossa
-heroku releases --app ariobarin-glossa --num 3
-```
-
-Also verify one real worker connects and ChatGPT can list its device.
-
 ## Publish the CLI
 
-npm trusts the GitHub Actions workflow `publish-cli.yml` for the public package `@ariobarin/glossa`. The workflow uses short-lived OIDC credentials and does not require an npm token.
+npm trusts the GitHub Actions workflow `publish-cli.yml` for `@ariobarin/glossa`. The workflow uses short-lived OIDC credentials and does not require an npm token.
 
 Prepare a `0.1.x` CLI version, build it, and inspect its package without publishing:
 
@@ -76,7 +65,7 @@ Prepare a `0.1.x` CLI version, build it, and inspect its package without publish
 npm run cli:prepare -- 0.1.0-beta.4
 ```
 
-After merging that version change, tag the exact main commit and push the tag only when publication is intended:
+After merging that version change, tag the exact `main` commit and push the tag only when publication is intended:
 
 ```powershell
 $version = node -p "require('./packages/cli/package.json').version"
@@ -84,23 +73,22 @@ git tag "cli-v$version"
 git push origin "cli-v$version"
 ```
 
-The tag must exactly match the version in `packages/cli/package.json`. Prerelease versions publish under `beta`; stable versions publish under `latest`.
-Keep CLI versions on the `0.1.x` line until the release policy changes.
+The tag must exactly match the version in `packages/cli/package.json`. Prerelease versions publish under `beta`; stable versions publish under `latest`. Keep CLI versions on the `0.1.x` line until the release policy changes.
 
-## DNS and TLS
+## Website, DNS, and TLS
 
-`glossa.sh` remains at Vercel. Only `mcp.glossa.sh` points to the Heroku DNS target. Do not replace nameservers or alter the apex, mail, verification, or unrelated records.
-
-The Vercel project is connected to GitHub with `site/` as its root directory. Changes under `site/` deploy automatically from `main`; other commits are ignored. For manual recovery:
+The Vercel project uses `site/` as its root directory and deploys changes from `main`. For manual recovery:
 
 ```powershell
 vercel deploy --prod --cwd site
 ```
 
-## Recovery
+Only `mcp.glossa.sh` should point to the Heroku custom-domain target. Preserve the apex site and all unrelated DNS records when changing that route.
+
+## Recovery principles
 
 - Keep the web process count at one.
 - Retain a recent logical Postgres backup.
 - Roll back application code before applying an irreversible schema change.
-- Workers reconnect after relay restarts, but active jobs do not survive a restart.
+- Expect workers to reconnect after relay restarts. Active jobs do not survive a restart.
 - Restore only the previous `mcp` DNS record during DNS rollback.

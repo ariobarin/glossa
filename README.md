@@ -37,7 +37,7 @@ Install the Glossa plugin in ChatGPT:
 
 [Install Glossa Live](https://chatgpt.com/plugins/plugin_asdk_app_6a5702618d3081919dfdd643c18aba0c)
 
-See [FRIEND_TESTING.md](FRIEND_TESTING.md) for the complete setup workflow.
+See the [open beta guide](docs/open-beta.md) for safe setup, verification, and troubleshooting.
 
 ## Local development
 
@@ -53,6 +53,7 @@ Stop local Postgres with `npm run dev:down`.
 ## Documentation
 
 - [Product contract](docs/product.md)
+- [Open beta guide](docs/open-beta.md)
 - [Architecture](docs/architecture.md)
 - [Security model](docs/security.md)
 - [API and protocol](docs/protocol.md)
