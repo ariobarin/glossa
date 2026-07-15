@@ -33,7 +33,7 @@ Glossa executes commands with the permissions and environment of the local accou
 - require account ID in every query;
 - never fetch by resource ID and check ownership afterward when an account-scoped query is possible;
 - use opaque random identifiers;
-- maintain explicit adversarial isolation tests.
+- verify account isolation with direct integration checks before deployment.
 
 ### Stolen device token
 
@@ -72,12 +72,12 @@ Glossa executes commands with the permissions and environment of the local accou
 
 **Controls:**
 
-- implement and test canonicalization, realpath, symlink, and junction checks from the current Glossa requirements;
+- enforce canonicalization, realpath, symlink, and junction checks from the current Glossa requirements;
 - validate existing paths and nearest writable ancestors locally;
 - reject absolute paths and lexical parent escapes;
 - revalidate workspace-relative paths for every operation;
 - treat Windows path, junction, and reparse-point behavior as the launch security baseline;
-- add Windows junction and reparse-point tests before private beta.
+- verify Windows junction and reparse-point behavior when path enforcement changes.
 
 ### Shell authority
 
@@ -106,7 +106,7 @@ Glossa executes commands with the permissions and environment of the local accou
 - redact headers and bodies;
 - never attach request or response content;
 - never send local absolute paths or derived repository names to the relay;
-- test scrubbing functions.
+- verify log scrubbing before deployment.
 
 ### Relay compromise
 
@@ -117,7 +117,7 @@ Glossa executes commands with the permissions and environment of the local accou
 - relay does not possess local repository clones or developer credentials;
 - device tokens are sufficient to issue jobs while a worker is exposed, so relay compromise remains serious;
 - minimize dependencies and privileges;
-- use managed patching, Dependabot, secret scanning, provenance, and rapid device revocation.
+- use managed platform patching, secret scanning, exact dependencies, and rapid device revocation.
 
 ## Data retention
 
@@ -136,4 +136,4 @@ Do not durably retain:
 - repository names unless explicitly chosen by the user;
 - OAuth or device bearer secrets.
 
-Additional defense-in-depth ideas are isolated in `optional/FEATURES.md`; they are not substitutes for these core controls.
+Additional defenses must extend these controls rather than replace them.

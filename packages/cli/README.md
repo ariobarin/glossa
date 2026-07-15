@@ -1,21 +1,22 @@
 # @ariobarin/glossa
 
-This package publishes the `glossa` executable.
+This package contains the `glossa` executable. It is currently installed from the repository:
 
-```bash
-npm install --global @ariobarin/glossa
+```powershell
+npm ci
+npm run build
+npm install --global .\packages\cli
 glossa login
 glossa status
 glossa whoami
-cd path/to/repository
+Set-Location C:\path\to\a\repository
 glossa
-glossa logout
 ```
 
-Login uses Auth0 Device Authorization Flow and opens the complete verification URL when Auth0 provides one. The public tenant, client, and API identifiers are built in, so a fresh installation does not need environment configuration. Development deployments can override them with `GLOSSA_AUTH0_ISSUER`, `GLOSSA_AUTH0_CLI_CLIENT_ID`, and `GLOSSA_AUTH0_AUDIENCE`.
+Login uses Auth0 Device Authorization Flow. Public tenant, client, and API identifiers are built in, so testers do not configure OAuth values.
 
-Refresh credentials use the operating-system credential store. If that store is unavailable, Glossa prints a warning before using its mode-0600 credential-file fallback.
+OAuth and device credentials use the operating-system credential store. If it is unavailable, Glossa warns before using a restricted credential file.
 
-The first managed session enrolls the computer under its hostname and stores the returned device credential in the same operating-system credential store. Running `glossa` inside a Git worktree exposes only that worktree root. The local process prints the full canonical root, shell-authority warning, and write or command activity. Press Ctrl+C to disconnect immediately.
+The first managed session enrolls the computer under its hostname. Running `glossa` inside a Git worktree exposes only that worktree root. The process prints the canonical root, shell authority warning, and write or command activity. Press Ctrl+C to disconnect.
 
-The managed endpoint defaults to `https://mcp.glossa.sh`. Temporary or local deployments can set `GLOSSA_RELAY_ORIGIN` for authenticated enrollment and `GLOSSA_WORKER_ORIGIN` for outbound worker polling. Plain HTTP is accepted only for loopback relay origins and loopback or private IPv4 worker origins.
+The managed endpoint defaults to `https://mcp.glossa.sh`. Development deployments may override `GLOSSA_RELAY_ORIGIN` and `GLOSSA_WORKER_ORIGIN`. Plain HTTP is accepted only for loopback relay origins and loopback or private IPv4 worker origins.

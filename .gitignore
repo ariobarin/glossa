@@ -1,12 +1,9 @@
 node_modules/
 dist/
-coverage/
 .env
 .env.*
 !.env.example
-.glossa-agent-state.json
 *.log
 .DS_Store
 .vscode/
 .idea/
-glossa-mvp-handoff.zip
