@@ -79,6 +79,19 @@ heroku releases --app ariobarin-glossa --num 3
 
 Also verify one real worker connects and ChatGPT can list its device.
 
+## Publish the CLI
+
+npm trusts the GitHub Actions workflow `publish-cli.yml` for the public package `@ariobarin/glossa`. The workflow uses short-lived OIDC credentials and does not require an npm token.
+
+After merging a CLI version change, tag that exact main commit and push the tag:
+
+```powershell
+git tag cli-v0.1.0-beta.2
+git push origin cli-v0.1.0-beta.2
+```
+
+The tag must exactly match the version in `packages/cli/package.json`. Prerelease versions publish under `beta`; stable versions publish under `latest`.
+
 ## DNS and TLS
 
 `glossa.sh` remains at Vercel. Only `mcp.glossa.sh` points to the Heroku DNS target. Do not replace nameservers or alter the apex, mail, verification, or unrelated records.
