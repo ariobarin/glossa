@@ -42,7 +42,7 @@ Proposed full description:
 | `get_command` | Yes | No | No | Reads status and captured output for a command previously started by the signed-in account. |
 | `cancel_command` | No | Yes | No | Terminates a running local process tree. It does not reverse effects already caused by that command. |
 
-The table records the target submission metadata. The current base branch still advertises `openWorldHint: false` for `run_command`; deploy the corrected MCP contract before scanning or submitting the plugin. The unrestricted authority of `run_command` remains the primary submission risk. Do not soften this explanation in the portal. Decide whether to remove, narrow, or isolate that authority before submission.
+The table records the target submission metadata. The deployed MCP scan must show `openWorldHint: true` for `run_command` before submission; this packet is not evidence that the deployment is corrected. The unrestricted authority of `run_command` remains the primary submission risk. Do not soften this explanation in the portal. Decide whether to remove, narrow, or isolate that authority before submission.
 
 ## Reviewer environment
 
