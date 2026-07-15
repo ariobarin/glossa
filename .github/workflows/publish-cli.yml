@@ -26,6 +26,7 @@ jobs:
           version=$(node -p "require('./packages/cli/package.json').version")
           [[ "$version" == 0.1.* ]]
           test "cli-v${version}" = "${GITHUB_REF_NAME}"
+      - run: npm run build --workspace @glossa/protocol
       - run: npm run build --workspace @ariobarin/glossa
       - name: Publish package
         shell: bash
