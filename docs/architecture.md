@@ -85,6 +85,7 @@ The database stores the device ID, account ID, salt, and scrypt hash. Worker req
 Heroku's router requires an initial response within its request window. Therefore:
 
 - worker long polls return within 20 seconds;
+- worker poll wait time is reduced by authentication time so the complete request remains bounded;
 - `run_command` returns promptly after the worker accepts the command and supplies a command ID;
 - command execution continues locally beyond the initiating request;
 - `get_command` may wait up to 15 seconds, and `cancel_command` uses a separate bounded request;

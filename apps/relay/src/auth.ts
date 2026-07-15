@@ -2,6 +2,22 @@ import type { NextFunction, Request, Response } from "express";
 import { createRemoteJWKSet, jwtVerify, type JWTPayload } from "jose";
 import type { RelayConfig } from "./config.js";
 
+const jwksByIssuer = new Map<
+  string,
+  ReturnType<typeof createRemoteJWKSet>
+>();
+
+function jwksForIssuer(issuer: string): ReturnType<typeof createRemoteJWKSet> {
+  const existing = jwksByIssuer.get(issuer);
+  if (existing) return existing;
+  const created = createRemoteJWKSet(
+    new URL(".well-known/jwks.json", issuer),
+    { timeoutDuration: 5_000 },
+  );
+  jwksByIssuer.set(issuer, created);
+  return created;
+}
+
 export interface AuthenticatedRequest extends Request {
   auth?: {
     subject: string;
@@ -40,7 +56,7 @@ export function requireAuth(config: RelayConfig, requiredScope?: string) {
   const issuer = config.GLOSSA_AUTH0_ISSUER.endsWith("/")
     ? config.GLOSSA_AUTH0_ISSUER
     : `${config.GLOSSA_AUTH0_ISSUER}/`;
-  const jwks = createRemoteJWKSet(new URL(".well-known/jwks.json", issuer));
+  const jwks = jwksForIssuer(issuer);
 
   return async (
     request: AuthenticatedRequest,

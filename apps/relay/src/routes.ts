@@ -21,6 +21,7 @@ const renameSchema = z.object({ name: deviceNameSchema }).strict();
 const deviceIdSchema = z.string().uuid();
 const registerSchema = z.object({}).strict();
 const pollSchema = z.object({ generation: z.string().uuid() }).strict();
+const MAX_WORKER_POLL_REQUEST_MS = 18_000;
 
 type AuthFactory = (
   config: RelayConfig,
@@ -272,6 +273,7 @@ export function buildRoutes(
   });
 
   router.post("/device/poll", async (request, response) => {
+    const requestStartedAt = Date.now();
     const device = await authenticatedDevice(
       request,
       response,
@@ -285,11 +287,19 @@ export function buildRoutes(
       return;
     }
     try {
+      const remainingRequestMs = Math.max(
+        0,
+        MAX_WORKER_POLL_REQUEST_MS - (Date.now() - requestStartedAt),
+      );
+      if (remainingRequestMs === 0) {
+        response.status(204).end();
+        return;
+      }
       const job = await state.poll(
         device.accountId,
         device.id,
         parsed.data.generation,
-        config.GLOSSA_WORKER_POLL_MS,
+        Math.min(config.GLOSSA_WORKER_POLL_MS, remainingRequestMs),
       );
       if (!job) {
         response.status(204).end();
