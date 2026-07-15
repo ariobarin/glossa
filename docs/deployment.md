@@ -83,6 +83,12 @@ Also verify one real worker connects and ChatGPT can list its device.
 
 `glossa.sh` remains at Vercel. Only `mcp.glossa.sh` points to the Heroku DNS target. Do not replace nameservers or alter the apex, mail, verification, or unrelated records.
 
+Deploy the static landing page from `site/` with the Vercel project linked to that directory:
+
+```powershell
+vercel deploy --prod --cwd site
+```
+
 ## Recovery
 
 - Keep the web process count at one.
