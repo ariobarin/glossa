@@ -47,7 +47,7 @@ export class Store implements RelayStore {
             ? { rejectUnauthorized: false }
             : undefined,
         max: 5,
-        connectionTimeoutMillis: 5_000,
+        connectionTimeoutMillis: 30_000,
         query_timeout: 5_000,
         statement_timeout: 5_000,
       });
