@@ -15,14 +15,10 @@ Glossa is an execution bridge, not an agent. ChatGPT owns the model, conversatio
 
 Glossa is a Windows-first private beta. The managed relay is live at `https://mcp.glossa.sh/mcp`. Tester accounts require explicit operator admission.
 
-The CLI package is not published yet. Install it from the repository:
+Install the private-beta CLI from npm:
 
 ```powershell
-git clone https://github.com/ariobarin/glossa.git
-Set-Location glossa
-npm ci
-npm run build
-npm install --global .\packages\cli
+npm install --global @ariobarin/glossa@beta
 ```
 
 Then sign in and expose one workspace:

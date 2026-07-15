@@ -1,11 +1,9 @@
 # @ariobarin/glossa
 
-This package contains the `glossa` executable. It is currently installed from the repository:
+This package contains the `glossa` executable. Install the private beta from npm:
 
 ```powershell
-npm ci
-npm run build
-npm install --global .\packages\cli
+npm install --global @ariobarin/glossa@beta
 glossa login
 glossa status
 glossa whoami

@@ -20,11 +20,7 @@ ChatGPT Pro can connect custom MCP apps for read and fetch behavior. Full MCP wr
 In PowerShell:
 
 ```powershell
-git clone https://github.com/ariobarin/glossa.git
-Set-Location glossa
-npm ci
-npm run build
-npm install --global .\packages\cli
+npm install --global @ariobarin/glossa@beta
 glossa login
 ```
 
