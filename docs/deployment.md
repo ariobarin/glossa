@@ -91,7 +91,7 @@ Keep CLI versions on the `0.1.x` line until the release policy changes.
 
 `glossa.sh` remains at Vercel. Only `mcp.glossa.sh` points to the Heroku DNS target. Do not replace nameservers or alter the apex, mail, verification, or unrelated records.
 
-The Vercel project is connected to GitHub with `site/` as its root directory. Changes under `site/` deploy automatically from `main`. For manual recovery:
+The Vercel project is connected to GitHub with `site/` as its root directory. Changes under `site/` deploy automatically from `main`; other commits are ignored. For manual recovery:
 
 ```powershell
 vercel deploy --prod --cwd site
