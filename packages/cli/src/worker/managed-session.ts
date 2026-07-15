@@ -61,7 +61,7 @@ export async function deviceForSession(
   if (stored?.relayOrigin === endpoints.relayOrigin) return stored;
 
   const loaded = await loadLogin();
-  if (!loaded) throw new Error("Not signed in. Run: glossa login");
+  if (!loaded) throw new Error("Not signed in. Run Glossa again to sign in.");
   const credentials = await validate(loaded.credentials);
   const enrolled = await enroll(
     endpoints,

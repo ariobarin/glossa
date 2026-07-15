@@ -38,8 +38,15 @@ function endpoint(issuer: string, pathname: string): string {
   return new URL(pathname, issuer.endsWith("/") ? issuer : `${issuer}/`).toString();
 }
 
-function sessionExpiredError(): Error {
-  return new Error("Session expired. Run: glossa login");
+export class SessionExpiredError extends Error {
+  constructor() {
+    super("Session expired. Run Glossa again to sign in.");
+    this.name = "SessionExpiredError";
+  }
+}
+
+function sessionExpiredError(): SessionExpiredError {
+  return new SessionExpiredError();
 }
 
 function oauthMessage(data: OAuthError, status: number): string {
