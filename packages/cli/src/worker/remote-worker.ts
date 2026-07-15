@@ -27,7 +27,7 @@ export interface RemoteWorkerOptions {
   reconnectMaxMs?: number;
 }
 
-class DeviceRejectedError extends Error {
+export class DeviceRejectedError extends Error {
   constructor() {
     super("The relay rejected the device credential.");
     this.name = "DeviceRejectedError";

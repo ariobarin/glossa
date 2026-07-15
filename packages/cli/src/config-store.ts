@@ -40,7 +40,7 @@ export interface CredentialStoreOptions {
   warn?: (message: string) => void;
 }
 
-function configDirectory(): string {
+export function configDirectory(): string {
   if (process.platform === "win32") {
     return path.join(process.env.APPDATA ?? os.homedir(), "Glossa");
   }

@@ -3,7 +3,9 @@ import { deleteCredentials, loadCredentials } from "./config-store.js";
 import { loadUserProfile } from "./auth-session.js";
 import { loadAuthConfig } from "./auth-config.js";
 import { loginWithDeviceFlow } from "./device-flow.js";
+import { loadRelayEndpoints } from "./relay-client.js";
 import { runLocalSession } from "./worker/local-session.js";
+import { runManagedSession } from "./worker/managed-session.js";
 import { selectExposureRoot } from "./worker/root-selection.js";
 
 const VERSION = "prototype";
@@ -12,14 +14,16 @@ function usage(): void {
   console.log(`Glossa ${VERSION}
 
 Usage:
+  glossa [path] [--allow-broad-root]
   glossa login
   glossa logout
   glossa status
   glossa whoami
-  glossa expose [path] --local [--allow-broad-root]
+  glossa [path] --local [--allow-broad-root]
   glossa --version
   glossa --help
 
+Running Glossa exposes one local root through the managed MCP relay.
 Local mode reads newline-delimited worker jobs from stdin and writes results to stdout.`);
 }
 
@@ -46,7 +50,25 @@ function exposeOptions(args: string[]): {
 }
 
 async function main(): Promise<void> {
-  const [command = "help"] = process.argv.slice(2);
+  const args = process.argv.slice(2);
+  const [command] = args;
+
+  if (
+    !command ||
+    (command.startsWith("-") &&
+      !["--help", "-h", "--version", "-v"].includes(command))
+  ) {
+    const options = exposeOptions(args);
+    const root = await selectExposureRoot(options.path, options.allowBroadRoot);
+    if (options.local) await runLocalSession(root, options.allowBroadRoot);
+    else
+      await runManagedSession(
+        root,
+        loadRelayEndpoints(),
+        options.allowBroadRoot,
+      );
+    return;
+  }
 
   switch (command) {
     case "--help":
@@ -104,20 +126,19 @@ async function main(): Promise<void> {
       );
       return;
     }
-    case "expose":
+    default:
       {
-        const options = exposeOptions(process.argv.slice(3));
-        if (!options.local) {
-          throw new Error(
-            "Managed relay connection requires device enrollment. Use --local during M1 development.",
-          );
-        }
+        const options = exposeOptions(args);
         const root = await selectExposureRoot(options.path, options.allowBroadRoot);
-        await runLocalSession(root, options.allowBroadRoot);
+        if (options.local) await runLocalSession(root, options.allowBroadRoot);
+        else
+          await runManagedSession(
+            root,
+            loadRelayEndpoints(),
+            options.allowBroadRoot,
+          );
         return;
       }
-    default:
-      throw new Error(`Unknown command: ${command}`);
   }
 }
 
