@@ -13,12 +13,11 @@
   "main": "dist/main.js",
   "files": [
     "dist/main.js",
-    "dist/main.js.map",
     "README.md",
     "LICENSE"
   ],
   "scripts": {
-    "build": "tsc -p tsconfig.json && node scripts/build-package.mjs",
+    "build": "tsc -p tsconfig.json --noEmit && node scripts/build-package.mjs",
     "prepack": "npm run build"
   },
   "dependencies": {
