@@ -10,10 +10,31 @@ const expectedTools = [
   "cancel_command",
   "get_command",
   "list_devices",
+  "list_files",
   "read_file",
   "run_command",
   "write_file",
 ];
+
+interface JsonSchemaNode {
+  description?: unknown;
+  properties?: Record<string, JsonSchemaNode>;
+  items?: JsonSchemaNode;
+}
+
+function assertFieldDescriptions(schema: JsonSchemaNode, label: string): void {
+  for (const [name, property] of Object.entries(schema.properties ?? {})) {
+    assert.equal(
+      typeof property.description,
+      "string",
+      `${label}.${name} must have a description`,
+    );
+    assertFieldDescriptions(property, `${label}.${name}`);
+    if (property.items) {
+      assertFieldDescriptions(property.items, `${label}.${name}[]`);
+    }
+  }
+}
 
 function testConfig() {
   return loadConfig({
@@ -51,15 +72,25 @@ test("publishes reviewable MCP tool contracts", async (context) => {
   );
 
   for (const tool of tools) {
+    assert.ok(tool.title, `${tool.name} must have a title`);
     assert.ok(tool.description, `${tool.name} must have a description`);
     assert.ok(tool.inputSchema, `${tool.name} must have an input schema`);
     assert.ok(tool.outputSchema, `${tool.name} must have an output schema`);
+    assertFieldDescriptions(
+      tool.inputSchema as JsonSchemaNode,
+      `${tool.name}.input`,
+    );
+    assertFieldDescriptions(
+      tool.outputSchema as JsonSchemaNode,
+      `${tool.name}.output`,
+    );
     assert.equal(tool._meta?.["openai/visibility"], "public");
     assert.deepEqual(tool._meta?.securitySchemes, [
       { type: "oauth2", scopes: ["glossa:access"] },
     ]);
     assert.equal(typeof tool.annotations?.readOnlyHint, "boolean");
     assert.equal(typeof tool.annotations?.destructiveHint, "boolean");
+    assert.equal(typeof tool.annotations?.idempotentHint, "boolean");
     assert.equal(typeof tool.annotations?.openWorldHint, "boolean");
   }
 

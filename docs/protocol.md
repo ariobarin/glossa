@@ -82,21 +82,24 @@ The origin route `POST /` serves the same authenticated transport for MCP client
 Tools:
 
 - `list_devices`
+- `list_files`
 - `read_file`
 - `write_file`
 - `run_command`
 - `get_command`
 - `cancel_command`
 
-`list_devices` identifies an active root by device ID and reports `path: "."`. File and command tools accept that device ID and operate relative to its exposed root. Local absolute paths are never transmitted to or returned by the hosted relay.
+`list_devices` identifies an active root by device ID and reports `path: "."`. `list_files` returns at most 1,000 immediate entries for one directory without recursion or link traversal. File and command tools accept the device ID and operate relative to its exposed root. Local absolute paths are never transmitted to or returned by the hosted relay.
 
 Tool annotations must describe actual behavior. `write_file` and `run_command` are non-read-only and destructive-capable.
 Every tool advertises the `glossa:access` OAuth scheme in descriptor metadata and is visible to the model. `run_command` declares `openWorldHint: true` because a command can use the worker account's inherited network access and affect external systems. All other tools declare `openWorldHint: false`.
+Tool descriptions state when the model should select each operation. Every public input and output field includes a description, and successful results provide both structured content and an equivalent JSON text fallback.
 
 ## Worker job union
 
 ```ts
 type WorkerJob =
+  | { type: "list_files"; requestId: string; path: string }
   | { type: "read_file"; requestId: string; path: string }
   | {
       type: "write_file";

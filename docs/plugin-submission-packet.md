@@ -22,7 +22,7 @@ Proposed short description:
 
 Proposed full description:
 
-> Glossa connects ChatGPT to one local coding workspace selected by the user. It can read and replace UTF-8 files, start bounded commands, inspect command output, and cancel running commands while the local Glossa worker is connected. Commands run with the environment, network access, and operating-system permissions of the account that launched the worker. Workspace operations require the local Glossa worker to be running.
+> Glossa connects ChatGPT to one local coding workspace selected by the user. It can inspect directories, read and replace UTF-8 files, start bounded commands, inspect command output, and cancel running commands while the local Glossa worker is connected. Commands run with the environment, network access, and operating-system permissions of the account that launched the worker. Workspace operations require the local Glossa worker to be running.
 
 ## Starter prompts
 
@@ -36,6 +36,7 @@ Proposed full description:
 | Tool | Read only | Destructive | Open world | Explanation |
 | --- | --- | --- | --- | --- |
 | `list_devices` | Yes | No | No | Reads the online workers associated with the signed-in account. |
+| `list_files` | Yes | No | No | Lists one directory inside the exposed root without recursion or link traversal. |
 | `read_file` | Yes | No | No | Reads one relative UTF-8 file inside the exposed root. |
 | `write_file` | No | Yes | No | Creates or replaces one file inside the exposed root. Revision checking is available through `expectedSha256`. |
 | `run_command` | No | Yes | Yes | Starts an arbitrary command with the worker account's inherited environment and network access. It can affect files and external systems. |

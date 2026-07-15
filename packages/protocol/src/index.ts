@@ -14,7 +14,12 @@ export const deviceNameSchema = z
   .max(80)
   .regex(/^[^\u0000-\u001f\u007f]+$/, "Device name contains control characters");
 
-export const relativePathSchema = z.string().max(4096);
+export const relativePathSchema = z
+  .string()
+  .max(4096)
+  .describe(
+    "Path relative to the exposed workspace root. Absolute paths and parent traversal are rejected.",
+  );
 const boundedTextSchema = z
   .string()
   .refine((value) => Buffer.byteLength(value, "utf8") <= MAX_TEXT_BYTES);
@@ -23,6 +28,17 @@ export const readFileRequestSchema = z.object({
   path: relativePathSchema,
 }).strict();
 
+export const listFilesRequestSchema = z.object({
+  path: relativePathSchema
+    .default(".")
+    .describe("Directory path relative to the exposed root. Defaults to the root."),
+}).strict();
+
+export const listFilesJobSchema = listFilesRequestSchema.extend({
+  type: z.literal("list_files"),
+  requestId: z.string().uuid(),
+});
+
 export const readFileJobSchema = readFileRequestSchema.extend({
   type: z.literal("read_file"),
   requestId: z.string().uuid(),
@@ -30,8 +46,16 @@ export const readFileJobSchema = readFileRequestSchema.extend({
 
 export const writeFileRequestSchema = z.object({
   path: relativePathSchema,
-  content: boundedTextSchema,
-  expectedSha256: z.string().regex(/^[a-f0-9]{64}$/).optional(),
+  content: boundedTextSchema.describe(
+    "Complete UTF-8 text content that will replace the file.",
+  ),
+  expectedSha256: z
+    .string()
+    .regex(/^[a-f0-9]{64}$/)
+    .optional()
+    .describe(
+      "SHA-256 returned by read_file. When provided, the write fails if the file changed.",
+    ),
 }).strict();
 
 export const writeFileJobSchema = writeFileRequestSchema.extend({
@@ -57,15 +81,31 @@ function requireOneCommand(
 
 export const runCommandRequestSchema = z
   .object({
-    argv: z.array(z.string()).min(1).max(256).optional(),
-    shellCommand: z.string().max(64 * 1024).optional(),
-    stdin: boundedTextSchema.optional(),
+    argv: z
+      .array(z.string())
+      .min(1)
+      .max(256)
+      .optional()
+      .describe(
+        "Executable and arguments passed without shell parsing. Provide this or shellCommand, not both.",
+      ),
+    shellCommand: z
+      .string()
+      .max(64 * 1024)
+      .optional()
+      .describe("PowerShell command text. Provide this or argv, not both."),
+    stdin: boundedTextSchema
+      .optional()
+      .describe("Optional UTF-8 text sent to the command standard input."),
     timeoutMs: z
       .number()
       .int()
       .min(1)
       .max(MAX_COMMAND_TIMEOUT_MS)
-      .default(DEFAULT_COMMAND_TIMEOUT_MS),
+      .default(DEFAULT_COMMAND_TIMEOUT_MS)
+      .describe(
+        "Maximum command runtime in milliseconds. Defaults to 900000 and cannot exceed 3600000.",
+      ),
   })
   .strict()
   .superRefine(requireOneCommand);
@@ -76,8 +116,17 @@ export const runCommandJobSchema = runCommandRequestSchema.safeExtend({
 });
 
 export const getCommandRequestSchema = z.object({
-  commandId: z.string().uuid(),
-  waitMs: z.number().int().min(0).max(MAX_COMMAND_STATUS_WAIT_MS).optional(),
+  commandId: z
+    .string()
+    .uuid()
+    .describe("Command identifier returned by run_command."),
+  waitMs: z
+    .number()
+    .int()
+    .min(0)
+    .max(MAX_COMMAND_STATUS_WAIT_MS)
+    .optional()
+    .describe("Optional long-poll duration in milliseconds, from 0 through 15000."),
 }).strict();
 
 export const getCommandJobSchema = getCommandRequestSchema.extend({
@@ -86,7 +135,10 @@ export const getCommandJobSchema = getCommandRequestSchema.extend({
 });
 
 export const cancelCommandRequestSchema = z.object({
-  commandId: z.string().uuid(),
+  commandId: z
+    .string()
+    .uuid()
+    .describe("Command identifier returned by run_command."),
 }).strict();
 
 export const cancelCommandJobSchema = cancelCommandRequestSchema.extend({
@@ -95,6 +147,7 @@ export const cancelCommandJobSchema = cancelCommandRequestSchema.extend({
 });
 
 export const workerJobSchema = z.discriminatedUnion("type", [
+  listFilesJobSchema,
   readFileJobSchema,
   writeFileJobSchema,
   runCommandJobSchema,
