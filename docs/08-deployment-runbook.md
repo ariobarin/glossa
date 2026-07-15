@@ -97,6 +97,8 @@ The same relay hostname serves:
 
 Protected-resource metadata advertises the API audience `https://mcp.glossa.sh/` as its `resource` value. MCP clients still send protocol requests to `https://mcp.glossa.sh/mcp`.
 
+Clients that derive the OAuth resource from their configured transport URL may use `https://mcp.glossa.sh/`. The origin serves the same authenticated MCP transport while `/mcp` remains canonical.
+
 Authorization, not hidden paths, protects routes.
 
 ## Health verification

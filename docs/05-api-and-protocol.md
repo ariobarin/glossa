@@ -77,6 +77,8 @@ Posts a structured result for the delivered job. Late results after caller timeo
 
 Auth0 OAuth required. The token's account can route only to devices owned by that account.
 
+The origin route `POST /` serves the same authenticated transport for MCP clients that use their configured transport URL as the OAuth resource. This keeps the OAuth resource equal to the Auth0 API identifier `https://mcp.glossa.sh/`. The canonical protocol endpoint remains `https://mcp.glossa.sh/mcp`.
+
 Tools:
 
 - `list_devices`

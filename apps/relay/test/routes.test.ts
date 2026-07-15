@@ -253,23 +253,25 @@ test("unadmitted identities are rejected before MCP dispatch", async (context) =
   assert.deepEqual(await response.json(), { error: "account_not_admitted" });
 });
 
-test("streamable HTTP serves the registered MCP tools", async (context) => {
+test("streamable HTTP serves MCP tools at both transport routes", async (context) => {
   const store = new MemoryStore();
   store.admit("subject-a");
   const origin = await startRelay(context, store);
-  const client = new Client({ name: "http-test", version: "0.0.0" });
-  const transport = new StreamableHTTPClientTransport(new URL(`${origin}/mcp`), {
-    requestInit: { headers: { authorization: "Bearer subject-a" } },
-  });
-  try {
-    await client.connect(transport as unknown as Transport);
-    const tools = await client.listTools();
+  for (const path of ["/", "/mcp"]) {
+    const client = new Client({ name: "http-test", version: "0.0.0" });
+    const transport = new StreamableHTTPClientTransport(new URL(`${origin}${path}`), {
+      requestInit: { headers: { authorization: "Bearer subject-a" } },
+    });
+    try {
+      await client.connect(transport as unknown as Transport);
+      const tools = await client.listTools();
 
-    assert.equal(tools.tools.length, 8);
-    assert.ok(tools.tools.some((tool) => tool.name === "run_command"));
-    assert.ok(tools.tools.some((tool) => tool.name === "write_file"));
-  } finally {
-    await client.close();
+      assert.equal(tools.tools.length, 8);
+      assert.ok(tools.tools.some((tool) => tool.name === "run_command"));
+      assert.ok(tools.tools.some((tool) => tool.name === "write_file"));
+    } finally {
+      await client.close();
+    }
   }
 });
 
