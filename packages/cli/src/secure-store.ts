@@ -76,7 +76,7 @@ export class SecureStore<T> {
       } catch {
         // An existing file can still provide the warned fallback.
       }
-      if (serialized) {
+      if (serialized !== undefined) {
         return { value: this.#options.parse(serialized), backend: "keyring" };
       }
     }
