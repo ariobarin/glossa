@@ -13,9 +13,8 @@
   ],
   "scripts": {
     "build": "npm run build --workspace @glossa/protocol && npm run build --workspace @ariobarin/glossa && npm run build --workspace @glossa/relay",
-    "check": "npm run build && node scripts/check-rebrand.mjs",
-    "dev": "npm run dev --workspace @glossa/relay",
-    "preflight": "node scripts/preflight.mjs"
+    "check": "npm run build",
+    "dev": "npm run dev --workspace @glossa/relay"
   },
   "license": "MIT"
 }

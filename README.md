@@ -1,56 +1,56 @@
 # Glossa
 
-Glossa lets a user explicitly expose one local coding workspace to an existing AI-agent harness through a managed MCP relay.
+Glossa lets ChatGPT work inside one local coding workspace that the user explicitly exposes.
 
 ```text
-agent harness
-    │ OAuth-protected MCP
-    ▼
-Glossa managed relay
-    │ per-device authenticated outbound polling
-    ▼
-glossa process on the user's computer
-    │ locally enforced root
-    ▼
-local files and bounded one-shot commands
+ChatGPT
+  -> OAuth protected MCP relay
+  -> authenticated outbound worker connection
+  -> one local Git worktree or explicit directory
 ```
 
-Glossa is an execution bridge, not an agent. The outer harness owns models, conversations, planning, approvals, retries, and user interaction.
+Glossa is an execution bridge, not an agent. ChatGPT owns the model, conversation, planning, and approvals. The local worker owns file containment and command execution.
 
-## Prototype status
+## Status
 
-No numbered Glossa release exists yet. The current code and the older Veronica repository are prototype material, not compatibility baselines. Until the first numbered public release, commands, configuration, protocols, schemas, and repository structure may change without aliases or migration shims.
+Glossa is a Windows-first private beta. The managed relay is live at `https://mcp.glossa.sh/mcp`. Tester accounts require explicit operator admission.
 
-## Intended user experience
+The CLI package is not published yet. Install it from the repository:
 
-```bash
-npm install --global @ariobarin/glossa
+```powershell
+git clone https://github.com/ariobarin/glossa.git
+Set-Location glossa
+npm ci
+npm run build
+npm install --global .\packages\cli
+```
+
+Then sign in and expose one workspace:
+
+```powershell
 glossa login
-cd ~/code/project
+Set-Location C:\path\to\a\project
 glossa
 ```
 
-The user signs in in a browser once. Glossa enrolls the computer, exposes only the selected Git worktree, and connects it to the stable MCP endpoint at `https://mcp.glossa.sh/mcp`.
+Starting `glossa` authorizes connected clients to modify files inside that root and run commands with the full environment and permissions of the Windows account that launched it. Press Ctrl+C to disconnect.
 
-Starting an exposure session authorizes the connected client to write files within the exposed root and run bounded commands without a second local prompt for each operation. The CLI displays the shell-authority warning and provides visible activity plus an immediate disconnect control.
+## ChatGPT
 
-Commands inherit the complete environment and permissions of the account that started Glossa, including available developer credentials. Glossa does not enumerate or log that environment automatically.
+Create a custom app in ChatGPT developer mode with this MCP URL:
 
-Commands run as asynchronous jobs. `run_command` returns a command ID promptly, while separate status and cancel operations allow installs, builds, and tests to continue beyond a single hosted request window.
+```text
+https://mcp.glossa.sh/mcp
+```
 
-## Domain context
+See [FRIEND_TESTING.md](FRIEND_TESTING.md) for the exact owner and tester workflow.
 
-`glossa.sh` was acquired through Vercel Domains. The existing apex site must remain intact. The core deployment adds only the records needed for `mcp.glossa.sh`, after first exporting or recording the current DNS configuration and confirming which nameservers are authoritative.
+## Documentation
 
-## Core MVP constraints
-
-- One Glossa account per Auth0 user.
-- Multiple devices are allowed, but only one active worker per device name.
-- One exposed root per running `glossa` process.
-- File reads, atomic writes, and completed bounded one-shot commands.
-- Per-device enrollment, listing, and revocation.
-- No user-managed VPS, VPN, reverse proxy, TLS, or OAuth setup.
-- Commands execute with the local operating-system account's permissions.
-- This is not a sandbox.
-
-The core specification is in `docs/01-prd.md`. Nonessential features and service integrations are kept separately under `optional/` and do not block the MVP.
+- [Product contract](docs/product.md)
+- [Architecture](docs/architecture.md)
+- [Security model](docs/security.md)
+- [Data model](docs/data-model.md)
+- [API and protocol](docs/protocol.md)
+- [Deployment](docs/deployment.md)
+- [Architecture decisions](docs/decisions.md)
