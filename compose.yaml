@@ -1,0 +1,19 @@
+services:
+  postgres:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_DB: glossa
+      POSTGRES_USER: glossa
+      POSTGRES_PASSWORD: glossa
+    ports:
+      - "55432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U glossa -d glossa"]
+      interval: 2s
+      timeout: 5s
+      retries: 15
+    volumes:
+      - glossa-postgres:/var/lib/postgresql/data
+
+volumes:
+  glossa-postgres:

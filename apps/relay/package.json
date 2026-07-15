@@ -5,10 +5,10 @@
   "type": "module",
   "main": "dist/src/index.js",
   "scripts": {
-    "dev": "tsx src/index.ts",
+    "dev": "node --env-file-if-exists=../../.env --import tsx src/index.ts",
     "build": "tsc -p tsconfig.json",
-    "start": "node dist/src/index.js",
-    "migrate": "node dist/src/migrate.js"
+    "start": "node --env-file-if-exists=../../.env dist/src/index.js",
+    "migrate": "node --env-file-if-exists=../../.env dist/src/migrate.js"
   },
   "dependencies": {
     "@glossa/protocol": "*",

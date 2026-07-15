@@ -4,7 +4,7 @@ Checked on 2026-07-15.
 
 ## What your friend needs
 
-- Windows with Git, Node.js 20 or newer, and npm
+- Windows with Git, Node.js 24, and npm
 - A disposable Git repository they are comfortable exposing
 - ChatGPT on the web with plugin access
 

@@ -8,7 +8,9 @@ import { runLocalSession } from "./worker/local-session.js";
 import { runManagedSession } from "./worker/managed-session.js";
 import { selectExposureRoot } from "./worker/root-selection.js";
 
-const VERSION = "0.1.0-beta.3";
+declare const __GLOSSA_VERSION__: string;
+
+const VERSION = __GLOSSA_VERSION__;
 
 function usage(): void {
   console.log(`Glossa ${VERSION}
