@@ -15,14 +15,16 @@ Auth0 has one `Glossa CLI` Native application, one current ChatGPT third-party c
 
 ## Deploy
 
-Build before deploying:
+Every push to `main` runs CI. After the build succeeds, the same tested commit is deployed automatically to Heroku and `https://mcp.glossa.sh/healthz` is checked. GitHub Actions uses the revocable `HEROKU_API_KEY` repository secret.
+
+For a manual recovery deployment, build first:
 
 ```powershell
 npm ci
 npm run check
 ```
 
-Deploy the reviewed `main` commit to Heroku:
+Then deploy the reviewed `main` commit to Heroku:
 
 ```powershell
 git push heroku main
