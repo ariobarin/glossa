@@ -69,6 +69,14 @@ test("publishes reviewable MCP tool contracts", async (context) => {
   assert.equal(byName.get("run_command")?.annotations?.openWorldHint, true);
   assert.match(byName.get("run_command")?.description ?? "", /network access/);
 
+  const commandOutputSchema = byName.get("get_command")?.outputSchema as {
+    properties?: Record<string, unknown>;
+  };
+  assert.ok(commandOutputSchema.properties?.commandId);
+  assert.ok(commandOutputSchema.properties?.status);
+  assert.equal(commandOutputSchema.properties?.startedAt, undefined);
+  assert.equal(commandOutputSchema.properties?.finishedAt, undefined);
+
   assert.equal(byName.get("write_file")?.annotations?.readOnlyHint, false);
   assert.equal(byName.get("write_file")?.annotations?.destructiveHint, true);
   assert.equal(byName.get("write_file")?.annotations?.openWorldHint, false);

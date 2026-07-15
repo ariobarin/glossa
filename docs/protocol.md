@@ -91,7 +91,7 @@ Tools:
 `list_devices` identifies an active root by device ID and reports `path: "."`. File and command tools accept that device ID and operate relative to its exposed root. Local absolute paths are never transmitted to or returned by the hosted relay.
 
 Tool annotations must describe actual behavior. `write_file` and `run_command` are non-read-only and destructive-capable.
-Every tool advertises the `glossa:access` OAuth scheme in descriptor metadata, is visible to the model, and declares `openWorldHint: false` because operations stay within the authenticated user's connected Glossa devices.
+Every tool advertises the `glossa:access` OAuth scheme in descriptor metadata and is visible to the model. `run_command` declares `openWorldHint: true` because a command can use the worker account's inherited network access and affect external systems. All other tools declare `openWorldHint: false`.
 
 ## Worker job union
 
@@ -128,7 +128,7 @@ An active worker executes valid `write_file` and bounded `run_command` jobs with
 
 Command processes inherit the complete environment of the Glossa worker process. Glossa does not enumerate or transmit that environment unless a user-authorized command explicitly reads or prints part of it.
 
-`run_command` returns a command ID once the worker accepts the job. `get_command` may wait up to 15 seconds, then reports `running`, `succeeded`, `failed`, `canceled`, or `timed_out`, and includes bounded output after completion. `cancel_command` terminates the process tree. Disconnecting the worker rejects new jobs and terminates an active command. Command state and output remain transient and are never persisted by the relay.
+`run_command` returns a command ID and status once the worker accepts the job. `get_command` may wait up to 15 seconds, then reports `running`, `succeeded`, `failed`, `canceled`, or `timed_out`, and includes bounded output after completion. Public MCP results omit worker-local lifecycle timestamps because clients do not need them to manage a command. `cancel_command` terminates the process tree. Disconnecting the worker rejects new jobs and terminates an active command. Command state and output remain transient and are never persisted by the relay.
 
 The requested command timeout defaults to 900,000 milliseconds and must be between 1 millisecond and the 3,600,000 millisecond hard maximum.
 
