@@ -48,6 +48,7 @@ The Heroku release process applies database migrations before the web release be
 - `NODE_ENV`
 
 Keep values in Heroku config. Never copy secret values into commits, issues, or logs.
+Keep `GLOSSA_RELAY_REQUEST_TIMEOUT_MS` at 18,000 milliseconds and never above 19,000 so hosted requests finish within 20 seconds.
 
 ## Admit a tester
 

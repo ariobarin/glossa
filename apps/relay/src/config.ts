@@ -38,8 +38,8 @@ const environmentSchema = z
       .number()
       .int()
       .positive()
-      .max(28_000)
-      .default(25_000),
+      .max(19_000)
+      .default(18_000),
   })
   .superRefine((environment, context) => {
     if (
