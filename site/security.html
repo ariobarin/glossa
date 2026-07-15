@@ -39,7 +39,8 @@
       <ul>
         <li>Path containment and process controls are enforced on the local worker.</li>
         <li>Every relay resource is scoped to the authenticated account.</li>
-        <li>Device secrets are random, transmitted over HTTPS, stored as hashes, and revocable per device.</li>
+        <li>The relay database stores only salted hashes of random device secrets.</li>
+        <li>The worker keeps its recoverable device secret in the Windows credential store, or a protected local file when no credential store is available.</li>
         <li>Hosted logs contain operational metadata rather than request or response content.</li>
       </ul>
 
