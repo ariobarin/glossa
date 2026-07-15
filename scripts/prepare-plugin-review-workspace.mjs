@@ -50,6 +50,11 @@ if (await exists(backup)) {
     throw new Error(`Refusing to use an unrecognized backup: ${backup}`);
   }
   if (await exists(target)) {
+    if (!(await recognizedFixture(target))) {
+      throw new Error(
+        `Refusing to remove a recognized backup while the target is unrecognized: ${target}`,
+      );
+    }
     await rm(backup, { recursive: true, force: false });
   } else {
     await rename(backup, target);

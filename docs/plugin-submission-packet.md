@@ -22,7 +22,7 @@ Proposed short description:
 
 Proposed full description:
 
-> Glossa connects ChatGPT to one local coding workspace selected by the user. It can read and replace UTF-8 files, start bounded commands, inspect command output, and cancel running commands while the local Glossa worker is connected. Commands run with the environment, network access, and operating-system permissions of the account that launched the worker. Disconnecting the worker immediately removes the workspace from ChatGPT.
+> Glossa connects ChatGPT to one local coding workspace selected by the user. It can read and replace UTF-8 files, start bounded commands, inspect command output, and cancel running commands while the local Glossa worker is connected. Commands run with the environment, network access, and operating-system permissions of the account that launched the worker. Workspace operations require the local Glossa worker to be running.
 
 ## Starter prompts
 
