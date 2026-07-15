@@ -4,14 +4,11 @@ This package contains the `glossa` executable. Node 24 is required. Install the 
 
 ```powershell
 npm install --global @ariobarin/glossa@beta
-glossa login
-glossa status
-glossa whoami
 Set-Location C:\path\to\a\repository
 glossa
 ```
 
-Login uses Auth0 Device Authorization Flow. Public tenant, client, and API identifiers are built in, so testers do not configure OAuth values.
+Glossa opens browser login automatically when needed using Auth0 Device Authorization Flow. Public tenant, client, and API identifiers are built in, so testers do not configure OAuth values.
 
 OAuth and device credentials use the operating-system credential store. If it is unavailable, Glossa warns before using a restricted credential file.
 

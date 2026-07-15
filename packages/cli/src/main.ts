@@ -2,6 +2,7 @@
 import { deleteCredentials, loadCredentials } from "./config-store.js";
 import { loadUserProfile } from "./auth-session.js";
 import { loadAuthConfig } from "./auth-config.js";
+import { ensureSignedIn } from "./auth-login.js";
 import { loginWithDeviceFlow } from "./device-flow.js";
 import { loadRelayEndpoints } from "./relay-client.js";
 import { runManagedSession } from "./worker/managed-session.js";
@@ -23,7 +24,7 @@ Usage:
   glossa --version
   glossa --help
 
-Running Glossa exposes one local root through the managed MCP relay.`);
+Running Glossa signs in when needed and exposes one local root through the managed MCP relay.`);
 }
 
 function exposeOptions(args: string[]): {
@@ -47,7 +48,26 @@ function exposeOptions(args: string[]): {
 async function runExposure(args: string[]): Promise<void> {
   const options = exposeOptions(args);
   const root = await selectExposureRoot(options.path, options.allowBroadRoot);
+  await withLoginSignal(async (signal) => {
+    await ensureSignedIn({
+      ...loadAuthConfig(),
+      signal,
+    });
+  });
   await runManagedSession(root, loadRelayEndpoints(), options.allowBroadRoot);
+}
+
+async function withLoginSignal(
+  action: (signal: AbortSignal) => Promise<void>,
+): Promise<void> {
+  const controller = new AbortController();
+  const cancel = () => controller.abort();
+  process.once("SIGINT", cancel);
+  try {
+    await action(controller.signal);
+  } finally {
+    process.removeListener("SIGINT", cancel);
+  }
 }
 
 async function main(): Promise<void> {
@@ -74,20 +94,12 @@ async function main(): Promise<void> {
       console.log(VERSION);
       return;
     case "login":
-      {
-        const authConfig = loadAuthConfig();
-        const controller = new AbortController();
-        const cancel = () => controller.abort();
-        process.once("SIGINT", cancel);
-        try {
-          await loginWithDeviceFlow({
-            ...authConfig,
-            signal: controller.signal,
-          });
-        } finally {
-          process.removeListener("SIGINT", cancel);
-        }
-      }
+      await withLoginSignal(async (signal) => {
+        await loginWithDeviceFlow({
+          ...loadAuthConfig(),
+          signal,
+        });
+      });
       return;
     case "logout":
       await deleteCredentials();
@@ -96,7 +108,7 @@ async function main(): Promise<void> {
     case "status": {
       const loaded = await loadCredentials();
       if (!loaded) {
-        console.log("Not signed in. Run: glossa login");
+        console.log("Not signed in. Run Glossa to sign in and connect a workspace.");
         process.exitCode = 1;
         return;
       }
@@ -108,7 +120,7 @@ async function main(): Promise<void> {
     case "whoami": {
       const loaded = await loadCredentials();
       if (!loaded) {
-        console.log("Not signed in. Run: glossa login");
+        console.log("Not signed in. Run Glossa to sign in and connect a workspace.");
         process.exitCode = 1;
         return;
       }

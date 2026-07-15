@@ -70,6 +70,11 @@ interface EnrollmentResponse {
   error?: unknown;
 }
 
+interface DeviceListResponse {
+  devices?: Array<{ id?: unknown; revokedAt?: unknown }>;
+  error?: unknown;
+}
+
 function enrollmentError(status: number, data: EnrollmentResponse): Error {
   if (status === 401) return new Error("Glossa login was rejected. Run: glossa login");
   if (status === 403 && data.error === "account_disabled") {
@@ -80,6 +85,41 @@ function enrollmentError(status: number, data: EnrollmentResponse): Error {
   }
   if (status === 429) return new Error("Glossa device enrollment is rate limited. Try again later.");
   return new Error(`Glossa device enrollment failed with HTTP ${status}.`);
+}
+
+export async function accountOwnsDevice(
+  endpoints: RelayEndpoints,
+  credentials: StoredCredentials,
+  deviceId: string,
+  fetchRequest: FetchLike = fetch,
+): Promise<boolean> {
+  const response = await fetchRequest(`${endpoints.relayOrigin}/v1/devices`, {
+    headers: {
+      authorization: `${credentials.tokenType} ${credentials.accessToken}`,
+    },
+  });
+  let data: DeviceListResponse = {};
+  try {
+    data = (await response.json()) as DeviceListResponse;
+  } catch {
+    // Status-specific errors below remain stable for non-JSON proxy responses.
+  }
+  if (!response.ok) throw enrollmentError(response.status, data);
+  if (!Array.isArray(data.devices)) {
+    throw new Error("The Glossa relay returned an invalid device list response.");
+  }
+  if (
+    data.devices.some(
+      (device) =>
+        typeof device.id !== "string" ||
+        (device.revokedAt !== null && typeof device.revokedAt !== "string"),
+    )
+  ) {
+    throw new Error("The Glossa relay returned an invalid device list response.");
+  }
+  return data.devices.some(
+    (device) => device.id === deviceId && device.revokedAt === null,
+  );
 }
 
 export async function enrollDevice(

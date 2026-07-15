@@ -8,6 +8,7 @@ import {
   type StoredDeviceCredential,
 } from "../device-store.js";
 import {
+  accountOwnsDevice,
   defaultDeviceName,
   enrollDevice,
   type RelayEndpoints,
@@ -42,7 +43,9 @@ export interface ManagedDeviceDependencies {
   loadCredentials?: typeof loadCredentials;
   validCredentials?: typeof validCredentials;
   loadDeviceCredential?: typeof loadDeviceCredential;
+  deleteDeviceCredential?: typeof deleteDeviceCredential;
   saveDeviceCredential?: typeof saveDeviceCredential;
+  accountOwnsDevice?: typeof accountOwnsDevice;
   enrollDevice?: typeof enrollDevice;
   defaultDeviceName?: typeof defaultDeviceName;
 }
@@ -54,15 +57,19 @@ export async function deviceForSession(
   const loadDevice = dependencies.loadDeviceCredential ?? loadDeviceCredential;
   const loadLogin = dependencies.loadCredentials ?? loadCredentials;
   const validate = dependencies.validCredentials ?? validCredentials;
+  const removeDevice = dependencies.deleteDeviceCredential ?? deleteDeviceCredential;
+  const ownsDevice = dependencies.accountOwnsDevice ?? accountOwnsDevice;
   const enroll = dependencies.enrollDevice ?? enrollDevice;
   const saveDevice = dependencies.saveDeviceCredential ?? saveDeviceCredential;
   const name = dependencies.defaultDeviceName ?? defaultDeviceName;
   const stored = await loadDevice();
-  if (stored?.relayOrigin === endpoints.relayOrigin) return stored;
-
   const loaded = await loadLogin();
-  if (!loaded) throw new Error("Not signed in. Run: glossa login");
+  if (!loaded) throw new Error("Not signed in. Run Glossa again to sign in.");
   const credentials = await validate(loaded.credentials);
+  if (stored?.relayOrigin === endpoints.relayOrigin) {
+    if (await ownsDevice(endpoints, credentials, stored.deviceId)) return stored;
+    await removeDevice();
+  }
   const enrolled = await enroll(
     endpoints,
     credentials,

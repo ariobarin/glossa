@@ -1,4 +1,5 @@
 import { setTimeout as delay } from "node:timers/promises";
+import { grantedScopesSatisfyRequest } from "./auth-scopes.js";
 import { type FetchLike } from "./auth-session.js";
 import { saveCredentials } from "./config-store.js";
 import { openBrowser } from "./open-browser.js";
@@ -133,6 +134,10 @@ export async function loginWithDeviceFlow(
         if (!data.refresh_token) {
           throw new Error("Auth0 did not issue a refresh token.");
         }
+        const grantedScope = data.scope ?? options.scope;
+        if (!grantedScopesSatisfyRequest(grantedScope, options.scope, true)) {
+          throw new Error("Auth0 did not grant the permissions Glossa requires.");
+        }
         await save({
           issuer: options.issuer,
           clientId: options.clientId,
@@ -141,7 +146,8 @@ export async function loginWithDeviceFlow(
           refreshToken: data.refresh_token,
           expiresAt: new Date(now() + data.expires_in * 1000).toISOString(),
           tokenType: data.token_type,
-          ...(data.scope ? { scope: data.scope } : {}),
+          scope: grantedScope,
+          requestedScope: options.scope,
         });
         log("Signed in to Glossa.");
         return;
