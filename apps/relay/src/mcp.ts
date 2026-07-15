@@ -99,16 +99,29 @@ function registerTools(
   state: RouterState,
   accountId: string,
 ): void {
+  const toolMetadata = {
+    securitySchemes: [
+      {
+        type: "oauth2",
+        scopes: [config.GLOSSA_MCP_REQUIRED_SCOPE],
+      },
+    ],
+    ui: { visibility: ["model"] },
+    "openai/visibility": "public",
+  };
+
   server.registerTool(
     "list_devices",
     {
       title: "List Devices",
       description: "List this account's connected Glossa devices.",
       inputSchema: z.object({}).strict(),
+      _meta: toolMetadata,
       annotations: {
         readOnlyHint: true,
         destructiveHint: false,
         idempotentHint: true,
+        openWorldHint: false,
       },
     },
     async () => textResult({ devices: state.listDevices(accountId) }),
@@ -125,10 +138,12 @@ function registerTools(
           path: relativePathSchema.default("."),
         })
         .strict(),
+      _meta: toolMetadata,
       annotations: {
         readOnlyHint: true,
         destructiveHint: false,
         idempotentHint: false,
+        openWorldHint: false,
       },
     },
     async ({ deviceId, path }) => {
@@ -169,10 +184,12 @@ function registerTools(
           path: relativePathSchema,
         })
         .strict(),
+      _meta: toolMetadata,
       annotations: {
         readOnlyHint: true,
         destructiveHint: false,
         idempotentHint: true,
+        openWorldHint: false,
       },
     },
     async ({ workspaceId, path }) => {
@@ -209,10 +226,12 @@ function registerTools(
           expectedSha256: z.string().regex(/^[a-f0-9]{64}$/).optional(),
         })
         .strict(),
+      _meta: toolMetadata,
       annotations: {
         readOnlyHint: false,
         destructiveHint: true,
         idempotentHint: false,
+        openWorldHint: false,
       },
     },
     async ({ workspaceId, path, content, expectedSha256 }) => {
@@ -273,10 +292,12 @@ function registerTools(
             });
           }
         }),
+      _meta: toolMetadata,
       annotations: {
         readOnlyHint: false,
         destructiveHint: true,
         idempotentHint: false,
+        openWorldHint: false,
       },
     },
     async ({ workspaceId, argv, shellCommand, stdin, timeoutMs }) => {
@@ -330,10 +351,12 @@ function registerTools(
             .optional(),
         })
         .strict(),
+      _meta: toolMetadata,
       annotations: {
         readOnlyHint: true,
         destructiveHint: false,
         idempotentHint: true,
+        openWorldHint: false,
       },
     },
     async ({ commandId, waitMs }) => {
@@ -361,10 +384,12 @@ function registerTools(
       title: "Cancel Command",
       description: "Terminate a running command and its process tree.",
       inputSchema: z.object({ commandId: z.string().uuid() }).strict(),
+      _meta: toolMetadata,
       annotations: {
         readOnlyHint: false,
         destructiveHint: true,
         idempotentHint: true,
+        openWorldHint: false,
       },
     },
     async ({ commandId }) => {
@@ -391,10 +416,12 @@ function registerTools(
       title: "Close Workspace",
       description: "Close a transient workspace lease.",
       inputSchema: z.object({ workspaceId: z.string().uuid() }).strict(),
+      _meta: toolMetadata,
       annotations: {
         readOnlyHint: false,
         destructiveHint: false,
         idempotentHint: false,
+        openWorldHint: false,
       },
     },
     async ({ workspaceId }) => {
