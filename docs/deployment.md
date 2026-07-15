@@ -71,8 +71,8 @@ npm trusts the GitHub Actions workflow `publish-cli.yml` for the public package 
 After merging a CLI version change, tag that exact main commit and push the tag:
 
 ```powershell
-git tag cli-v0.1.0-beta.2
-git push origin cli-v0.1.0-beta.2
+git tag cli-v0.1.0-beta.3
+git push origin cli-v0.1.0-beta.3
 ```
 
 The tag must exactly match the version in `packages/cli/package.json`. Prerelease versions publish under `beta`; stable versions publish under `latest`.
