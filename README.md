@@ -51,9 +51,12 @@ npm run dev
 
 Stop local Postgres with `npm run dev:down`.
 
+The managed service is optional. See [self-hosting](docs/self-hosting.md) to run your own relay, database, identity configuration, and CLI build.
+
 ## Documentation
 
 - [Open beta guide](docs/open-beta.md)
+- [Self-hosting](docs/self-hosting.md)
 - [Architecture](docs/architecture.md)
 - [Security model](docs/security.md)
 - [API and protocol](docs/protocol.md)
