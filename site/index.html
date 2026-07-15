@@ -3,20 +3,213 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="description" content="Glossa connects ChatGPT to a local coding workspace." />
+    <meta
+      name="description"
+      content="Glossa connects ChatGPT to a local coding workspace through a managed MCP relay. Your code stays on your computer."
+    />
     <meta name="theme-color" content="#0b0d12" />
-    <title>Glossa</title>
+    <meta property="og:title" content="Glossa" />
+    <meta
+      property="og:description"
+      content="Connect ChatGPT to a local coding workspace. Your code stays on your computer."
+    />
+    <meta property="og:type" content="website" />
+    <title>Glossa - your code stays on your computer</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="icon" href="/icon.svg" type="image/svg+xml" />
     <link rel="stylesheet" href="/styles.css" />
   </head>
   <body>
-    <header>
-      <a class="brand" href="/" aria-label="Glossa home">Glossa</a>
-      <a class="github" href="https://github.com/ariobarin/glossa">GitHub</a>
+    <div class="aurora" aria-hidden="true"></div>
+
+    <header class="nav">
+      <a class="brand" href="/" aria-label="Glossa home">
+        <svg class="brand-mark" width="28" height="28" viewBox="0 0 28 28" fill="none" aria-hidden="true">
+          <rect x="1.5" y="1.5" width="25" height="25" rx="7" stroke="currentColor" stroke-opacity="0.22" stroke-width="1.6" />
+          <circle cx="8.5" cy="14" r="2.6" fill="#b7ff5a" />
+          <circle cx="19.5" cy="14" r="2.6" fill="currentColor" />
+          <path d="M10.4 14h7.2" stroke="#b7ff5a" stroke-width="1.8" stroke-linecap="round" />
+        </svg>
+        <span>Glossa</span>
+      </a>
+      <nav class="nav-links">
+        <a href="#how-it-works">How it works</a>
+        <a href="#features">Features</a>
+        <a href="#quickstart">Quickstart</a>
+        <a class="btn btn-ghost" href="https://github.com/ariobarin/glossa">GitHub</a>
+      </nav>
     </header>
 
     <main>
-      <p>Private beta</p>
-      <h1>Your code stays on your computer.</h1>
+      <section class="hero">
+        <p class="eyebrow"><span class="pulse" aria-hidden="true"></span> Private beta</p>
+        <h1>Your code stays<br />on your computer.</h1>
+        <p class="lede">
+          Connect ChatGPT to your local code. Nothing leaves your machine.
+        </p>
+        <div class="cta-row">
+          <a class="btn btn-primary" href="#quickstart">Get started</a>
+          <a class="btn btn-secondary" href="https://github.com/ariobarin/glossa">View on GitHub</a>
+        </div>
+        <div class="install-chip" role="group" aria-label="Install command">
+          <span class="chip-prompt" aria-hidden="true">$</span>
+          <code id="install-cmd">npm install --global @ariobarin/glossa@beta</code>
+          <button class="copy" type="button" data-copy-target="install-cmd" aria-label="Copy install command">
+            <span class="copy-label">Copy</span>
+          </button>
+        </div>
+      </section>
+
+      <section id="how-it-works" class="how">
+        <header class="section-head">
+          <p class="eyebrow">How it works</p>
+          <h2>An execution bridge, not an agent.</h2>
+        </header>
+        <ol class="pipeline">
+          <li class="node">
+            <span class="node-index">1</span>
+            <h3>ChatGPT</h3>
+            <p>Owns the conversation, planning, and approvals.</p>
+          </li>
+          <li class="connector" aria-hidden="true"></li>
+          <li class="node">
+            <span class="node-index">2</span>
+            <h3>Managed relay</h3>
+            <p>Routes calls to your worker. Never stores files.</p>
+          </li>
+          <li class="connector" aria-hidden="true"></li>
+          <li class="node">
+            <span class="node-index">3</span>
+            <h3>Local worker</h3>
+            <p>Runs on your machine, in one folder.</p>
+          </li>
+        </ol>
+      </section>
+
+      <section id="features" class="features">
+        <header class="section-head">
+          <p class="eyebrow">Features</p>
+          <h2>Containment without the ops.</h2>
+        </header>
+        <div class="card-grid">
+          <article class="card">
+            <h3>No infrastructure to manage</h3>
+            <p>No VPS, VPN, proxy, or database to run.</p>
+          </article>
+          <article class="card">
+            <h3>One exposed root</h3>
+            <p>Scoped to one worktree or directory. Nothing broader.</p>
+          </article>
+          <article class="card">
+            <h3>Bounded commands</h3>
+            <p>One command at a time, with firm timeouts.</p>
+          </article>
+          <article class="card">
+            <h3>Account tenancy</h3>
+            <p>Your devices, workspaces, and jobs stay yours.</p>
+          </article>
+        </div>
+      </section>
+
+      <section id="quickstart" class="quickstart">
+        <header class="section-head">
+          <p class="eyebrow">Quickstart</p>
+          <h2>Three commands to a connected workspace.</h2>
+        </header>
+        <ol class="steps">
+          <li class="step">
+            <div class="step-text">
+              <h3>Install the CLI</h3>
+              <p>Private beta builds live on npm.</p>
+            </div>
+            <pre><code>npm install --global @ariobarin/glossa@beta</code></pre>
+          </li>
+          <li class="step">
+            <div class="step-text">
+              <h3>Sign in</h3>
+              <p>Sign in through Auth0. Admission is explicit.</p>
+            </div>
+            <pre><code>glossa login</code></pre>
+          </li>
+          <li class="step">
+            <div class="step-text">
+              <h3>Expose one workspace</h3>
+              <p>Run it in a worktree. Ctrl+C to stop.</p>
+            </div>
+            <pre><code>cd path/to/a/project
+glossa</code></pre>
+          </li>
+        </ol>
+        <div class="connect">
+          <p class="eyebrow">Then connect ChatGPT</p>
+          <p class="connect-body">
+            Point a ChatGPT custom app at this endpoint.
+          </p>
+          <pre class="endpoint"><code>https://mcp.glossa.sh/mcp</code></pre>
+        </div>
+      </section>
     </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        <a class="brand" href="/" aria-label="Glossa home">
+          <svg class="brand-mark" width="22" height="22" viewBox="0 0 28 28" fill="none" aria-hidden="true">
+            <rect x="1.5" y="1.5" width="25" height="25" rx="7" stroke="currentColor" stroke-opacity="0.22" stroke-width="1.6" />
+            <circle cx="8.5" cy="14" r="2.6" fill="#b7ff5a" />
+            <circle cx="19.5" cy="14" r="2.6" fill="currentColor" />
+            <path d="M10.4 14h7.2" stroke="#b7ff5a" stroke-width="1.8" stroke-linecap="round" />
+          </svg>
+          <span>Glossa</span>
+        </a>
+        <p class="footer-note">Windows-first private beta. Admission is explicit.</p>
+        <nav class="footer-links">
+          <a href="https://github.com/ariobarin/glossa">GitHub</a>
+          <a href="https://github.com/ariobarin/glossa/blob/main/README.md">Docs</a>
+          <a href="https://mcp.glossa.sh/healthz">Status</a>
+        </nav>
+      </div>
+    </footer>
+
+    <script>
+      document.querySelectorAll("[data-copy-target]").forEach((btn) => {
+        btn.addEventListener("click", async () => {
+          const el = document.getElementById(btn.dataset.copyTarget);
+          if (!el) return;
+          try {
+            await navigator.clipboard.writeText(el.textContent);
+          } catch {
+            const r = document.createRange();
+            r.selectNodeContents(el);
+            const sel = window.getSelection();
+            sel.removeAllRanges();
+            sel.addRange(r);
+          }
+          const label = btn.querySelector(".copy-label");
+          const prev = label.textContent;
+          label.textContent = "Copied";
+          btn.classList.add("copied");
+          window.setTimeout(() => {
+            label.textContent = prev;
+            btn.classList.remove("copied");
+          }, 1400);
+        });
+      });
+
+      document.querySelectorAll('a[href^="#"]').forEach((a) => {
+        a.addEventListener("click", (e) => {
+          const id = a.getAttribute("href").slice(1);
+          const el = document.getElementById(id);
+          if (el) {
+            e.preventDefault();
+            el.scrollIntoView({ behavior: "smooth", block: "start" });
+          }
+        });
+      });
+    </script>
   </body>
 </html>
