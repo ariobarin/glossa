@@ -101,4 +101,4 @@ Use exactly one web dyno for MVP because active jobs and workspaces are process-
 
 ## Local development
 
-Local mode may skip Auth0 only when bound to loopback and clearly marked development-only. Production code paths must exercise the same account and device ownership checks.
+Local development may use loopback relay and worker origins. It must still exercise Auth0 authentication and the same account and device ownership checks as production.
