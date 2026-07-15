@@ -51,7 +51,7 @@ npm run dev
 
 Stop local Postgres with `npm run dev:down`.
 
-The managed service is optional. See [self-hosting](docs/self-hosting.md) to run your own relay, database, identity configuration, and CLI build.
+Glossa uses the managed relay by default. See [self-hosting](docs/self-hosting.md) if you prefer to operate your own relay, database, identity configuration, and CLI build.
 
 ## Documentation
 

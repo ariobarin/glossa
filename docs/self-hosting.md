@@ -1,6 +1,6 @@
 # Self-hosting
 
-Glossa does not require the managed service. A private installation consists of one public relay process, one Postgres database, one OAuth tenant, and the Windows CLI built from this repository.
+Glossa is a managed service. Self-hosting is the optional alternative for people who prefer to operate the infrastructure themselves. A private installation consists of one public relay process, one Postgres database, one OAuth tenant, and the Windows CLI built from this repository.
 
 ## Requirements
 
