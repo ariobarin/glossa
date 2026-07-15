@@ -8,7 +8,7 @@ import {
   MAX_TEXT_BYTES,
 } from "@glossa/protocol";
 import { WorkerError } from "./errors.js";
-import type { WorkspaceManager } from "./workspace-manager.js";
+import type { PathPolicy } from "./path-policy.js";
 
 export type CommandStatus =
   | "running"
@@ -18,7 +18,6 @@ export type CommandStatus =
   | "timed_out";
 
 export interface StartCommandOptions {
-  workspaceId: string;
   argv?: string[];
   shellCommand?: string;
   stdin?: string;
@@ -120,7 +119,7 @@ export class CommandService {
   readonly #commands = new Map<string, CommandRecord>();
   #activeCommandId: string | null = null;
 
-  constructor(readonly workspaces: WorkspaceManager) {}
+  constructor(readonly policy: PathPolicy) {}
 
   async start(options: StartCommandOptions): Promise<CommandSnapshot> {
     if (this.#activeCommandId) {
@@ -143,7 +142,7 @@ export class CommandService {
         "Command timeout must be between 1 millisecond and 60 minutes.",
       );
     }
-    const cwd = await this.workspaces.resolve(options.workspaceId, ".");
+    const cwd = this.policy.root;
     const invocation = options.argv
       ? { file: options.argv[0]!, args: options.argv.slice(1) }
       : shellInvocation(options.shellCommand!);

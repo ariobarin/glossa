@@ -70,7 +70,6 @@ The canonical database schema is [`apps/relay/sql/001_init.sql`](../apps/relay/s
 - active worker connections
 - device IDs and connection generations, without local absolute paths
 - pending jobs
-- workspace leases
 - request waiters
 - recent nonces and bounded rate-limit counters
 

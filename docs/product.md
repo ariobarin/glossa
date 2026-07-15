@@ -32,13 +32,11 @@ The tester does not manage a VPS, VPN, reverse proxy, TLS certificate, OAuth ser
 ## MCP tools
 
 - `list_devices`
-- `open_workspace`
 - `read_file`
 - `write_file`
 - `run_command`
 - `get_command`
 - `cancel_command`
-- `close_workspace`
 
 ## Limits
 

@@ -3,24 +3,20 @@ import { CommandService } from "./command-service.js";
 import { WorkerError } from "./errors.js";
 import { FileService } from "./file-service.js";
 import { PathPolicy } from "./path-policy.js";
-import { WorkspaceManager } from "./workspace-manager.js";
 
 export class LocalWorker {
   private constructor(
     readonly policy: PathPolicy,
-    readonly workspaces: WorkspaceManager,
     readonly files: FileService,
     readonly commands: CommandService,
   ) {}
 
   static async create(root: string, allowBroadRoot = false): Promise<LocalWorker> {
     const policy = await PathPolicy.create(root, allowBroadRoot);
-    const workspaces = new WorkspaceManager(policy);
     return new LocalWorker(
       policy,
-      workspaces,
-      new FileService(policy, workspaces),
-      new CommandService(workspaces),
+      new FileService(policy),
+      new CommandService(policy),
     );
   }
 
@@ -28,15 +24,11 @@ export class LocalWorker {
     try {
       let value: unknown;
       switch (job.type) {
-        case "open_workspace":
-          value = await this.workspaces.open(job.path);
-          break;
         case "read_file":
-          value = await this.files.readText(job.workspaceId, job.path);
+          value = await this.files.readText(job.path);
           break;
         case "write_file":
           value = await this.files.writeText(
-            job.workspaceId,
             job.path,
             job.content,
             job.expectedSha256,
@@ -44,7 +36,6 @@ export class LocalWorker {
           break;
         case "run_command":
           value = await this.commands.start({
-            workspaceId: job.workspaceId,
             ...(job.argv ? { argv: job.argv } : {}),
             ...(job.shellCommand ? { shellCommand: job.shellCommand } : {}),
             ...(job.stdin !== undefined ? { stdin: job.stdin } : {}),
@@ -56,9 +47,6 @@ export class LocalWorker {
           break;
         case "cancel_command":
           value = await this.commands.cancel(job.commandId);
-          break;
-        case "close_workspace":
-          value = { closed: this.workspaces.close(job.workspaceId) };
           break;
       }
       return { requestId: job.requestId, ok: true, value };

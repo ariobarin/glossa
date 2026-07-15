@@ -4,7 +4,6 @@ import path from "node:path";
 import { MAX_TEXT_BYTES } from "@glossa/protocol";
 import { WorkerError } from "./errors.js";
 import type { PathPolicy } from "./path-policy.js";
-import type { WorkspaceManager } from "./workspace-manager.js";
 
 function sha256(content: Uint8Array): string {
   return createHash("sha256").update(content).digest("hex");
@@ -22,13 +21,10 @@ export interface WriteTextResult {
 }
 
 export class FileService {
-  constructor(
-    readonly policy: PathPolicy,
-    readonly workspaces: WorkspaceManager,
-  ) {}
+  constructor(readonly policy: PathPolicy) {}
 
-  async readText(workspaceId: string, relativePath: string): Promise<ReadTextResult> {
-    const target = await this.workspaces.resolve(workspaceId, relativePath);
+  async readText(relativePath: string): Promise<ReadTextResult> {
+    const target = await this.policy.resolveExisting(relativePath);
     const targetStat = await stat(target);
     if (!targetStat.isFile()) {
       throw new WorkerError("not_file", "The requested path is not a file.");
@@ -47,7 +43,6 @@ export class FileService {
   }
 
   async writeText(
-    workspaceId: string,
     relativePath: string,
     content: string,
     expectedSha256?: string,
@@ -57,8 +52,7 @@ export class FileService {
       throw new WorkerError("file_too_large", "The content exceeds the 1 MiB text limit.");
     }
 
-    const workspaceRelative = this.workspaces.relativePath(workspaceId, relativePath);
-    let target = await this.policy.resolveWritableFile(workspaceRelative);
+    let target = await this.policy.resolveWritableFile(relativePath);
     if (expectedSha256) {
       let actual: string | null = null;
       try {
@@ -75,7 +69,7 @@ export class FileService {
     const temporary = path.join(path.dirname(target), `.glossa-${randomUUID()}.tmp`);
     try {
       await writeFile(temporary, bytes, { flag: "wx", mode: 0o600 });
-      target = await this.policy.resolveWritableFile(workspaceRelative);
+      target = await this.policy.resolveWritableFile(relativePath);
       const tempStat = await lstat(temporary);
       if (!tempStat.isFile() || tempStat.isSymbolicLink()) {
         throw new WorkerError("unsafe_temporary_file", "The atomic write temporary file changed.");

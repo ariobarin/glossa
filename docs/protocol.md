@@ -82,15 +82,13 @@ The origin route `POST /` serves the same authenticated transport for MCP client
 Tools:
 
 - `list_devices`
-- `open_workspace`
 - `read_file`
 - `write_file`
 - `run_command`
 - `get_command`
 - `cancel_command`
-- `close_workspace`
 
-`list_devices` identifies an active root by device ID and reports `path: "."`. `open_workspace` accepts the device ID and a root-relative path, with `.` as the default. Local absolute paths are never transmitted to or returned by the hosted relay.
+`list_devices` identifies an active root by device ID and reports `path: "."`. File and command tools accept that device ID and operate relative to its exposed root. Local absolute paths are never transmitted to or returned by the hosted relay.
 
 Tool annotations must describe actual behavior. `write_file` and `run_command` are non-read-only and destructive-capable.
 Every tool advertises the `glossa:access` OAuth scheme in descriptor metadata, is visible to the model, and declares `openWorldHint: false` because operations stay within the authenticated user's connected Glossa devices.
@@ -99,12 +97,10 @@ Every tool advertises the `glossa:access` OAuth scheme in descriptor metadata, i
 
 ```ts
 type WorkerJob =
-  | { type: "open_workspace"; requestId: string; path: string }
-  | { type: "read_file"; requestId: string; workspaceId: string; path: string }
+  | { type: "read_file"; requestId: string; path: string }
   | {
       type: "write_file";
       requestId: string;
-      workspaceId: string;
       path: string;
       content: string;
       expectedSha256?: string;
@@ -112,7 +108,6 @@ type WorkerJob =
   | {
       type: "run_command";
       requestId: string;
-      workspaceId: string;
       argv?: string[];
       shellCommand?: string;
       stdin?: string;

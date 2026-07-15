@@ -14,23 +14,15 @@ export const deviceNameSchema = z
   .max(80)
   .regex(/^[^\u0000-\u001f\u007f]+$/, "Device name contains control characters");
 
-export const openWorkspaceJobSchema = z.object({
-  type: z.literal("open_workspace"),
-  requestId: z.string().uuid(),
-  path: z.string().max(4096),
-});
-
 export const readFileJobSchema = z.object({
   type: z.literal("read_file"),
   requestId: z.string().uuid(),
-  workspaceId: z.string().uuid(),
   path: z.string().max(4096),
 });
 
 export const writeFileJobSchema = z.object({
   type: z.literal("write_file"),
   requestId: z.string().uuid(),
-  workspaceId: z.string().uuid(),
   path: z.string().max(4096),
   content: z.string(),
   expectedSha256: z.string().regex(/^[a-f0-9]{64}$/).optional(),
@@ -40,7 +32,6 @@ export const runCommandJobSchema = z
   .object({
     type: z.literal("run_command"),
     requestId: z.string().uuid(),
-    workspaceId: z.string().uuid(),
     argv: z.array(z.string()).min(1).max(256).optional(),
     shellCommand: z.string().max(64 * 1024).optional(),
     stdin: z.string().max(MAX_TEXT_BYTES).optional(),
@@ -73,20 +64,12 @@ export const cancelCommandJobSchema = z.object({
   commandId: z.string().uuid(),
 });
 
-export const closeWorkspaceJobSchema = z.object({
-  type: z.literal("close_workspace"),
-  requestId: z.string().uuid(),
-  workspaceId: z.string().uuid(),
-});
-
 export const workerJobSchema = z.discriminatedUnion("type", [
-  openWorkspaceJobSchema,
   readFileJobSchema,
   writeFileJobSchema,
   runCommandJobSchema,
   getCommandJobSchema,
   cancelCommandJobSchema,
-  closeWorkspaceJobSchema,
 ]);
 
 export type WorkerJob = z.infer<typeof workerJobSchema>;
