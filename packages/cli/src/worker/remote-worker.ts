@@ -53,7 +53,6 @@ function defaultSleep(milliseconds: number, signal: AbortSignal): Promise<void> 
       reject(signal.reason);
     };
     const timer = setTimeout(finish, milliseconds);
-    timer.unref();
     signal.addEventListener("abort", cancel, { once: true });
   });
 }
