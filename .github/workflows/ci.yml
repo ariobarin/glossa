@@ -12,17 +12,47 @@ jobs:
   check:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
         with:
-          node-version: 22
+          node-version: 24
           cache: npm
       - run: npm ci
       - run: npm run check
 
-  deploy:
+  deploy-changes:
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-    needs: check
+    runs-on: ubuntu-latest
+    outputs:
+      relay: ${{ steps.changed.outputs.relay }}
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+      - id: changed
+        name: Detect relay changes
+        env:
+          BEFORE: ${{ github.event.before }}
+        shell: bash
+        run: |
+          if [[ "$BEFORE" =~ ^0+$ ]] || ! git cat-file -e "$BEFORE^{commit}" 2>/dev/null; then
+            echo "relay=true" >> "$GITHUB_OUTPUT"
+          elif git diff --quiet "$BEFORE" "$GITHUB_SHA" -- \
+            apps/relay \
+            packages/protocol \
+            package.json \
+            package-lock.json \
+            tsconfig.base.json \
+            Procfile \
+            app.json; then
+            echo "relay=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "relay=true" >> "$GITHUB_OUTPUT"
+          fi
+
+  deploy:
+    if: needs.deploy-changes.outputs.relay == 'true'
+    needs: [check, deploy-changes]
     runs-on: ubuntu-latest
     concurrency:
       group: heroku-production
@@ -31,7 +61,7 @@ jobs:
       name: production
       url: https://mcp.glossa.sh/healthz
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
         with:
           fetch-depth: 0
       - name: Deploy tested commit to Heroku

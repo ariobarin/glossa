@@ -5,7 +5,7 @@
   "description": "Connect an explicitly exposed local coding workspace to the Glossa MCP relay.",
   "type": "module",
   "engines": {
-    "node": ">=20"
+    "node": ">=24 <25"
   },
   "bin": {
     "glossa": "dist/main.js"

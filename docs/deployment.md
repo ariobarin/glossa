@@ -15,7 +15,7 @@ Auth0 has one `Glossa CLI` Native application, one current ChatGPT third-party c
 
 ## Deploy
 
-Every push to `main` runs CI. After the build succeeds, the same tested commit is deployed automatically to Heroku and `https://mcp.glossa.sh/healthz` is checked. GitHub Actions uses the revocable `HEROKU_API_KEY` repository secret.
+Every push to `main` runs CI. After the build succeeds, relay-affecting changes deploy the same tested commit automatically to Heroku and check `https://mcp.glossa.sh/healthz`. Documentation, website, and CLI-only changes do not restart the relay. GitHub Actions uses the revocable `HEROKU_API_KEY` repository secret.
 
 For a manual recovery deployment, build first:
 
@@ -70,11 +70,18 @@ Also verify one real worker connects and ChatGPT can list its device.
 
 npm trusts the GitHub Actions workflow `publish-cli.yml` for the public package `@ariobarin/glossa`. The workflow uses short-lived OIDC credentials and does not require an npm token.
 
-After merging a CLI version change, tag that exact main commit and push the tag:
+Prepare a `0.1.x` CLI version, build it, and inspect its package without publishing:
 
 ```powershell
-git tag cli-v0.1.0-beta.3
-git push origin cli-v0.1.0-beta.3
+npm run cli:prepare -- 0.1.0-beta.4
+```
+
+After merging that version change, tag the exact main commit and push the tag only when publication is intended:
+
+```powershell
+$version = node -p "require('./packages/cli/package.json').version"
+git tag "cli-v$version"
+git push origin "cli-v$version"
 ```
 
 The tag must exactly match the version in `packages/cli/package.json`. Prerelease versions publish under `beta`; stable versions publish under `latest`.
@@ -84,7 +91,7 @@ Keep CLI versions on the `0.1.x` line until the release policy changes.
 
 `glossa.sh` remains at Vercel. Only `mcp.glossa.sh` points to the Heroku DNS target. Do not replace nameservers or alter the apex, mail, verification, or unrelated records.
 
-Deploy the static landing page from `site/` with the Vercel project linked to that directory:
+The Vercel project is connected to GitHub with `site/` as its root directory. Changes under `site/` deploy automatically from `main`. For manual recovery:
 
 ```powershell
 vercel deploy --prod --cwd site

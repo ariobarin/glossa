@@ -15,7 +15,7 @@ Glossa is an execution bridge, not an agent. ChatGPT owns the model, conversatio
 
 Glossa is a Windows-first open beta. The managed relay is live at `https://mcp.glossa.sh/mcp`. A valid Glossa login activates access automatically.
 
-Install the open-beta CLI from npm:
+Install the open-beta CLI with Node 24:
 
 ```powershell
 npm install --global @ariobarin/glossa@beta
@@ -38,6 +38,17 @@ Install the Glossa plugin in ChatGPT:
 [Install Glossa Live](https://chatgpt.com/plugins/plugin_asdk_app_6a5702618d3081919dfdd643c18aba0c)
 
 See [FRIEND_TESTING.md](FRIEND_TESTING.md) for the complete setup workflow.
+
+## Local development
+
+Node 24 and Docker are required. Start local Postgres, create `.env` when missing, build, and migrate with:
+
+```powershell
+npm run dev:setup
+npm run dev
+```
+
+Stop local Postgres with `npm run dev:down`.
 
 ## Documentation
 

@@ -1,6 +1,6 @@
 # @ariobarin/glossa
 
-This package contains the `glossa` executable. Install the open beta from npm:
+This package contains the `glossa` executable. Node 24 is required. Install the open beta from npm:
 
 ```powershell
 npm install --global @ariobarin/glossa@beta
