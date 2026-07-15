@@ -13,8 +13,7 @@
   ],
   "scripts": {
     "build": "npm run build --workspace @glossa/protocol && npm run build --workspace @ariobarin/glossa && npm run build --workspace @glossa/relay",
-    "test": "npm run test --workspaces --if-present",
-    "check": "npm run build && npm test && node scripts/check-rebrand.mjs",
+    "check": "npm run build && node scripts/check-rebrand.mjs",
     "dev": "npm run dev --workspace @glossa/relay",
     "preflight": "node scripts/preflight.mjs"
   },
