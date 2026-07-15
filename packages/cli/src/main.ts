@@ -4,7 +4,6 @@ import { loadUserProfile } from "./auth-session.js";
 import { loadAuthConfig } from "./auth-config.js";
 import { loginWithDeviceFlow } from "./device-flow.js";
 import { loadRelayEndpoints } from "./relay-client.js";
-import { runLocalSession } from "./worker/local-session.js";
 import { runManagedSession } from "./worker/managed-session.js";
 import { selectExposureRoot } from "./worker/root-selection.js";
 
@@ -21,34 +20,34 @@ Usage:
   glossa logout
   glossa status
   glossa whoami
-  glossa [path] --local [--allow-broad-root]
   glossa --version
   glossa --help
 
-Running Glossa exposes one local root through the managed MCP relay.
-Local mode reads newline-delimited worker jobs from stdin and writes results to stdout.`);
+Running Glossa exposes one local root through the managed MCP relay.`);
 }
 
 function exposeOptions(args: string[]): {
   path?: string;
-  local: boolean;
   allowBroadRoot: boolean;
 } {
   let selectedPath: string | undefined;
-  let local = false;
   let allowBroadRoot = false;
   for (const argument of args) {
-    if (argument === "--local") local = true;
-    else if (argument === "--allow-broad-root") allowBroadRoot = true;
+    if (argument === "--allow-broad-root") allowBroadRoot = true;
     else if (argument.startsWith("-")) throw new Error(`Unknown expose option: ${argument}`);
     else if (selectedPath) throw new Error("Expose accepts at most one directory.");
     else selectedPath = argument;
   }
   return {
     ...(selectedPath ? { path: selectedPath } : {}),
-    local,
     allowBroadRoot,
   };
+}
+
+async function runExposure(args: string[]): Promise<void> {
+  const options = exposeOptions(args);
+  const root = await selectExposureRoot(options.path, options.allowBroadRoot);
+  await runManagedSession(root, loadRelayEndpoints(), options.allowBroadRoot);
 }
 
 async function main(): Promise<void> {
@@ -60,15 +59,7 @@ async function main(): Promise<void> {
     (command.startsWith("-") &&
       !["--help", "-h", "--version", "-v"].includes(command))
   ) {
-    const options = exposeOptions(args);
-    const root = await selectExposureRoot(options.path, options.allowBroadRoot);
-    if (options.local) await runLocalSession(root, options.allowBroadRoot);
-    else
-      await runManagedSession(
-        root,
-        loadRelayEndpoints(),
-        options.allowBroadRoot,
-      );
+    await runExposure(args);
     return;
   }
 
@@ -130,15 +121,7 @@ async function main(): Promise<void> {
     }
     default:
       {
-        const options = exposeOptions(args);
-        const root = await selectExposureRoot(options.path, options.allowBroadRoot);
-        if (options.local) await runLocalSession(root, options.allowBroadRoot);
-        else
-          await runManagedSession(
-            root,
-            loadRelayEndpoints(),
-            options.allowBroadRoot,
-          );
+        await runExposure(args);
         return;
       }
   }
