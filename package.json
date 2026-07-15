@@ -20,7 +20,7 @@
     "dev:setup": "node scripts/dev-setup.mjs",
     "dev:down": "docker compose down",
     "cli:prepare": "node scripts/prepare-cli-release.mjs",
-    "test": "npm run test --workspace @glossa/relay"
+    "test": "npm run test --workspace @glossa/relay && npm run test --workspace @ariobarin/glossa"
   },
   "license": "MIT"
 }

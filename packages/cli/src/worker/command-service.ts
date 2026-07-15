@@ -150,7 +150,7 @@ export class CommandService {
     const child = spawn(invocation.file, invocation.args, {
       cwd,
       env: process.env,
-      detached: true,
+      detached: process.platform !== "win32",
       stdio: "pipe",
       windowsHide: true,
     });
@@ -223,7 +223,15 @@ export class CommandService {
       throw new WorkerError("invalid_wait", "Status wait must be between 0 and 15 seconds.");
     }
     if (record.status === "running" && waitMs > 0) {
-      await Promise.race([record.completion, delay(waitMs)]);
+      const waitController = new AbortController();
+      try {
+        await Promise.race([
+          record.completion,
+          delay(waitMs, undefined, { signal: waitController.signal }),
+        ]);
+      } finally {
+        waitController.abort();
+      }
     }
     return this.snapshot(record);
   }
