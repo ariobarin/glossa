@@ -22,7 +22,46 @@ const writeFileInputSchema = writeFileRequestSchema.extend(deviceIdSchema.shape)
 const runCommandInputSchema = runCommandRequestSchema.safeExtend(
   deviceIdSchema.shape,
 );
-const commandResultSchema = z.object({ commandId: z.string().uuid() }).passthrough();
+const sha256Schema = z.string().regex(/^[a-f0-9]{64}$/);
+const listDevicesOutputSchema = z
+  .object({
+    devices: z.array(
+      z
+        .object({
+          deviceId: z.string().uuid(),
+          path: z.literal("."),
+        })
+        .strict(),
+    ),
+  })
+  .strict();
+const readFileOutputSchema = z
+  .object({
+    content: z.string(),
+    sha256: sha256Schema,
+    bytes: z.number().int().nonnegative(),
+  })
+  .strict();
+const writeFileOutputSchema = z
+  .object({
+    sha256: sha256Schema,
+    bytes: z.number().int().nonnegative(),
+  })
+  .strict();
+const commandOutputSchema = z
+  .object({
+    commandId: z.string().uuid(),
+    status: z.enum(["running", "succeeded", "failed", "canceled", "timed_out"]),
+    exitCode: z.number().int().nullable().optional(),
+    signal: z.string().nullable().optional(),
+    stdout: z.string().optional(),
+    stderr: z.string().optional(),
+    stdoutTruncated: z.boolean().optional(),
+    stderrTruncated: z.boolean().optional(),
+  })
+  .strip();
+
+export const MCP_SERVER_VERSION = "0.1.0-beta.3";
 
 const safeWorkerMessages: Record<string, string> = {
   path_not_found: "The requested path does not exist.",
@@ -41,9 +80,10 @@ const safeWorkerMessages: Record<string, string> = {
   worker_failure: "The local worker operation failed.",
 };
 
-function textResult(value: unknown) {
+function structuredResult(value: Record<string, unknown>) {
   return {
     content: [{ type: "text" as const, text: JSON.stringify(value) }],
+    structuredContent: value,
   };
 }
 
@@ -76,6 +116,21 @@ function workerError(result: WorkerResult) {
     code,
     safeWorkerMessages[code] ?? "The local worker operation failed.",
   );
+}
+
+function workerSuccess<T extends z.ZodObject>(
+  result: WorkerResult,
+  schema: T,
+) {
+  if (!result.ok) return workerError(result);
+  const parsed = schema.safeParse(result.value);
+  if (!parsed.success) {
+    return errorResult(
+      "invalid_worker_result",
+      "The worker returned an invalid result.",
+    );
+  }
+  return structuredResult(parsed.data);
 }
 
 async function executeJob(
@@ -114,8 +169,9 @@ function registerTools(
     "list_devices",
     {
       title: "List Devices",
-      description: "List this account's connected Glossa devices.",
+      description: "List the online Glossa workers available to this account.",
       inputSchema: z.object({}).strict(),
+      outputSchema: listDevicesOutputSchema,
       _meta: toolMetadata,
       annotations: {
         readOnlyHint: true,
@@ -124,15 +180,16 @@ function registerTools(
         openWorldHint: false,
       },
     },
-    async () => textResult({ devices: state.listDevices(accountId) }),
+    async () => structuredResult({ devices: state.listDevices(accountId) }),
   );
 
   server.registerTool(
     "read_file",
     {
       title: "Read File",
-      description: "Read one UTF-8 text file within a connected device root.",
+      description: "Read one UTF-8 text file by relative path from a worker's exposed root.",
       inputSchema: readFileInputSchema,
+      outputSchema: readFileOutputSchema,
       _meta: toolMetadata,
       annotations: {
         readOnlyHint: true,
@@ -148,7 +205,7 @@ function registerTools(
           requestId: randomUUID(),
           path,
         });
-        return result.ok ? textResult(result.value) : workerError(result);
+        return workerSuccess(result, readFileOutputSchema);
       } catch (error) {
         return routedError(error);
       }
@@ -159,8 +216,9 @@ function registerTools(
     "write_file",
     {
       title: "Write File",
-      description: "Atomically write one UTF-8 text file within a connected device root.",
+      description: "Create or replace one UTF-8 text file atomically within a worker's exposed root. Use expectedSha256 to prevent a stale overwrite.",
       inputSchema: writeFileInputSchema,
+      outputSchema: writeFileOutputSchema,
       _meta: toolMetadata,
       annotations: {
         readOnlyHint: false,
@@ -185,7 +243,7 @@ function registerTools(
           deviceId,
           job,
         );
-        return result.ok ? textResult(result.value) : workerError(result);
+        return workerSuccess(result, writeFileOutputSchema);
       } catch (error) {
         return routedError(error);
       }
@@ -196,14 +254,15 @@ function registerTools(
     "run_command",
     {
       title: "Run Command",
-      description: "Start a bounded command with the full authority of the worker account.",
+      description: "Start an arbitrary bounded command in the exposed root with the full authority, inherited environment, and network access of the worker account. The command may modify local or external systems.",
       inputSchema: runCommandInputSchema,
+      outputSchema: commandOutputSchema,
       _meta: toolMetadata,
       annotations: {
         readOnlyHint: false,
         destructiveHint: true,
         idempotentHint: false,
-        openWorldHint: false,
+        openWorldHint: true,
       },
     },
     async ({ deviceId, argv, shellCommand, stdin, timeoutMs }) => {
@@ -224,12 +283,15 @@ function registerTools(
           job,
         );
         if (!result.ok) return workerError(result);
-        const parsed = commandResultSchema.safeParse(result.value);
+        const parsed = commandOutputSchema.safeParse(result.value);
         if (!parsed.success) {
-          return errorResult("invalid_worker_result", "The worker returned an invalid command.");
+          return errorResult(
+            "invalid_worker_result",
+            "The worker returned an invalid result.",
+          );
         }
         state.rememberCommand(accountId, deviceId, parsed.data.commandId);
-        return textResult(parsed.data);
+        return structuredResult(parsed.data);
       } catch (error) {
         return routedError(error);
       }
@@ -240,8 +302,9 @@ function registerTools(
     "get_command",
     {
       title: "Get Command",
-      description: "Get current or completed command state, optionally waiting up to 15 seconds.",
+      description: "Read the current or completed state and captured output of a command started by this account, optionally waiting up to 15 seconds.",
       inputSchema: getCommandRequestSchema,
+      outputSchema: commandOutputSchema,
       _meta: toolMetadata,
       annotations: {
         readOnlyHint: true,
@@ -262,7 +325,7 @@ function registerTools(
           commandId,
           ...(waitMs === undefined ? {} : { waitMs }),
         });
-        return result.ok ? textResult(result.value) : workerError(result);
+        return workerSuccess(result, commandOutputSchema);
       } catch (error) {
         return routedError(error);
       }
@@ -273,8 +336,9 @@ function registerTools(
     "cancel_command",
     {
       title: "Cancel Command",
-      description: "Terminate a running command and its process tree.",
+      description: "Terminate a running command and its process tree. Cancellation does not revert effects the command already caused.",
       inputSchema: cancelCommandRequestSchema,
+      outputSchema: commandOutputSchema,
       _meta: toolMetadata,
       annotations: {
         readOnlyHint: false,
@@ -294,7 +358,7 @@ function registerTools(
           requestId: randomUUID(),
           commandId,
         });
-        return result.ok ? textResult(result.value) : workerError(result);
+        return workerSuccess(result, commandOutputSchema);
       } catch (error) {
         return routedError(error);
       }
@@ -308,7 +372,10 @@ export function createMcpServer(
   state: RouterState,
   accountId: string,
 ): McpServer {
-  const server = new McpServer({ name: "glossa", version: "0.0.0" });
+  const server = new McpServer({
+    name: "glossa",
+    version: MCP_SERVER_VERSION,
+  });
   registerTools(server, config, state, accountId);
   return server;
 }
