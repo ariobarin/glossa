@@ -9,3 +9,4 @@ dist/
 .idea/
 .vercel/
 .glossa-agent-state.json
+.review-workspace/
