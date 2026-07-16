@@ -12,6 +12,7 @@ const environmentSchema = z
     GLOSSA_BIND_HOST: z.string().trim().min(1).max(255).default("127.0.0.1"),
     PORT: z.coerce.number().int().positive().max(65535).default(39100),
     DATABASE_URL: z.string().min(1),
+    GLOSSA_DATABASE_CA_PEM: z.string().trim().min(1).optional(),
     GLOSSA_PUBLIC_ORIGIN: z.string().url(),
     GLOSSA_AUTH0_ISSUER: z.string().url(),
     GLOSSA_AUTH0_AUDIENCE: z.string().url(),
