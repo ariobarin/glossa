@@ -324,16 +324,6 @@ pre code {
   font-weight: 800;
 }
 
-.safety {
-  max-width: 820px;
-  margin: 24px 0 0;
-  padding-left: 18px;
-  border-left: 3px solid var(--accent);
-  color: #cbd1d9;
-  font-size: 14px;
-  line-height: 1.65;
-}
-
 footer {
   min-height: 100px;
   justify-content: space-between;
