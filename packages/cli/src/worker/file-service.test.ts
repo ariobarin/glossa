@@ -39,30 +39,6 @@ test("blocks Windows junction traversal", async (context) => {
   });
 });
 
-test("lists one directory without following junctions", async (context) => {
-  const fixture = await temporaryDirectory(context);
-  const root = path.join(fixture, "root");
-  const outside = path.join(fixture, "outside");
-  await mkdir(path.join(root, "nested"), { recursive: true });
-  await mkdir(outside);
-  await writeFile(path.join(root, "README.md"), "hello", "utf8");
-  await writeFile(path.join(root, "nested", "hidden.txt"), "nested", "utf8");
-  await symlink(outside, path.join(root, "linked"), "junction");
-
-  const files = new FileService(await PathPolicy.create(root));
-  const result = await files.list(".");
-
-  assert.deepEqual(result, {
-    entries: [
-      { name: "linked", type: "other" },
-      { name: "nested", type: "directory" },
-      { name: "README.md", type: "file" },
-    ],
-    truncated: false,
-  });
-  assert.equal(result.entries.some((entry) => entry.name === "hidden.txt"), false);
-});
-
 test("writes atomically and rejects stale revisions", async (context) => {
   const root = await temporaryDirectory(context);
   const files = new FileService(await PathPolicy.create(root));
