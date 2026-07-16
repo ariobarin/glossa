@@ -5,28 +5,67 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta
       name="description"
-      content="Connect ChatGPT to one explicitly exposed local coding workspace with Glossa."
+      content="Glossa is the thin execution bridge between ChatGPT and one local coding workspace."
     />
     <meta name="theme-color" content="#0b0d12" />
-    <title>Glossa | Your code stays local</title>
+    <title>Glossa | Put ChatGPT to work on your Windows computer</title>
     <link rel="stylesheet" href="/styles.css" />
   </head>
   <body>
     <header>
       <a class="brand" href="/" aria-label="Glossa home">Glossa</a>
       <nav aria-label="Site navigation">
-        <a href="https://github.com/ariobarin/glossa/blob/main/docs/open-beta.md">Guide</a>
+        <a href="/get-started">Get started</a>
+        <a href="/security">Security</a>
         <a href="https://github.com/ariobarin/glossa">GitHub</a>
       </nav>
     </header>
 
     <main>
       <section class="hero" aria-labelledby="hero-title">
-        <p class="eyebrow">Open beta</p>
-        <h1 id="hero-title">Your code stays on your computer.</h1>
-        <p class="lede">
-          Glossa connects ChatGPT to one local coding workspace that you choose.
-        </p>
+        <div class="hero-copy">
+          <p class="eyebrow">Windows-first open beta</p>
+          <h1 id="hero-title">Put ChatGPT to work on <span>your Windows computer.</span></h1>
+          <p class="lede">
+            Connect one local coding workspace to a ChatGPT conversation. Your repository
+            stays on your computer while Glossa relays requested content and results.
+          </p>
+          <div class="hero-actions">
+            <a class="button" href="/get-started">Get started</a>
+            <a href="https://github.com/ariobarin/glossa">Read the code</a>
+          </div>
+        </div>
+
+        <div class="wire" aria-label="ChatGPT connects through Glossa to one local workspace">
+          <div class="wire-node">
+            <span class="wire-label">ChatGPT</span>
+            <p>Run the tests and fix what broke.</p>
+          </div>
+          <div class="wire-link"><span>OAuth + MCP</span></div>
+          <div class="wire-node wire-relay">
+            <span class="wire-label">Glossa relay</span>
+            <p>Authentication and routing. No repository clone.</p>
+          </div>
+          <div class="wire-link"><span>Outbound HTTPS</span></div>
+          <div class="wire-node wire-local">
+            <span class="wire-label">Your computer</span>
+            <p><code>PS C:\project&gt; glossa</code></p>
+          </div>
+        </div>
+      </section>
+
+      <section class="why" aria-labelledby="why-title">
+        <div>
+          <p class="eyebrow">Why Glossa</p>
+          <h2 id="why-title">Keep working from Chat.</h2>
+        </div>
+        <div class="why-copy">
+          <p>
+            Codex and ChatGPT Work share usage. Glossa connects the regular Chat surface
+            to your local workspace without putting another model, planner, or agent in
+            the middle.
+          </p>
+        </div>
       </section>
 
       <section class="quickstart" aria-labelledby="quickstart-title">
@@ -35,7 +74,7 @@
           <h2 id="quickstart-title">Install once. Run <code>glossa</code>.</h2>
           <p class="summary">
             Glossa opens browser sign-in automatically and connects the current Git worktree.
-            Windows and Node.js 24 are required.
+            Windows, Node.js 24, and eligible ChatGPT Developer Mode access are required.
           </p>
         </div>
 
@@ -45,11 +84,8 @@ Set-Location C:\path\to\your\project
 glossa</code></pre>
 
           <div class="actions">
-            <a
-              class="button"
-              href="https://chatgpt.com/plugins/plugin_asdk_app_6a5702618d3081919dfdd643c18aba0c"
-            >Install Glossa Live</a>
-            <a href="https://github.com/ariobarin/glossa/blob/main/docs/open-beta.md">Read the setup guide</a>
+            <a class="button" href="/get-started">Get started</a>
+            <a href="https://github.com/ariobarin/glossa/blob/main/docs/open-beta.md">Read the full guide</a>
           </div>
         </div>
 
@@ -66,7 +102,7 @@ glossa</code></pre>
         <a href="/privacy">Privacy</a>
         <a href="/terms">Terms</a>
         <a href="/support">Support</a>
-        <a href="https://github.com/ariobarin/glossa/blob/main/docs/security.md">Security model</a>
+        <a href="/security">Security</a>
       </nav>
     </footer>
   </body>

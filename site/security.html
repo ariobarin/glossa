@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="How Glossa protects local workspaces, accounts, and data." />
+    <meta name="theme-color" content="#0b0d12" />
+    <title>Security | Glossa</title>
+    <link rel="stylesheet" href="/policy.css" />
+  </head>
+  <body>
+    <header>
+      <a class="brand" href="/">Glossa</a>
+      <a href="/get-started">Get started</a>
+    </header>
+
+    <main>
+      <p class="eyebrow">Glossa security</p>
+      <h1>Your worker controls workspace access.</h1>
+      <p class="summary">Glossa does not clone your repository into the hosted relay. The local worker reads files and runs commands. Requested file contents, command details, and command results are transmitted through the relay to the connected client.</p>
+
+      <div class="notice">
+        <strong>Command access is powerful.</strong>
+        <p>Commands run with the full environment and permissions of the Windows account that launched Glossa. File boundaries do not turn shell commands into a sandbox.</p>
+      </div>
+
+      <h2>What you authorize</h2>
+      <ul>
+        <li>You choose one Git worktree or explicit directory when you start Glossa.</li>
+        <li>Connected clients can read and modify files inside that root.</li>
+        <li>Connected clients can run commands with the worker account's authority.</li>
+          <li>Press Ctrl+C in the worker terminal to start disconnecting. The worker is disconnected when the process exits.</li>
+      </ul>
+
+      <h2>What the relay stores</h2>
+      <p>The hosted relay keeps only account, device, routing, and metadata-only audit records needed to operate the service. It does not durably store file contents, command arguments, command output, environment variables, tokens, or local absolute paths.</p>
+
+      <h2>How boundaries are enforced</h2>
+      <ul>
+        <li>Path containment and process controls are enforced on the local worker.</li>
+        <li>Every relay resource is scoped to the authenticated account.</li>
+        <li>The relay database stores only salted hashes of random device secrets.</li>
+        <li>The worker keeps its recoverable device secret in the Windows credential store, or a protected local file when no credential store is available.</li>
+        <li>Hosted logs contain operational metadata rather than request or response content.</li>
+      </ul>
+
+      <h2>Use Glossa safely</h2>
+      <ul>
+        <li>Start with a disposable repository.</li>
+        <li>Never expose your home directory, a drive root, or a repository containing credentials.</li>
+        <li>Run the worker under a dedicated Windows account when you need a stronger boundary.</li>
+        <li>Use a container or virtual machine when operating-system isolation is required.</li>
+      </ul>
+
+      <h2>Report a security issue</h2>
+      <p>Do not publish credentials, private source code, exploit details, or personal data. Follow the private-contact process on the <a href="/support">support page</a>.</p>
+      <p>Maintainers and reviewers can read the complete <a href="https://github.com/ariobarin/glossa/blob/main/docs/security.md">threat model and controls</a>.</p>
+    </main>
+
+    <footer>
+      <a href="/privacy">Privacy</a>
+      <a href="/terms">Terms</a>
+      <a href="/support">Support</a>
+      <a href="/security">Security</a>
+    </footer>
+  </body>
+</html>

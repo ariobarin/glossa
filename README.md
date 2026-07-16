@@ -11,6 +11,10 @@ ChatGPT
 
 Glossa is an execution bridge, not an agent. ChatGPT owns the model, conversation, planning, and approvals. The local worker owns file containment and command execution.
 
+## Why Glossa
+
+Codex and ChatGPT Work share usage. Glossa connects the regular Chat surface to one local workspace without putting another model, planner, or agent in the middle.
+
 ## Status
 
 Glossa is a Windows-first open beta. The managed relay is live at `https://mcp.glossa.sh/mcp`. A valid Glossa login activates access automatically.
@@ -32,9 +36,7 @@ Starting `glossa` authorizes connected clients to modify files inside that root 
 
 ## ChatGPT
 
-Install the Glossa plugin in ChatGPT:
-
-[Install Glossa Live](https://chatgpt.com/plugins/plugin_asdk_app_6a5702618d3081919dfdd643c18aba0c)
+Glossa is not listed in the public plugin directory yet, so add it as a custom app in Developer Mode during the open beta. Follow [Get started](https://glossa.sh/get-started) to connect the managed Glossa endpoint.
 
 See the [open beta guide](docs/open-beta.md) for safe setup, verification, and troubleshooting.
 
