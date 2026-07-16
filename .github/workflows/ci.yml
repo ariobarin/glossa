@@ -9,11 +9,20 @@ permissions:
   contents: read
 
 jobs:
-  check:
-    strategy:
-      matrix:
-        os: [ubuntu-latest, windows-latest]
-    runs-on: ${{ matrix.os }}
+  relay-check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - run: npm run build
+      - run: npm run test --workspace @glossa/relay
+
+  windows-check:
+    runs-on: windows-latest
     steps:
       - uses: actions/checkout@v6
       - uses: actions/setup-node@v6
@@ -55,7 +64,7 @@ jobs:
 
   deploy:
     if: needs.deploy-changes.outputs.relay == 'true'
-    needs: [check, deploy-changes]
+    needs: [relay-check, windows-check, deploy-changes]
     runs-on: ubuntu-latest
     concurrency:
       group: heroku-production
