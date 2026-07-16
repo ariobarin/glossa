@@ -16,52 +16,101 @@ import {
 import type { RelayConfig } from "./config.js";
 import type { RouterState } from "./router-state.js";
 
-const deviceIdSchema = z.object({ deviceId: z.string().uuid() }).strict();
+const deviceIdSchema = z
+  .object({
+    deviceId: z
+      .string()
+      .uuid()
+      .describe("Online worker identifier returned by list_devices."),
+  })
+  .strict();
 const readFileInputSchema = readFileRequestSchema.extend(deviceIdSchema.shape);
 const writeFileInputSchema = writeFileRequestSchema.extend(deviceIdSchema.shape);
 const runCommandInputSchema = runCommandRequestSchema.safeExtend(
   deviceIdSchema.shape,
 );
-const sha256Schema = z.string().regex(/^[a-f0-9]{64}$/);
+const sha256Schema = z
+  .string()
+  .regex(/^[a-f0-9]{64}$/)
+  .describe("Lowercase SHA-256 digest of the UTF-8 file content.");
 const listDevicesOutputSchema = z
   .object({
-    devices: z.array(
-      z
-        .object({
-          deviceId: z.string().uuid(),
-          path: z.literal("."),
-        })
-        .strict(),
-    ),
+    devices: z
+      .array(
+        z
+          .object({
+            deviceId: z
+              .string()
+              .uuid()
+              .describe("Identifier to pass to workspace tools."),
+            path: z.literal(".").describe("The single exposed workspace root."),
+          })
+          .strict(),
+      )
+      .describe("Online Windows workers available to the authenticated account."),
   })
   .strict();
 const readFileOutputSchema = z
   .object({
-    content: z.string(),
+    content: z.string().describe("Complete UTF-8 file content."),
     sha256: sha256Schema,
-    bytes: z.number().int().nonnegative(),
+    bytes: z
+      .number()
+      .int()
+      .nonnegative()
+      .describe("UTF-8 byte length of content."),
   })
   .strict();
 const writeFileOutputSchema = z
   .object({
     sha256: sha256Schema,
-    bytes: z.number().int().nonnegative(),
+    bytes: z
+      .number()
+      .int()
+      .nonnegative()
+      .describe("UTF-8 byte length written."),
   })
   .strict();
 const commandOutputSchema = z
   .object({
-    commandId: z.string().uuid(),
-    status: z.enum(["running", "succeeded", "failed", "canceled", "timed_out"]),
-    exitCode: z.number().int().nullable().optional(),
-    signal: z.string().nullable().optional(),
-    stdout: z.string().optional(),
-    stderr: z.string().optional(),
-    stdoutTruncated: z.boolean().optional(),
-    stderrTruncated: z.boolean().optional(),
+    commandId: z
+      .string()
+      .uuid()
+      .describe("Identifier for get_command and cancel_command."),
+    status: z
+      .enum(["running", "succeeded", "failed", "canceled", "timed_out"])
+      .describe("Current command lifecycle state."),
+    exitCode: z
+      .number()
+      .int()
+      .nullable()
+      .optional()
+      .describe("Process exit code when available."),
+    signal: z
+      .string()
+      .nullable()
+      .optional()
+      .describe("Termination signal when available."),
+    stdout: z
+      .string()
+      .optional()
+      .describe("Captured standard output after completion."),
+    stderr: z
+      .string()
+      .optional()
+      .describe("Captured standard error after completion."),
+    stdoutTruncated: z
+      .boolean()
+      .optional()
+      .describe("Whether standard output exceeded its capture limit."),
+    stderrTruncated: z
+      .boolean()
+      .optional()
+      .describe("Whether standard error exceeded its capture limit."),
   })
   .strip();
 
-export const MCP_SERVER_VERSION = "0.1.0-beta.3";
+export const MCP_SERVER_VERSION = "0.1.0-beta.4";
 
 const safeWorkerMessages: Record<string, string> = {
   path_not_found: "The requested path does not exist.",
@@ -169,7 +218,7 @@ function registerTools(
     "list_devices",
     {
       title: "List Devices",
-      description: "List the online Glossa workers available to this account.",
+      description: "Call this first to obtain the deviceId for each online Glossa worker and its single exposed workspace root.",
       inputSchema: z.object({}).strict(),
       outputSchema: listDevicesOutputSchema,
       _meta: toolMetadata,
@@ -187,7 +236,7 @@ function registerTools(
     "read_file",
     {
       title: "Read File",
-      description: "Read one UTF-8 text file by relative path from a worker's exposed root.",
+      description: "Use after list_devices to read one known UTF-8 text file. Returns its full content and SHA-256 for a guarded write_file call.",
       inputSchema: readFileInputSchema,
       outputSchema: readFileOutputSchema,
       _meta: toolMetadata,
@@ -216,7 +265,7 @@ function registerTools(
     "write_file",
     {
       title: "Write File",
-      description: "Create or replace one UTF-8 text file atomically within a worker's exposed root. Use expectedSha256 to prevent a stale overwrite.",
+      description: "Use to create or completely replace one UTF-8 text file inside the exposed root. Pass the SHA-256 from read_file when editing an existing file to reject stale overwrites.",
       inputSchema: writeFileInputSchema,
       outputSchema: writeFileOutputSchema,
       _meta: toolMetadata,
@@ -254,7 +303,7 @@ function registerTools(
     "run_command",
     {
       title: "Run Command",
-      description: "Start an arbitrary bounded command in the exposed root with the full authority, inherited environment, and network access of the worker account. The command may modify local or external systems.",
+      description: "Use when the task requires a Windows command, tests, builds, version control, or multi-file work. Starts a bounded process with the full authority, inherited environment, and network access of the worker account. The command may modify local or external systems.",
       inputSchema: runCommandInputSchema,
       outputSchema: commandOutputSchema,
       _meta: toolMetadata,
@@ -302,7 +351,7 @@ function registerTools(
     "get_command",
     {
       title: "Get Command",
-      description: "Read the current or completed state and captured output of a command started by this account, optionally waiting up to 15 seconds.",
+      description: "Use after run_command to read current status or completed output. Set waitMs to wait up to 15 seconds when the command is still running.",
       inputSchema: getCommandRequestSchema,
       outputSchema: commandOutputSchema,
       _meta: toolMetadata,
@@ -336,7 +385,7 @@ function registerTools(
     "cancel_command",
     {
       title: "Cancel Command",
-      description: "Terminate a running command and its process tree. Cancellation does not revert effects the command already caused.",
+      description: "Use only to stop a command started by run_command. Terminates its process tree but does not revert effects already caused.",
       inputSchema: cancelCommandRequestSchema,
       outputSchema: commandOutputSchema,
       _meta: toolMetadata,

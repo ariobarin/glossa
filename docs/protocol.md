@@ -92,6 +92,7 @@ Tools:
 
 Tool annotations must describe actual behavior. `write_file` and `run_command` are non-read-only and destructive-capable.
 Every tool advertises the `glossa:access` OAuth scheme in descriptor metadata and is visible to the model. `run_command` declares `openWorldHint: true` because a command can use the worker account's inherited network access and affect external systems. All other tools declare `openWorldHint: false`.
+Tool descriptions state when the model should select each operation. Every public input and output field includes a description, and successful results provide both structured content and an equivalent JSON text fallback.
 
 ## Worker job union
 
