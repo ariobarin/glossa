@@ -5,7 +5,7 @@ Glossa is a managed service. Self-hosting is the optional alternative for people
 ## Requirements
 
 - Node.js 24 and npm 11
-- Postgres 17
+- Postgres 17 with TLS enabled
 - one public HTTPS origin for the relay
 - an Auth0 tenant that issues JWT access tokens for your relay audience
 - one Auth0 Native application with Device Code enabled for the CLI
@@ -24,6 +24,8 @@ The Native application is a public client and needs Device Code and refresh toke
 The MCP client must receive tokens from the same issuer, for the same audience, with `glossa:access`. Configure the client registration and consent flow using the current instructions from your identity provider and MCP client.
 
 ## Relay
+
+Production mode connects to Postgres with TLS. The database in `compose.yaml` is for local development and is not a production self-hosting database.
 
 Copy `.env.example` to `.env` and set at least:
 
