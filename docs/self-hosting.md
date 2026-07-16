@@ -25,7 +25,7 @@ The MCP client must receive tokens from the same issuer, for the same audience, 
 
 ## Relay
 
-Production mode connects to Postgres with TLS. The database in `compose.yaml` is for local development and is not a production self-hosting database.
+Production mode connects to Postgres with TLS and verifies its certificate. Set `GLOSSA_DATABASE_CA_PEM` when your database provider uses a CA that is not in the system trust store. The database in `compose.yaml` is for local development and is not a production self-hosting database.
 
 Copy `.env.example` to `.env` and set at least:
 
@@ -34,6 +34,7 @@ NODE_ENV=production
 GLOSSA_BIND_HOST=0.0.0.0
 PORT=39100
 DATABASE_URL=postgres://USER:PASSWORD@HOST:5432/DATABASE
+# GLOSSA_DATABASE_CA_PEM="-----BEGIN CERTIFICATE-----..."
 GLOSSA_PUBLIC_ORIGIN=https://mcp.example.com
 GLOSSA_AUTH0_ISSUER=https://YOUR_TENANT.auth0.com/
 GLOSSA_AUTH0_AUDIENCE=https://mcp.example.com/
