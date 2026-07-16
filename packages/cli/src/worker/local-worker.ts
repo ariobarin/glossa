@@ -24,9 +24,6 @@ export class LocalWorker {
     try {
       let value: unknown;
       switch (job.type) {
-        case "list_files":
-          value = await this.files.list(job.path);
-          break;
         case "read_file":
           value = await this.files.readText(job.path);
           break;

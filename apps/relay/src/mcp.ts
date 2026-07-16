@@ -7,7 +7,6 @@ import { z } from "zod";
 import {
   cancelCommandRequestSchema,
   getCommandRequestSchema,
-  listFilesRequestSchema,
   readFileRequestSchema,
   runCommandRequestSchema,
   writeFileRequestSchema,
@@ -26,7 +25,6 @@ const deviceIdSchema = z
   })
   .strict();
 const readFileInputSchema = readFileRequestSchema.extend(deviceIdSchema.shape);
-const listFilesInputSchema = listFilesRequestSchema.extend(deviceIdSchema.shape);
 const writeFileInputSchema = writeFileRequestSchema.extend(deviceIdSchema.shape);
 const runCommandInputSchema = runCommandRequestSchema.safeExtend(
   deviceIdSchema.shape,
@@ -50,29 +48,6 @@ const listDevicesOutputSchema = z
           .strict(),
       )
       .describe("Online Windows workers available to the authenticated account."),
-  })
-  .strict();
-const listFilesOutputSchema = z
-  .object({
-    entries: z
-      .array(
-        z
-          .object({
-            name: z
-              .string()
-              .describe("Entry name within the requested directory."),
-            type: z
-              .enum(["file", "directory", "other"])
-              .describe(
-                "Entry type. Links and unsupported filesystem objects are reported as other.",
-              ),
-          })
-          .strict(),
-      )
-      .describe("At most 1000 immediate directory entries."),
-    truncated: z
-      .boolean()
-      .describe("Whether more entries exist beyond the returned limit."),
   })
   .strict();
 const readFileOutputSchema = z
@@ -255,35 +230,6 @@ function registerTools(
       },
     },
     async () => structuredResult({ devices: state.listDevices(accountId) }),
-  );
-
-  server.registerTool(
-    "list_files",
-    {
-      title: "List Files",
-      description: "Use after list_devices to inspect one directory inside the exposed root. Returns at most 1000 immediate entries and does not recurse or follow links.",
-      inputSchema: listFilesInputSchema,
-      outputSchema: listFilesOutputSchema,
-      _meta: toolMetadata,
-      annotations: {
-        readOnlyHint: true,
-        destructiveHint: false,
-        idempotentHint: true,
-        openWorldHint: false,
-      },
-    },
-    async ({ deviceId, path }) => {
-      try {
-        const result = await executeJob(state, config, accountId, deviceId, {
-          type: "list_files",
-          requestId: randomUUID(),
-          path,
-        });
-        return workerSuccess(result, listFilesOutputSchema);
-      } catch (error) {
-        return routedError(error);
-      }
-    },
   );
 
   server.registerTool(

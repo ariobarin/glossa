@@ -10,7 +10,6 @@ const expectedTools = [
   "cancel_command",
   "get_command",
   "list_devices",
-  "list_files",
   "read_file",
   "run_command",
   "write_file",

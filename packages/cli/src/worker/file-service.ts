@@ -1,13 +1,5 @@
 import { createHash, randomUUID } from "node:crypto";
-import {
-  lstat,
-  opendir,
-  readFile,
-  rename,
-  rm,
-  stat,
-  writeFile,
-} from "node:fs/promises";
+import { lstat, readFile, rename, rm, stat, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { MAX_TEXT_BYTES } from "@glossa/protocol";
 import { WorkerError } from "./errors.js";
@@ -23,14 +15,6 @@ export interface ReadTextResult {
   bytes: number;
 }
 
-export interface ListFilesResult {
-  entries: Array<{
-    name: string;
-    type: "file" | "directory" | "other";
-  }>;
-  truncated: boolean;
-}
-
 export interface WriteTextResult {
   sha256: string;
   bytes: number;
@@ -38,34 +22,6 @@ export interface WriteTextResult {
 
 export class FileService {
   constructor(readonly policy: PathPolicy) {}
-
-  async list(relativePath: string): Promise<ListFilesResult> {
-    const target = await this.policy.resolveExisting(relativePath);
-    const targetStat = await stat(target);
-    if (!targetStat.isDirectory()) {
-      throw new WorkerError("not_directory", "The requested path is not a directory.");
-    }
-
-    const entries: ListFilesResult["entries"] = [];
-    let truncated = false;
-    const directory = await opendir(target);
-    for await (const entry of directory) {
-      if (entries.length === 1000) {
-        truncated = true;
-        break;
-      }
-      entries.push({
-        name: entry.name,
-        type: entry.isFile()
-          ? "file"
-          : entry.isDirectory()
-            ? "directory"
-            : "other",
-      });
-    }
-    entries.sort((left, right) => left.name.localeCompare(right.name));
-    return { entries, truncated };
-  }
 
   async readText(relativePath: string): Promise<ReadTextResult> {
     const target = await this.policy.resolveExisting(relativePath);

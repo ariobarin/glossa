@@ -28,17 +28,6 @@ export const readFileRequestSchema = z.object({
   path: relativePathSchema,
 }).strict();
 
-export const listFilesRequestSchema = z.object({
-  path: relativePathSchema
-    .default(".")
-    .describe("Directory path relative to the exposed root. Defaults to the root."),
-}).strict();
-
-export const listFilesJobSchema = listFilesRequestSchema.extend({
-  type: z.literal("list_files"),
-  requestId: z.string().uuid(),
-});
-
 export const readFileJobSchema = readFileRequestSchema.extend({
   type: z.literal("read_file"),
   requestId: z.string().uuid(),
@@ -147,7 +136,6 @@ export const cancelCommandJobSchema = cancelCommandRequestSchema.extend({
 });
 
 export const workerJobSchema = z.discriminatedUnion("type", [
-  listFilesJobSchema,
   readFileJobSchema,
   writeFileJobSchema,
   runCommandJobSchema,
