@@ -1,7 +1,7 @@
 import { Pool, type PoolClient } from "pg";
 import { randomUUID } from "node:crypto";
 import { generateDeviceToken, verifyDeviceSecret } from "./device-token.js";
-import { databaseSsl } from "./database-options.js";
+import { databaseOptions } from "./database-options.js";
 
 export interface DeviceRecord {
   id: string;
@@ -42,8 +42,7 @@ export class Store implements RelayStore {
     this.#pool =
       pool ??
       new Pool({
-        connectionString: databaseUrl,
-        ssl: databaseSsl(),
+        ...databaseOptions(databaseUrl),
         max: 5,
         connectionTimeoutMillis: 30_000,
         query_timeout: 5_000,
