@@ -5,54 +5,65 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="description" content="Install Glossa and connect ChatGPT to a local coding workspace." />
     <meta name="theme-color" content="#0b0d12" />
-    <title>Get started | Glossa</title>
+    <title>Installation | Glossa</title>
     <link rel="stylesheet" href="/policy.css" />
   </head>
   <body>
     <header>
       <a class="brand" href="/">Glossa</a>
-      <a href="/security">Security</a>
+      <a href="/">What it is</a>
     </header>
 
     <main>
-      <p class="eyebrow">Get started</p>
-      <h1>Connect a workspace in minutes.</h1>
-      <p class="summary">Glossa is a Windows-first open beta. Use a disposable Git repository for your first connection.</p>
+      <p class="eyebrow">Installation</p>
+      <h1>Connect a workspace in three steps.</h1>
+      <p class="summary">
+        Glossa is a Windows-first open beta. It connects ChatGPT to one Git
+        repository that you choose from your computer.
+      </p>
 
-      <h2>1. Install Glossa</h2>
+      <h2>1. Install the CLI</h2>
       <p>Install Git and Node.js 24, then run this command in PowerShell:</p>
       <pre><code>npm install --global @ariobarin/glossa@beta</code></pre>
 
-      <h2>2. Start the worker</h2>
-      <p>Open a disposable repository and start Glossa. Browser sign-in opens automatically when needed.</p>
-      <pre><code>Set-Location C:\path\to\a\test-repo
+      <h2>2. Start Glossa</h2>
+      <p>Change to the repository you want ChatGPT to use and start the worker:</p>
+      <pre><code>Set-Location C:\path\to\your\project
 glossa</code></pre>
-      <p>Leave the terminal open while you use Glossa. Press Ctrl+C to disconnect.</p>
+      <p>Leave this terminal open while you work. Press Ctrl+C to disconnect.</p>
 
-      <h2>3. Add Glossa to ChatGPT</h2>
-      <div class="notice">
-        <strong>Developer Mode is required during the open beta.</strong>
-        <p>Glossa is not listed in the public plugin directory yet. Add it as a custom app and authorize it with the same account you used for the CLI.</p>
-      </div>
+      <h2>3. Add it to ChatGPT</h2>
+      <p>
+        During the open beta, Glossa is added manually as a custom app in
+        ChatGPT Developer Mode.
+      </p>
       <ol>
-        <li>Enable Developer Mode using OpenAI's instructions for your plan and workspace role.</li>
-        <li>In ChatGPT Settings, open <strong>Apps</strong>, choose <strong>Create</strong>, and name the custom app <strong>Glossa</strong>.</li>
-        <li>Enter <code>https://mcp.glossa.sh/mcp</code> as the MCP server endpoint and choose OAuth authentication.</li>
-        <li>Choose <strong>Scan tools</strong>, complete authorization using the same Glossa account as the worker, then create the app.</li>
+        <li>Enable Developer Mode for your ChatGPT plan and workspace role.</li>
+        <li>Open ChatGPT Settings, choose Apps, then choose Create.</li>
+        <li>Name the app <strong>Glossa</strong> and enter <code>https://mcp.glossa.sh/mcp</code>.</li>
+        <li>Choose OAuth authentication, scan the tools, and authorize the same Glossa account.</li>
       </ol>
 
-      <h2>4. Verify the connection</h2>
-      <p>Start a ChatGPT conversation with the Dev-labeled Glossa app selected and ask:</p>
-      <pre><code>List my connected devices.</code></pre>
-      <p>Then try a harmless read from the disposable repository:</p>
-      <pre><code>Open my connected Glossa workspace and read README.md.</code></pre>
-
       <div class="notice">
-        <strong>Glossa can modify files and run commands.</strong>
-        <p>Commands run with the full environment and permissions of your Windows account. Do not expose your home directory, a drive root, or a repository containing credentials.</p>
+        <strong>Verify the connection</strong>
+        <p>Open a conversation with the Dev-labeled Glossa app selected and ask:</p>
+        <pre><code>List my connected devices.</code></pre>
+        <p>A connected worker reports one online device with root path <code>.</code>.</p>
       </div>
 
-      <p>For troubleshooting and more detail, read the <a href="https://github.com/ariobarin/glossa/blob/main/docs/open-beta.md">open beta guide</a>.</p>
+      <div class="notice notice-warning">
+        <strong>Expose only a workspace you trust.</strong>
+        <p>
+          Glossa can modify files and run commands with your Windows account's
+          permissions. Do not expose your home directory, a drive root, or a
+          repository containing credentials.
+        </p>
+      </div>
+
+      <p>
+        Need more detail? Read the
+        <a href="https://github.com/ariobarin/glossa/blob/main/docs/open-beta.md">open beta guide</a>.
+      </p>
     </main>
 
     <footer>
