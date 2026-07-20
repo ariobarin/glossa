@@ -170,12 +170,12 @@ function renderPage(page, slug) {
     </header>
 
     <main class="docs-main page-width">
+      <div class="docs-layout${sectionNavigation ? " has-toc" : ""}">
       <header class="docs-intro">
         <h1>${renderedTitle}</h1>
         <p class="docs-summary">${marked.parseInline(page.summary)}</p>${connection}
       </header>
 
-      <div class="docs-layout${sectionNavigation ? " has-toc" : ""}">
 ${sectionNavigation}
       <article class="docs-content">
 ${body}

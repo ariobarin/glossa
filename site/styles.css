@@ -240,6 +240,8 @@ p {
 }
 
 .docs-intro {
+  grid-column: 1;
+  grid-row: 1;
   padding: 16px 0 44px;
   border-bottom: 1px solid var(--line);
 }
@@ -313,14 +315,19 @@ p {
 }
 
 .docs-layout {
-  max-width: 780px;
-  margin-top: 46px;
+  display: grid;
+  grid-template-columns: minmax(0, 780px) minmax(160px, 184px);
+  align-items: start;
+  gap: clamp(40px, 5vw, 62px);
 }
 
 .docs-toc {
-  margin-bottom: 42px;
-  padding: 0 0 28px;
-  border-bottom: 1px solid var(--line);
+  position: sticky;
+  top: 24px;
+  grid-column: 2;
+  grid-row: 1 / span 2;
+  padding: 4px 0 4px 18px;
+  border-left: 1px solid var(--line);
 }
 
 .docs-toc strong {
@@ -333,16 +340,13 @@ p {
 }
 
 .docs-toc ol {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 9px 24px;
   margin: 0;
   padding: 0;
   list-style: none;
 }
 
 .docs-toc li + li {
-  margin-top: 0;
+  margin-top: 10px;
 }
 
 .docs-toc a {
@@ -357,7 +361,10 @@ p {
 }
 
 .docs-content {
+  grid-column: 1;
+  grid-row: 2;
   min-width: 0;
+  margin-top: 46px;
 }
 
 .doc-section {
@@ -675,6 +682,38 @@ p {
 @media (max-width: 820px) {
   .landing-hero {
     align-content: center;
+  }
+}
+
+@media (max-width: 720px) {
+  .docs-layout {
+    display: block;
+  }
+
+  .docs-toc {
+    position: static;
+    margin: 38px 0;
+    padding: 0 0 28px;
+    border: 0;
+    border-bottom: 1px solid var(--line);
+  }
+
+  .docs-toc ol {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 9px 24px;
+  }
+
+  .docs-toc li + li {
+    margin-top: 0;
+  }
+
+  .docs-content {
+    margin-top: 38px;
+  }
+
+  .docs-layout.has-toc .docs-content {
+    margin-top: 0;
   }
 }
 
