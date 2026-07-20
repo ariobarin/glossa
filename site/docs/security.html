@@ -1,0 +1,184 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="How Glossa protects local workspaces, accounts, credentials, and data." />
+    <meta name="theme-color" content="#111016" />
+    <title>Security | Glossa</title>
+    <link rel="icon" href="/glossa-symbol.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="/styles.css?v=36" />
+    <script src="/copy.js?v=3" defer></script>
+  </head>
+  <body class="docs-shell doc-security">
+    <!-- Generated from security.md. Run npm run docs:build after editing Markdown. -->
+    <header class="site-header page-width">
+      <a class="brand" href="/" aria-label="Glossa home">
+        <img class="brand-symbol" src="/glossa-symbol.svg" alt="" />
+        <span>Glossa</span>
+      </a>
+      <nav class="header-links" aria-label="Site navigation">
+        <a href="/">Home</a>
+      </nav>
+    </header>
+
+    <main class="docs-main page-width">
+      <header class="docs-intro">
+        <h1>Core security and threat model</h1>
+        <p class="docs-summary">How Glossa protects local workspaces, accounts, credentials, and data.</p>
+      </header>
+
+      <div class="docs-layout has-toc">
+      <nav class="docs-toc" aria-label="On this page">
+        <strong>On this page</strong>
+        <ol>
+          <li><a href="#warning">Warning</a></li>
+          <li><a href="#trust-assumptions">Trust assumptions</a></li>
+          <li><a href="#primary-assets">Primary assets</a></li>
+          <li><a href="#primary-threats-and-controls">Primary threats and controls</a></li>
+          <li><a href="#data-retention">Data retention</a></li>
+        </ol>
+      </nav>
+      <article class="docs-content">
+<section class="doc-section">
+<h2 id="warning">Warning</h2>
+<p>Glossa executes commands with the permissions and environment of the local account that launched it. File-tool root checks do not sandbox shell commands. A command may access credentials, developer tools, networks, or other files available to that account.</p>
+</section><section class="doc-section">
+<h2 id="trust-assumptions">Trust assumptions</h2>
+<ul>
+<li>The Glossa operator controls the hosted relay and identity provider.</li>
+<li>The authenticated user intends to authorize the connected MCP client.</li>
+<li>The local computer and operating-system account are trusted.</li>
+<li>There is no hostile multi-tenant execution on one worker.</li>
+<li>TLS termination and OAuth token validation are correctly configured.</li>
+</ul>
+</section><section class="doc-section">
+<h2 id="primary-assets">Primary assets</h2>
+<ul>
+<li>Local source code.</li>
+<li>Local developer credentials and environment.</li>
+<li>Device credentials.</li>
+<li>OAuth refresh/access tokens.</li>
+<li>Account/device ownership relationships.</li>
+<li>Command results and file contents in transit.</li>
+</ul>
+</section><section class="doc-section">
+<h2 id="primary-threats-and-controls">Primary threats and controls</h2>
+<h3 id="cross-account-routing">Cross-account routing</h3>
+<p><strong>Threat:</strong> an authenticated account guesses another device or job ID.</p>
+<p><strong>Controls:</strong></p>
+<ul>
+<li>include <code>account_id</code> in all primary and foreign-key relationships;</li>
+<li>accept only the configured Auth0 subject prefix;</li>
+<li>require account ID in every query;</li>
+<li>never fetch by resource ID and check ownership afterward when an account-scoped query is possible;</li>
+<li>use opaque random identifiers;</li>
+<li>verify account isolation with direct integration checks before deployment.</li>
+</ul>
+<h3 id="stolen-device-token">Stolen device token</h3>
+<p><strong>Threat:</strong> token grants remote execution on an exposed root.</p>
+<p><strong>Controls:</strong></p>
+<ul>
+<li>256-bit random secret;</li>
+<li>transmit only over HTTPS;</li>
+<li>store only salted scrypt hash;</li>
+<li>display or return once;</li>
+<li>operating-system credential storage, with an explicit warning before a local file fallback;</li>
+<li>device-specific revocation;</li>
+<li>rate limiting and constant-time comparison;</li>
+<li>never log Authorization headers.</li>
+</ul>
+<h3 id="malicious-or-compromised-mcp-client">Malicious or compromised MCP client</h3>
+<p><strong>Threat:</strong> authenticated client requests destructive actions.</p>
+<p><strong>Controls:</strong></p>
+<ul>
+<li>explicit OAuth authorization;</li>
+<li>accurate MCP tool annotations;</li>
+<li>narrow exposed root;</li>
+<li>temporary exposure by default;</li>
+<li>treat local session startup as authorization for writes and bounded commands without per-operation confirmation;</li>
+<li>display the full shell-authority warning before connection;</li>
+<li>show write and command activity locally;</li>
+<li>visible local status and immediate disconnect;</li>
+<li>no implicit broad-root exposure.</li>
+</ul>
+<h3 id="path-escape">Path escape</h3>
+<p><strong>Threat:</strong> absolute paths, parent traversal, symlinks, junctions, or writable ancestors escape the root.</p>
+<p><strong>Controls:</strong></p>
+<ul>
+<li>enforce canonicalization, realpath, symlink, and junction checks from the current Glossa requirements;</li>
+<li>validate existing paths and nearest writable ancestors locally;</li>
+<li>reject absolute paths and lexical parent escapes;</li>
+<li>revalidate root-relative paths for every operation;</li>
+<li>treat Windows path, junction, and reparse-point behavior as the launch security baseline;</li>
+<li>verify Windows junction and reparse-point behavior when path enforcement changes.</li>
+</ul>
+<h3 id="shell-authority">Shell authority</h3>
+<p><strong>Threat:</strong> a command accesses resources outside the exposed file root.</p>
+<p><strong>Reality:</strong> this is expected shell authority, not a bug in path tools. Command filtering is not a sandbox.</p>
+<p><strong>Controls:</strong></p>
+<ul>
+<li>state the risk honestly;</li>
+<li>require explicit session startup, but do not prompt locally for each command;</li>
+<li>inherit the complete worker process environment, including available developer credentials;</li>
+<li>never enumerate, persist, or log environment variables automatically;</li>
+<li>run under a dedicated OS account for unattended use;</li>
+<li>recommend a container or VM when stronger isolation is required;</li>
+<li>bound duration and output;</li>
+<li>terminate process groups and discovered descendants.</li>
+</ul>
+<h3 id="logging-leakage">Logging leakage</h3>
+<p><strong>Threat:</strong> source code, command output, paths, or tokens reach platform logs.</p>
+<p><strong>Controls:</strong></p>
+<ul>
+<li>structured metadata logs only;</li>
+<li>redact headers and bodies;</li>
+<li>never attach request or response content;</li>
+<li>never add local absolute paths or derived repository names to relay metadata or logs;</li>
+<li>verify log scrubbing before deployment.</li>
+</ul>
+<h3 id="relay-compromise">Relay compromise</h3>
+<p><strong>Threat:</strong> attacker controls the routing service.</p>
+<p><strong>Controls and limits:</strong></p>
+<ul>
+<li>relay does not possess local repository clones or developer credentials;</li>
+<li>device tokens are sufficient to issue jobs while a worker is exposed, so relay compromise remains serious;</li>
+<li>minimize dependencies and privileges;</li>
+<li>use managed platform patching, secret scanning, exact dependencies, and rapid device revocation.</li>
+</ul>
+</section><section class="doc-section">
+<h2 id="data-retention">Data retention</h2>
+<p>Durably retain only what is needed for account/device operation and security:</p>
+<ul>
+<li>device ID, name, platform, created, last seen, and revoked timestamps;</li>
+<li>OAuth subject identifier;</li>
+<li>metadata-only audit event type, status, and timestamp.</li>
+</ul>
+<p>Do not durably retain:</p>
+<ul>
+<li>file content;</li>
+<li>command input or output;</li>
+<li>environment variables;</li>
+<li>full local paths;</li>
+<li>repository names unless explicitly chosen by the user;</li>
+<li>OAuth or device bearer secrets.</li>
+</ul>
+<p>Additional defenses must extend these controls rather than replace them.</p>
+</section>
+      </article>
+      </div>
+    </main>
+
+    <footer class="site-footer">
+      <div class="site-footer-inner page-width">
+        <span>Need help? <a href="/support">Visit support.</a></span>
+        <nav aria-label="Legal and support">
+          <a href="/security">Security</a>
+          <a href="/privacy">Privacy</a>
+          <a href="/terms">Terms</a>
+          <a href="/support">Support</a>
+        </nav>
+      </div>
+    </footer>
+  </body>
+</html>

@@ -2,6 +2,8 @@
 
 Glossa lets ChatGPT read files, make changes, and run commands in your folder.
 
+Full Glossa access currently requires ChatGPT Business, Enterprise, or Edu on the web. You must be a Business admin or owner, or an Enterprise/Edu user authorized for [Developer Mode](https://help.openai.com/en/articles/12584461-developer-mode-and-full-mcp-connectors-in-chatgpt-beta).
+
 ## Install Glossa
 
 Requires Node.js 24.
@@ -20,15 +22,16 @@ glossa .
 
 ## Add it to ChatGPT
 
-1. Open **Settings > Apps > Advanced Settings**. Enable [Developer Mode](https://help.openai.com/en/articles/12584461-developer-mode-apps-and-full-mcp-connectors-in-chatgpt-beta), then choose **Create**.
+1. Open **Settings > Apps > Advanced Settings**, enable **Developer Mode**, then choose **Create**. Business admins and owners can also start from **Workspace settings > Apps > Create**.
 2. Name it **Glossa** and paste this server URL:
 
 ```text
 https://mcp.glossa.sh/mcp
 ```
 
-3. Choose **OAuth**, check the confirmation box, then choose **Create**.
-4. Choose **Sign in with Glossa**, then choose the same Google account you used in the Glossa CLI.
+3. Choose **OAuth**, then choose **Scan Tools**.
+4. Complete the Glossa authorization prompt with the same Google account you used in the Glossa CLI, then wait for the tool scan to finish.
+5. Choose **Create**.
 
 ## Test the connection
 

@@ -7,7 +7,7 @@
     <meta name="theme-color" content="#111016" />
     <title>Security | Glossa</title>
     <link rel="icon" href="/glossa-symbol.svg" type="image/svg+xml" />
-    <link rel="stylesheet" href="/styles.css?v=34" />
+    <link rel="stylesheet" href="/styles.css?v=36" />
   </head>
   <body class="policy-shell">
     <header class="site-header page-width">
@@ -18,7 +18,6 @@
       <nav class="header-links" aria-label="Site navigation">
         <a href="/">Home</a>
         <a href="/docs/quickstart">Quickstart</a>
-        <a href="https://github.com/ariobarin/glossa">GitHub</a>
       </nav>
     </header>
 
@@ -47,7 +46,7 @@
         <li>Path containment and process controls are enforced on the local worker.</li>
         <li>Every relay resource is scoped to the authenticated account.</li>
         <li>The relay database stores only salted hashes of random device secrets.</li>
-        <li>The worker keeps its recoverable device secret in the Windows credential store, or a protected local file when no credential store is available.</li>
+        <li>The worker keeps its recoverable device secret in the Windows credential store, or uses a warned local file fallback whose access controls depend on the operating system.</li>
         <li>Hosted logs contain operational metadata rather than request or response content.</li>
       </ul>
 
@@ -61,12 +60,12 @@
 
       <h2>Report a security issue</h2>
       <p>Do not publish credentials, private source code, exploit details, or personal data. Follow the private-contact process on the <a href="/support">support page</a>.</p>
-      <p>Maintainers and reviewers can read the complete <a href="https://github.com/ariobarin/glossa/blob/main/docs/security.md">threat model and controls</a>.</p>
+      <p>Maintainers and reviewers can read the complete <a href="/docs/security">threat model and controls</a>.</p>
     </main>
 
     <footer class="site-footer">
       <div class="site-footer-inner page-width">
-        <span>Need help? <a href="https://github.com/ariobarin/glossa/issues">Open a GitHub issue.</a></span>
+        <span>Need help? <a href="/support">Visit support.</a></span>
         <nav aria-label="Legal and support">
           <a href="/security">Security</a>
           <a href="/privacy">Privacy</a>

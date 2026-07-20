@@ -1,5 +1,7 @@
 # Core security and threat model
 
+How Glossa protects local workspaces, accounts, credentials, and data.
+
 ## Warning
 
 Glossa executes commands with the permissions and environment of the local account that launched it. File-tool root checks do not sandbox shell commands. A command may access credentials, developer tools, networks, or other files available to that account.
@@ -46,7 +48,7 @@ Glossa executes commands with the permissions and environment of the local accou
 - transmit only over HTTPS;
 - store only salted scrypt hash;
 - display or return once;
-- mode-0600 or operating-system credential storage locally;
+- operating-system credential storage, with an explicit warning before a local file fallback;
 - device-specific revocation;
 - rate limiting and constant-time comparison;
 - never log Authorization headers.
@@ -106,7 +108,7 @@ Glossa executes commands with the permissions and environment of the local accou
 - structured metadata logs only;
 - redact headers and bodies;
 - never attach request or response content;
-- never send local absolute paths or derived repository names to the relay;
+- never add local absolute paths or derived repository names to relay metadata or logs;
 - verify log scrubbing before deployment.
 
 ### Relay compromise
