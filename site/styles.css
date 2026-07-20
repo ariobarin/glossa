@@ -189,6 +189,71 @@ p {
   box-shadow: 0 4px 14px rgba(0, 0, 0, 0.24);
 }
 
+.secondary-action,
+.dialog-close {
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius);
+  background: transparent;
+  color: var(--ink);
+  font: inherit;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: border-color 140ms ease, color 140ms ease;
+}
+
+.secondary-action {
+  min-height: 48px;
+  padding: 0 17px;
+}
+
+.secondary-action:hover,
+.dialog-close:hover {
+  border-color: var(--purple-readable);
+  color: var(--purple-readable);
+}
+
+.why-dialog {
+  width: min(calc(100% - 32px), 460px);
+  padding: 0;
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  background: var(--surface);
+  color: var(--ink);
+  box-shadow: 0 24px 80px rgba(0, 0, 0, 0.5);
+}
+
+.why-dialog::backdrop {
+  background: rgba(8, 7, 11, 0.78);
+  backdrop-filter: blur(3px);
+}
+
+.why-dialog-content {
+  padding: 28px;
+}
+
+.why-dialog h2 {
+  margin: 0 0 12px;
+  font-size: 28px;
+  letter-spacing: -0.04em;
+}
+
+.why-dialog p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 16px;
+  line-height: 1.6;
+}
+
+.why-dialog form {
+  margin-top: 24px;
+}
+
+.dialog-close {
+  min-height: 42px;
+  padding: 0 15px;
+}
+
 .site-footer {
   border-top: 1px solid var(--line);
   background: #0d0c11;
@@ -608,6 +673,12 @@ p {
   }
 
   .primary-action {
+    min-height: 43px;
+    padding: 0 13px;
+    font-size: 13px;
+  }
+
+  .secondary-action {
     min-height: 43px;
     padding: 0 13px;
     font-size: 13px;
