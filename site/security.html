@@ -46,7 +46,7 @@
         <li>Path containment and process controls are enforced on the local worker.</li>
         <li>Every relay resource is scoped to the authenticated account.</li>
         <li>The relay database stores only salted hashes of random device secrets.</li>
-        <li>The worker keeps its recoverable device secret in the Windows credential store, or a protected local file when no credential store is available.</li>
+        <li>The worker keeps its recoverable device secret in the Windows credential store, or uses a warned local file fallback whose access controls depend on the operating system.</li>
         <li>Hosted logs contain operational metadata rather than request or response content.</li>
       </ul>
 

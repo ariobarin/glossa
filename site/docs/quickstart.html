@@ -48,6 +48,7 @@
         </ol>
       </nav>
       <article class="docs-content">
+<p>Full Glossa access currently requires ChatGPT Business, Enterprise, or Edu on the web. You must be a Business admin or owner, or an Enterprise/Edu user authorized for <a href="https://help.openai.com/en/articles/12584461-developer-mode-and-full-mcp-connectors-in-chatgpt-beta">Developer Mode</a>.</p>
 <section class="doc-section">
 <h2 id="install-glossa">Install Glossa</h2>
 <p>Requires Node.js 24.</p>
@@ -71,7 +72,7 @@
 </section><section class="doc-section">
 <h2 id="add-it-to-chatgpt">Add it to ChatGPT</h2>
 <ol>
-<li>Open <strong>Settings &gt; Apps &gt; Advanced Settings</strong>. Enable <a href="https://help.openai.com/en/articles/12584461-developer-mode-apps-and-full-mcp-connectors-in-chatgpt-beta">Developer Mode</a>, then choose <strong>Create</strong>.</li>
+<li>Open <strong>Settings &gt; Apps &gt; Advanced Settings</strong>, enable <strong>Developer Mode</strong>, then choose <strong>Create</strong>. Business admins and owners can also start from <strong>Workspace settings &gt; Apps &gt; Create</strong>.</li>
 <li>Name it <strong>Glossa</strong> and paste this server URL:</li>
 </ol>
 <div class="code-block">
@@ -82,8 +83,9 @@
 </code></pre>
 </div>
 <ol start="3">
-<li>Choose <strong>OAuth</strong>, check the confirmation box, then choose <strong>Create</strong>.</li>
-<li>Choose <strong>Sign in with Glossa</strong>.</li>
+<li>Choose <strong>OAuth</strong>, then choose <strong>Scan Tools</strong>.</li>
+<li>Complete the Glossa authorization prompt and wait for the tool scan to finish.</li>
+<li>Choose <strong>Create</strong>.</li>
 </ol>
 </section><section class="doc-section">
 <h2 id="test-the-connection">Test the connection</h2>

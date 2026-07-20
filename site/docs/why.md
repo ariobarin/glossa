@@ -1,9 +1,9 @@
 # Why Glossa?
 
-ChatGPT Chat often has much higher usage limits than Codex or Work.
+ChatGPT Chat has separate usage limits from agentic features.
 
-Codex and Work share one agentic usage pool. Chat has separate limits.
+Codex and Work share one agentic usage pool.
 
-Glossa lets Chat read files, make changes, and run commands in a folder on your computer. You can code in Chat without using the Codex and Work pool.
+On eligible plans, Glossa lets Chat read files, make changes, and run commands in a folder on your computer. This provides a separate coding workflow from Codex and Work.
 
 <a class="primary-action" href="/docs/quickstart">Set up Glossa</a>
