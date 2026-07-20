@@ -87,6 +87,12 @@ function renderConnection() {
 
 function renderPage(page, slug) {
   const renderedTitle = escapeHtml(page.title).replace(/\.$/, '<span class="accent-coral">.</span>');
+  const tabTitle = slug
+    .split("/")
+    .at(-1)
+    .split("-")
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(" ");
   const body = addCopyButtons(marked.parse(page.body, { gfm: true }), slug);
   const connection = slug === "quickstart" ? renderConnection() : "";
 
@@ -97,7 +103,8 @@ function renderPage(page, slug) {
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="description" content="${escapeHtml(page.summary)}" />
     <meta name="theme-color" content="#111016" />
-    <title>${escapeHtml(page.title.replace(/\.$/, ""))} | Glossa docs</title>
+    <title>${escapeHtml(tabTitle)} | Glossa</title>
+    <link rel="icon" href="/glossa-symbol.svg" type="image/svg+xml" />
     <link rel="stylesheet" href="/styles.css?v=34" />
     <script src="/copy.js?v=3" defer></script>
   </head>
