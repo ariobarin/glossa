@@ -7,10 +7,10 @@
     <meta name="theme-color" content="#111016" />
     <title>Quickstart | Glossa</title>
     <link rel="icon" href="/glossa-symbol.svg" type="image/svg+xml" />
-    <link rel="stylesheet" href="/styles.css?v=34" />
+    <link rel="stylesheet" href="/styles.css?v=36" />
     <script src="/copy.js?v=3" defer></script>
   </head>
-  <body class="docs-shell">
+  <body class="docs-shell doc-quickstart">
     <!-- Generated from quickstart.md. Run npm run docs:build after editing Markdown. -->
     <header class="site-header page-width">
       <a class="brand" href="/" aria-label="Glossa home">
@@ -19,14 +19,13 @@
       </a>
       <nav class="header-links" aria-label="Site navigation">
         <a href="/">Home</a>
-        <a href="https://github.com/ariobarin/glossa">GitHub</a>
       </nav>
     </header>
 
     <main class="docs-main page-width">
       <header class="docs-intro">
-        <h1>Put ChatGPT to work<span class="accent-coral">.</span></h1>
-        <p>Glossa lets ChatGPT read files, make changes, and run commands in your folder.</p>
+        <h1>Put ChatGPT to work.</h1>
+        <p class="docs-summary">Glossa lets ChatGPT read files, make changes, and run commands in your folder.</p>
         <div class="connection-strip" aria-label="ChatGPT connects through Glossa to your folder">
           <strong>ChatGPT.com</strong>
           <span class="connection-line connection-line-purple" aria-hidden="true"></span>
@@ -38,8 +37,20 @@
         </div>
       </header>
 
+      <div class="docs-layout has-toc">
+      <nav class="docs-toc" aria-label="On this page">
+        <strong>On this page</strong>
+        <ol>
+          <li><a href="#install-glossa">Install Glossa</a></li>
+          <li><a href="#start-it-in-a-folder">Start it in a folder</a></li>
+          <li><a href="#add-it-to-chatgpt">Add it to ChatGPT</a></li>
+          <li><a href="#test-the-connection">Test the connection</a></li>
+        </ol>
+      </nav>
       <article class="docs-content">
-<h2>Install Glossa</h2>
+<p>Full Glossa access currently requires ChatGPT Business, Enterprise, or Edu on the web. You must be a Business admin or owner, or an Enterprise/Edu user authorized for <a href="https://help.openai.com/en/articles/12584461-developer-mode-and-full-mcp-connectors-in-chatgpt-beta">Developer Mode</a>.</p>
+<section class="doc-section">
+<h2 id="install-glossa">Install Glossa</h2>
 <p>Requires Node.js 24.</p>
 <div class="code-block">
   <button class="copy-button" type="button" data-copy-target="quickstart-code-1" aria-label="Copy code">
@@ -48,7 +59,8 @@
   <pre><code class="language-shell" id="quickstart-code-1">npm install --global @ariobarin/glossa@beta
 </code></pre>
 </div>
-<h2>Start it in a folder</h2>
+</section><section class="doc-section">
+<h2 id="start-it-in-a-folder">Start it in a folder</h2>
 <p>Open a terminal in the folder where you want ChatGPT to work.</p>
 <div class="code-block">
   <button class="copy-button" type="button" data-copy-target="quickstart-code-2" aria-label="Copy code">
@@ -57,9 +69,10 @@
   <pre><code class="language-shell" id="quickstart-code-2">glossa .
 </code></pre>
 </div>
-<h2>Add it to ChatGPT</h2>
+</section><section class="doc-section">
+<h2 id="add-it-to-chatgpt">Add it to ChatGPT</h2>
 <ol>
-<li>Open <strong>Settings &gt; Apps &gt; Advanced Settings</strong>. Enable <a href="https://help.openai.com/en/articles/12584461-developer-mode-apps-and-full-mcp-connectors-in-chatgpt-beta">Developer Mode</a>, then choose <strong>Create</strong>.</li>
+<li>Open <strong>Settings &gt; Apps &gt; Advanced Settings</strong>, enable <strong>Developer Mode</strong>, then choose <strong>Create</strong>. Business admins and owners can also start from <strong>Workspace settings &gt; Apps &gt; Create</strong>.</li>
 <li>Name it <strong>Glossa</strong> and paste this server URL:</li>
 </ol>
 <div class="code-block">
@@ -70,10 +83,12 @@
 </code></pre>
 </div>
 <ol start="3">
-<li>Choose <strong>OAuth</strong>, check the confirmation box, then choose <strong>Create</strong>.</li>
-<li>Choose <strong>Sign in with Glossa</strong>.</li>
+<li>Choose <strong>OAuth</strong>, then choose <strong>Scan Tools</strong>.</li>
+<li>Complete the Glossa authorization prompt and wait for the tool scan to finish.</li>
+<li>Choose <strong>Create</strong>.</li>
 </ol>
-<h2>Test the connection</h2>
+</section><section class="doc-section">
+<h2 id="test-the-connection">Test the connection</h2>
 <p>In ChatGPT, send:</p>
 <div class="code-block">
   <button class="copy-button" type="button" data-copy-target="quickstart-code-4" aria-label="Copy code">
@@ -82,13 +97,14 @@
   <pre><code class="language-text" id="quickstart-code-4">Use Glossa to list my connected devices.
 </code></pre>
 </div>
-
+</section>
       </article>
+      </div>
     </main>
 
     <footer class="site-footer">
       <div class="site-footer-inner page-width">
-        <span>Need help? <a href="https://github.com/ariobarin/glossa/issues">Open a GitHub issue.</a></span>
+        <span>Need help? <a href="/support">Visit support.</a></span>
         <nav aria-label="Legal and support">
           <a href="/security">Security</a>
           <a href="/privacy">Privacy</a>
