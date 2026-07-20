@@ -47,3 +47,5 @@ glossa logout --browser
 ```
 
 In ChatGPT, disconnect and reconnect Glossa under **Settings > Apps**. Choose the same Google account when ChatGPT and the CLI authorize Glossa again.
+
+You can also ask ChatGPT to use Glossa's `logout` tool. ChatGPT will give you the browser link that you must open to clear the remembered Glossa login.

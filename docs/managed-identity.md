@@ -36,6 +36,8 @@ Never commit the Google client secret, an Auth0 Management API token, or an expo
 4. Choose the intended Google account during ChatGPT authorization.
 5. Run `glossa login` and choose the same Google account.
 
+The MCP `logout` tool returns the same browser logout URL and tells the model to present it to the user. The tool does not open the URL or revoke credentials itself.
+
 ## Release verification
 
 Before treating an identity change as deployed:

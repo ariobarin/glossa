@@ -82,6 +82,7 @@ The origin route `POST /` serves the same authenticated transport for MCP client
 Tools:
 
 - `list_devices`
+- `logout`
 - `read_file`
 - `write_file`
 - `run_command`
@@ -89,6 +90,8 @@ Tools:
 - `cancel_command`
 
 `list_devices` identifies an active root by device ID and reports `path: "."`. File and command tools accept that device ID and operate relative to its exposed root. Local absolute paths are never transmitted to or returned by the hosted relay.
+
+`logout` requires no worker. It returns the Auth0 browser logout URL and instructions that the model must present to the user. It does not navigate the browser, revoke credentials, or claim the user completed logout.
 
 Tool annotations must describe actual behavior. `write_file` and `run_command` are non-read-only and destructive-capable.
 Every tool advertises the `glossa:access` OAuth scheme in descriptor metadata and is visible to the model. `run_command` declares `openWorldHint: true` because a command can use the worker account's inherited network access and affect external systems. All other tools declare `openWorldHint: false`.

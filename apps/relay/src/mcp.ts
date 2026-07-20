@@ -50,6 +50,17 @@ const listDevicesOutputSchema = z
       .describe("Online Windows workers available to the authenticated account."),
   })
   .strict();
+const logoutOutputSchema = z
+  .object({
+    logoutUrl: z
+      .string()
+      .url()
+      .describe("Browser URL the user must open to clear the Glossa login session."),
+    instructions: z
+      .string()
+      .describe("Account-switching instructions to present to the user."),
+  })
+  .strict();
 const readFileOutputSchema = z
   .object({
     content: z.string().describe("Complete UTF-8 file content."),
@@ -134,6 +145,13 @@ function structuredResult(value: Record<string, unknown>) {
     content: [{ type: "text" as const, text: JSON.stringify(value) }],
     structuredContent: value,
   };
+}
+
+function browserLogoutUrl(issuer: string): string {
+  return new URL(
+    "v2/logout",
+    issuer.endsWith("/") ? issuer : `${issuer}/`,
+  ).toString();
 }
 
 function errorResult(code: string, message: string) {
@@ -230,6 +248,30 @@ function registerTools(
       },
     },
     async () => structuredResult({ devices: state.listDevices(accountId) }),
+  );
+
+  server.registerTool(
+    "logout",
+    {
+      title: "Log Out of Glossa",
+      description: "Use when the user asks to sign out of Glossa or switch Google accounts. Tell the user to open the returned logoutUrl in their browser, and do not claim logout is complete until they do. This tool returns instructions only and does not revoke credentials or change server state.",
+      inputSchema: z.object({}).strict(),
+      outputSchema: logoutOutputSchema,
+      _meta: toolMetadata,
+      annotations: {
+        readOnlyHint: true,
+        destructiveHint: false,
+        idempotentHint: true,
+        openWorldHint: false,
+      },
+    },
+    async () => {
+      const logoutUrl = browserLogoutUrl(config.GLOSSA_AUTH0_ISSUER);
+      return structuredResult({
+        logoutUrl,
+        instructions: `Tell the user to open ${logoutUrl} in their browser. After it loads, they can disconnect and reconnect Glossa in ChatGPT and choose the intended Google account.`,
+      });
+    },
   );
 
   server.registerTool(
