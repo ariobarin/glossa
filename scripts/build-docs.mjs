@@ -147,21 +147,29 @@ ${body}
 `;
 }
 
-const markdownFiles = await findMarkdownFiles(docsDirectory);
+const markdownPages = (await findMarkdownFiles(docsDirectory)).map((sourcePath) => ({
+  sourcePath,
+  slug: relative(docsDirectory, sourcePath).replaceAll("\\", "/").slice(0, -3),
+  outputPath: sourcePath.slice(0, -3) + ".html",
+}));
+
+markdownPages.push({
+  sourcePath: join(repositoryRoot, "docs", "security.md"),
+  slug: "security",
+  outputPath: join(docsDirectory, "security.html"),
+});
+
 const stalePages = [];
 
-for (const markdownPath of markdownFiles) {
-  const source = await readFile(markdownPath, "utf8");
-  const page = readPage(source, markdownPath);
-  const relativePath = relative(docsDirectory, markdownPath).replaceAll("\\", "/");
-  const slug = relativePath.slice(0, -3);
-  const outputPath = markdownPath.slice(0, -3) + ".html";
+for (const { sourcePath, slug, outputPath } of markdownPages) {
+  const source = await readFile(sourcePath, "utf8");
+  const page = readPage(source, sourcePath);
   const output = renderPage(page, slug);
 
   if (checkOnly) {
     const current = await readFile(outputPath, "utf8").catch(() => "");
     if (current.replaceAll("\r\n", "\n") !== output) {
-      stalePages.push(relativePath);
+      stalePages.push(relative(repositoryRoot, sourcePath).replaceAll("\\", "/"));
     }
   } else {
     await writeFile(outputPath, output, "utf8");
@@ -172,4 +180,4 @@ if (stalePages.length > 0) {
   throw new Error(`Generated docs are stale: ${stalePages.join(", ")}. Run npm run docs:build.`);
 }
 
-console.log(`${checkOnly ? "Checked" : "Built"} ${markdownFiles.length} documentation page${markdownFiles.length === 1 ? "" : "s"}.`);
+console.log(`${checkOnly ? "Checked" : "Built"} ${markdownPages.length} documentation page${markdownPages.length === 1 ? "" : "s"}.`);

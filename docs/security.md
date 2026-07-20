@@ -1,5 +1,7 @@
 # Core security and threat model
 
+How Glossa protects local workspaces, accounts, credentials, and data.
+
 ## Warning
 
 Glossa executes commands with the permissions and environment of the local account that launched it. File-tool root checks do not sandbox shell commands. A command may access credentials, developer tools, networks, or other files available to that account.
