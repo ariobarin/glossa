@@ -115,13 +115,6 @@ ${links}
       </nav>`;
 }
 
-function documentLabel(slug) {
-  if (slug === "quickstart") return "Setup guide";
-  if (slug === "security") return "Trust and safety";
-  if (slug === "why") return "Product overview";
-  return "Documentation";
-}
-
 function renderConnection() {
   return `
         <div class="connection-strip" aria-label="ChatGPT connects through Glossa to your folder">
@@ -136,7 +129,7 @@ function renderConnection() {
 }
 
 function renderPage(page, slug) {
-  const renderedTitle = escapeHtml(page.title).replace(/\.$/, '<span class="accent-coral">.</span>');
+  const renderedTitle = escapeHtml(page.title);
   const tabTitle = slug
     .split("/")
     .at(-1)
@@ -175,7 +168,6 @@ function renderPage(page, slug) {
 
     <main class="docs-main page-width">
       <header class="docs-intro">
-        <span class="docs-kicker">${documentLabel(slug)}</span>
         <h1>${renderedTitle}</h1>
         <p class="docs-summary">${marked.parseInline(page.summary)}</p>${connection}
       </header>

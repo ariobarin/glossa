@@ -232,67 +232,25 @@ p {
   display: grid;
   min-height: max(100vh, 100dvh);
   grid-template-rows: auto minmax(0, 1fr) auto;
-  background:
-    linear-gradient(90deg, transparent 0, transparent calc(50% - 1px), rgba(255, 255, 255, 0.018) 50%, transparent calc(50% + 1px)),
-    var(--paper);
 }
 
 .docs-main.page-width {
-  width: min(calc(100% - 48px), 1080px);
-  padding: 64px 0 92px;
+  width: min(calc(100% - 48px), 980px);
+  padding: 58px 0 84px;
 }
 
 .docs-intro {
-  position: relative;
-  overflow: hidden;
-  padding: 50px 54px 52px;
-  border: 1px solid var(--line);
-  border-radius: 26px;
-  background: linear-gradient(135deg, #1a1722 0 74%, #211a38 74%);
-  box-shadow: 0 22px 60px rgba(0, 0, 0, 0.2);
-}
-
-.docs-intro::after {
-  content: "";
-  position: absolute;
-  top: 0;
-  right: 0;
-  width: 34%;
-  height: 4px;
-  background: var(--coral);
-}
-
-.docs-kicker {
-  display: inline-flex;
-  align-items: center;
-  gap: 9px;
-  margin-bottom: 24px;
-  color: var(--purple-readable);
-  font-family: var(--mono);
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-}
-
-.docs-kicker::before {
-  content: "";
-  width: 20px;
-  height: 1px;
-  background: currentColor;
+  padding: 16px 0 44px;
+  border-bottom: 1px solid var(--line);
 }
 
 .docs-intro h1 {
-  max-width: 820px;
-  margin-bottom: 22px;
-  font-size: clamp(48px, 6vw, 68px);
+  max-width: 760px;
+  margin-bottom: 20px;
+  font-size: clamp(46px, 5.4vw, 62px);
   font-weight: 700;
   letter-spacing: -0.055em;
   line-height: 0.96;
-}
-
-.docs-intro h1 .accent-coral {
-  color: var(--coral);
 }
 
 .docs-summary {
@@ -309,9 +267,7 @@ p {
   grid-template-columns: auto minmax(28px, 1fr) 44px minmax(28px, 1fr) auto;
   align-items: center;
   gap: 12px;
-  margin: 38px auto 0;
-  padding-top: 28px;
-  border-top: 1px solid rgba(255, 255, 255, 0.09);
+  margin: 34px auto 0;
 }
 
 .connection-strip strong {
@@ -357,7 +313,7 @@ p {
 }
 
 .docs-layout {
-  margin-top: 54px;
+  margin-top: 46px;
 }
 
 .docs-layout.has-toc {
@@ -376,7 +332,7 @@ p {
   position: sticky;
   top: 24px;
   padding: 4px 0 4px 18px;
-  border-left: 1px solid var(--line-strong);
+  border-left: 1px solid var(--line);
 }
 
 .docs-toc strong {
@@ -386,7 +342,6 @@ p {
   font-family: var(--mono);
   font-size: 11px;
   letter-spacing: 0.06em;
-  text-transform: uppercase;
 }
 
 .docs-toc ol {
@@ -486,13 +441,7 @@ p {
 
 .doc-quickstart .doc-section h2::before {
   content: counter(quickstart-step, decimal-leading-zero);
-  display: inline-grid;
-  width: 34px;
-  height: 34px;
-  flex: 0 0 34px;
-  place-items: center;
-  border: 1px solid var(--line-strong);
-  border-radius: 10px;
+  flex: 0 0 24px;
   color: var(--purple-readable);
   font-family: var(--mono);
   font-size: 11px;
@@ -500,73 +449,15 @@ p {
 }
 
 .doc-security .doc-section:first-child {
-  padding: 26px 28px;
-  border: 1px solid rgba(255, 102, 95, 0.42);
-  border-radius: 18px;
-  background: rgba(255, 102, 95, 0.06);
+  padding: 4px 0 4px 22px;
+  border: 0;
+  border-left: 2px solid var(--coral);
+  border-radius: 0;
+  background: transparent;
 }
 
 .doc-security .doc-section:first-child h2 {
   color: var(--coral-hover);
-}
-
-.doc-security .docs-content h3 {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-.doc-security .docs-content h3::before {
-  content: "";
-  width: 8px;
-  height: 8px;
-  flex: 0 0 8px;
-  border: 2px solid var(--purple-readable);
-  border-radius: 50%;
-}
-
-.why-points {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  margin: 38px 0 34px;
-  border-block: 1px solid var(--line);
-}
-
-.why-points section {
-  padding: 26px 24px 28px 0;
-}
-
-.why-points section + section {
-  padding-left: 24px;
-  border-left: 1px solid var(--line);
-}
-
-.why-points span {
-  display: block;
-  margin-bottom: 28px;
-  color: var(--coral);
-  font-family: var(--mono);
-  font-size: 11px;
-}
-
-.why-points strong {
-  display: block;
-  margin-bottom: 10px;
-  font-size: 17px;
-  letter-spacing: -0.02em;
-}
-
-.why-points p {
-  margin-bottom: 0;
-  font-size: 13px;
-  line-height: 1.55;
-}
-
-.doc-why .docs-content > p:first-child {
-  max-width: 760px;
-  color: var(--ink);
-  font-size: 21px;
-  line-height: 1.5;
 }
 
 .code-block {
@@ -814,10 +705,11 @@ p {
 
   .docs-toc {
     position: static;
-    padding: 18px 20px;
-    border: 1px solid var(--line);
-    border-radius: var(--radius);
-    background: var(--surface);
+    padding: 4px 0 4px 18px;
+    border: 0;
+    border-left: 1px solid var(--line);
+    border-radius: 0;
+    background: transparent;
   }
 
   .docs-toc ol {
@@ -897,12 +789,7 @@ p {
   }
 
   .docs-intro {
-    padding: 32px 24px 34px;
-    border-radius: 20px;
-  }
-
-  .docs-kicker {
-    margin-bottom: 20px;
+    padding: 10px 0 34px;
   }
 
   .docs-intro h1 {
@@ -966,25 +853,6 @@ p {
 
   .doc-section + .doc-section {
     margin-top: 34px;
-  }
-
-  .why-points {
-    grid-template-columns: 1fr;
-    margin-top: 30px;
-  }
-
-  .why-points section,
-  .why-points section + section {
-    padding: 22px 0;
-    border-left: 0;
-  }
-
-  .why-points section + section {
-    border-top: 1px solid var(--line);
-  }
-
-  .why-points span {
-    margin-bottom: 14px;
   }
 
 }
