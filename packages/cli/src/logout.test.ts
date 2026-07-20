@@ -54,3 +54,22 @@ test("browser logout opens the Auth0 session endpoint", async () => {
   assert.equal(openedUrl, "https://identity.glossa.test/v2/logout");
   assert.match(messages.at(-1) ?? "", /same Google account/);
 });
+
+test("browser logout uses the stored session issuer", async () => {
+  let openedUrl: string | undefined;
+
+  await logoutFromGlossa(
+    { browser: true },
+    {
+      deleteCredentials: async () => undefined,
+      loadStoredIssuer: async () => "https://stored-identity.glossa.test/",
+      openBrowser: async (url) => {
+        openedUrl = url;
+        return true;
+      },
+      log: () => undefined,
+    },
+  );
+
+  assert.equal(openedUrl, "https://stored-identity.glossa.test/v2/logout");
+});

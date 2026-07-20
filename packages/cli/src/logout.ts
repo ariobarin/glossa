@@ -1,5 +1,5 @@
 import { loadAuthConfig } from "./auth-config.js";
-import { deleteCredentials } from "./config-store.js";
+import { deleteCredentials, loadCredentials } from "./config-store.js";
 import { openBrowser } from "./open-browser.js";
 
 export interface LogoutOptions {
@@ -8,6 +8,7 @@ export interface LogoutOptions {
 
 export interface LogoutDependencies {
   deleteCredentials?: typeof deleteCredentials;
+  loadStoredIssuer?: () => Promise<string | undefined>;
   openBrowser?: typeof openBrowser;
   issuer?: string;
   log?: (message: string) => void;
@@ -26,14 +27,25 @@ export async function logoutFromGlossa(
 ): Promise<void> {
   const remove = dependencies.deleteCredentials ?? deleteCredentials;
   const browse = dependencies.openBrowser ?? openBrowser;
-  const issuer = dependencies.issuer ?? loadAuthConfig().issuer;
   const log = dependencies.log ?? console.log;
+  let issuer = dependencies.issuer;
+
+  if (options.browser && issuer === undefined) {
+    const loadStoredIssuer = dependencies.loadStoredIssuer ?? (async () => (
+      await loadCredentials()
+    )?.credentials.issuer);
+    try {
+      issuer = await loadStoredIssuer();
+    } catch {
+      // Invalid credentials should not prevent their removal.
+    }
+  }
 
   await remove();
   log("Signed out of Glossa locally.");
   if (!options.browser) return;
 
-  const url = browserLogoutUrl(issuer);
+  const url = browserLogoutUrl(issuer ?? loadAuthConfig().issuer);
   const opened = await browse(url);
   if (opened) {
     log("Opened Glossa browser sign-out.");
