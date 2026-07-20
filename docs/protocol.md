@@ -61,15 +61,19 @@ Authorization: Device gld_<device-id>_<secret>
 
 ### `POST /device/register`
 
-Registers an active worker generation. The request does not include the canonical local root or a derived repository name.
+Registers an active worker generation using an ephemeral worker UUID created by the CLI process. One enrolled device may register any number of workers. Reconnecting one worker replaces only that worker's generation. The request does not include the canonical local root or a derived repository name.
 
 ### `POST /device/poll`
 
-Waits no more than 18 seconds. Returns one job or `204 No Content`. A worker has at most one delivered active job. Worker HTTP requests use a 19 second client timeout and reconnect with bounded exponential jitter.
+Includes the worker ID and generation. Waits no more than 18 seconds. Returns one job or `204 No Content`. A worker has at most one delivered active job. Worker HTTP requests use a 19 second client timeout and reconnect with bounded exponential jitter.
 
 ### `POST /device/result`
 
-Posts a structured result for the delivered job. Late results after caller timeout are ignored.
+Posts the worker ID and structured result for the delivered job. Late results after caller timeout are ignored.
+
+### `POST /device/unregister`
+
+Removes one active worker during graceful shutdown. Abruptly disconnected workers expire from active routing state when their polling heartbeat becomes stale.
 
 ## MCP endpoint
 
@@ -89,7 +93,7 @@ Tools:
 - `get_command`
 - `cancel_command`
 
-`list_devices` identifies an active root by device ID and reports `path: "."`. File and command tools accept that device ID and operate relative to its exposed root. Local absolute paths are never transmitted to or returned by the hosted relay.
+`list_devices` returns one entry for every active worker. Its `deviceId` is the ephemeral worker identifier accepted by file and command tools, and `name` is the enrolled computer name. Each entry reports `path: "."`. This preserves the existing MCP input name while allowing several independently routed workspaces on one enrolled computer. Local absolute paths are never transmitted to or returned by the hosted relay.
 
 `logout` requires no worker. It returns the Auth0 browser logout URL and instructions that the model must present to the user. It does not navigate the browser, revoke credentials, or claim the user completed logout.
 
@@ -132,7 +136,7 @@ An active worker executes valid `write_file` and bounded `run_command` jobs with
 
 Command processes inherit the complete environment of the Glossa worker process. Glossa does not enumerate or transmit that environment unless a user-authorized command explicitly reads or prints part of it.
 
-`run_command` returns a command ID and status once the worker accepts the job. `get_command` may wait up to 15 seconds, then reports `running`, `succeeded`, `failed`, `canceled`, or `timed_out`, and includes bounded output after completion. Public MCP results omit worker-local lifecycle timestamps because clients do not need them to manage a command. `cancel_command` terminates the process tree. Disconnecting the worker rejects new jobs and terminates an active command. Command state and output remain transient and are never persisted by the relay.
+`run_command` returns a command ID and status once the worker accepts the job. `get_command` may wait up to 15 seconds, then reports `running`, `succeeded`, `failed`, `canceled`, or `timed_out`, and includes bounded output after completion. Public MCP results omit worker-local lifecycle timestamps because clients do not need them to manage a command. `cancel_command` terminates the process tree. Disconnecting the worker rejects new jobs and terminates an active command. Command state, worker IDs, and output remain transient and are never persisted by the relay.
 
 Text file content and each captured command stream are limited to 1 MiB. Command output beyond that limit is truncated. One command may run at a time per worker; another `run_command` request returns `command_busy` until the active command finishes or is canceled.
 

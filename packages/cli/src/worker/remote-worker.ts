@@ -1,3 +1,4 @@
+import { randomUUID } from "node:crypto";
 import {
   workerJobSchema,
   type WorkerJob,
@@ -25,7 +26,14 @@ export interface RemoteWorkerOptions {
   random?: () => number;
   reconnectBaseMs?: number;
   reconnectMaxMs?: number;
+  onStatus?: (status: RemoteWorkerStatus) => void;
 }
+
+export type RemoteWorkerStatus =
+  | { state: "connecting" }
+  | { state: "connected"; reconnected: boolean }
+  | { state: "retrying"; error: Error; retryInMs: number }
+  | { state: "disconnected" };
 
 export class DeviceRejectedError extends Error {
   constructor() {
@@ -77,6 +85,8 @@ export class RemoteWorker {
   readonly #random: () => number;
   readonly #reconnectBaseMs: number;
   readonly #reconnectMaxMs: number;
+  readonly #workerId = randomUUID();
+  readonly #onStatus: (status: RemoteWorkerStatus) => void;
 
   constructor(options: RemoteWorkerOptions) {
     this.#origin = new URL(options.origin);
@@ -89,43 +99,62 @@ export class RemoteWorker {
     this.#reconnectBaseMs =
       options.reconnectBaseMs ?? DEFAULT_RECONNECT_BASE_MS;
     this.#reconnectMaxMs = options.reconnectMaxMs ?? DEFAULT_RECONNECT_MAX_MS;
+    this.#onStatus = options.onStatus ?? (() => {});
   }
 
   async run(): Promise<void> {
     let failures = 0;
-    while (!this.#signal.aborted) {
-      try {
-        const generation = await this.#register();
-        failures = 0;
-        await this.#pollGeneration(generation);
-      } catch (error) {
-        if (this.#signal.aborted) return;
-        if (error instanceof DeviceRejectedError) throw error;
-        const delay = reconnectDelayMs(
-          failures,
-          this.#random,
-          this.#reconnectBaseMs,
-          this.#reconnectMaxMs,
-        );
-        failures += 1;
+    let connectedBefore = false;
+    this.#onStatus({ state: "connecting" });
+    try {
+      while (!this.#signal.aborted) {
         try {
-          await this.#sleep(delay, this.#signal);
-        } catch (sleepError) {
+          const generation = await this.#register();
+          this.#onStatus({ state: "connected", reconnected: connectedBefore });
+          connectedBefore = true;
+          failures = 0;
+          await this.#pollGeneration(generation);
+        } catch (error) {
           if (this.#signal.aborted) return;
-          throw sleepError;
+          if (error instanceof DeviceRejectedError) throw error;
+          const delay = reconnectDelayMs(
+            failures,
+            this.#random,
+            this.#reconnectBaseMs,
+            this.#reconnectMaxMs,
+          );
+          failures += 1;
+          this.#onStatus({
+            state: "retrying",
+            error: error instanceof Error ? error : new Error(String(error)),
+            retryInMs: delay,
+          });
+          try {
+            await this.#sleep(delay, this.#signal);
+          } catch (sleepError) {
+            if (this.#signal.aborted) return;
+            throw sleepError;
+          }
         }
       }
+    } finally {
+      await this.#unregister();
+      this.#onStatus({ state: "disconnected" });
     }
   }
 
   async #register(): Promise<string> {
-    const response = await this.#post("/device/register", {});
+    const response = await this.#post("/device/register", {
+      workerId: this.#workerId,
+    });
     const value = (await response.json()) as unknown;
     if (
       typeof value !== "object" ||
       value === null ||
       !("generation" in value) ||
-      typeof value.generation !== "string"
+      typeof value.generation !== "string" ||
+      !("workerId" in value) ||
+      value.workerId !== this.#workerId
     ) {
       throw new Error("The relay returned an invalid registration response.");
     }
@@ -134,7 +163,10 @@ export class RemoteWorker {
 
   async #pollGeneration(generation: string): Promise<void> {
     while (!this.#signal.aborted) {
-      const response = await this.#post("/device/poll", { generation });
+      const response = await this.#post("/device/poll", {
+        workerId: this.#workerId,
+        generation,
+      });
       if (response.status === 204) continue;
       const value = (await response.json()) as unknown;
       const parsed = workerJobSchema.safeParse(
@@ -146,7 +178,26 @@ export class RemoteWorker {
         throw new Error("The relay returned an invalid worker job.");
       }
       const result = await this.#worker.handle(parsed.data);
-      await this.#post("/device/result", result);
+      await this.#post("/device/result", {
+        workerId: this.#workerId,
+        result,
+      });
+    }
+  }
+
+  async #unregister(): Promise<void> {
+    try {
+      await this.#fetcher(new URL("/device/unregister", this.#origin), {
+        method: "POST",
+        headers: {
+          authorization: `Device ${this.#deviceToken}`,
+          "content-type": "application/json",
+        },
+        body: JSON.stringify({ workerId: this.#workerId }),
+        signal: AbortSignal.timeout(3_000),
+      });
+    } catch {
+      // Liveness expiry removes workers after abrupt or offline shutdowns.
     }
   }
 

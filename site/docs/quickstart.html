@@ -53,6 +53,7 @@
 glossa .
 </code></pre>
 </div>
+<p><code>glossa start .</code> is the explicit form. You can start more workers in other terminals to expose additional workspaces from the same computer.</p>
 </section><section class="doc-section">
 <h2 id="connect-chatgpt">Connect ChatGPT</h2>
 <ol>
@@ -72,12 +73,20 @@ glossa .
 <p>Business admins and owners can also begin at <strong>Workspace settings &gt; Apps &gt; Create</strong>.</p>
 </section><section class="doc-section">
 <h2 id="try-it">Try it</h2>
-<p>In ChatGPT, send:</p>
+<p>In another terminal, verify the account, relay, and active worker:</p>
 <div class="code-block">
   <button class="copy-button" type="button" data-copy-target="quickstart-code-3" aria-label="Copy code">
     <span class="copy-tooltip" aria-hidden="true">Copy</span>
   </button>
-  <pre><code class="language-text" id="quickstart-code-3">Use Glossa to list my connected devices.
+  <pre><code class="language-shell" id="quickstart-code-3">glossa status
+</code></pre>
+</div>
+<p>In ChatGPT, send:</p>
+<div class="code-block">
+  <button class="copy-button" type="button" data-copy-target="quickstart-code-4" aria-label="Copy code">
+    <span class="copy-tooltip" aria-hidden="true">Copy</span>
+  </button>
+  <pre><code class="language-text" id="quickstart-code-4">Use Glossa to list my connected devices.
 </code></pre>
 </div>
 </section>

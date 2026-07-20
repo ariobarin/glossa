@@ -1,17 +1,22 @@
 import { randomUUID } from "node:crypto";
 import type { WorkerJob, WorkerResult } from "@glossa/protocol";
 
-interface ConnectedDevice {
+const WORKER_STALE_MS = 45_000;
+
+interface ConnectedWorker {
   accountId: string;
   deviceId: string;
+  deviceName: string;
+  workerId: string;
   generation: string;
+  lastSeenAt: number;
   pendingJobs: WorkerJob[];
   pollWaiter?: (job: WorkerJob | null) => void;
 }
 
 interface ResultWaiter {
   accountId: string;
-  deviceId: string;
+  workerId: string;
   resolve: (result: WorkerResult) => void;
   reject: (error: Error) => void;
   expiresAt: number;
@@ -20,82 +25,115 @@ interface ResultWaiter {
 
 interface RoutedResource {
   accountId: string;
-  deviceId: string;
+  workerId: string;
 }
 
 export class RouterState {
-  readonly #devices = new Map<string, ConnectedDevice>();
+  readonly #workers = new Map<string, ConnectedWorker>();
   readonly #results = new Map<string, ResultWaiter>();
   readonly #commands = new Map<string, RoutedResource>();
 
-  register(accountId: string, deviceId: string): string {
+  register(
+    accountId: string,
+    deviceId: string,
+    deviceName: string,
+    workerId: string,
+  ): string {
     const generation = randomUUID();
-    const previous = this.#devices.get(deviceId);
+    const previous = this.#workers.get(workerId);
+    if (
+      previous &&
+      (previous.accountId !== accountId || previous.deviceId !== deviceId)
+    ) {
+      throw new Error("worker_identity_conflict");
+    }
     previous?.pollWaiter?.(null);
-    this.#rejectDeviceWaiters(deviceId);
-    this.#devices.set(deviceId, {
+    this.#rejectWorkerWaiters(workerId);
+    this.#workers.set(workerId, {
       accountId,
       deviceId,
+      deviceName,
+      workerId,
       generation,
+      lastSeenAt: Date.now(),
       pendingJobs: [],
     });
     return generation;
   }
 
-  unregister(deviceId: string): void {
-    const device = this.#devices.get(deviceId);
-    device?.pollWaiter?.(null);
-    this.#devices.delete(deviceId);
-    this.#rejectDeviceWaiters(deviceId);
-    this.#deleteDeviceResources(deviceId);
+  unregisterWorker(accountId: string, deviceId: string, workerId: string): void {
+    const worker = this.#workers.get(workerId);
+    if (
+      !worker ||
+      worker.accountId !== accountId ||
+      worker.deviceId !== deviceId
+    ) {
+      return;
+    }
+    worker.pollWaiter?.(null);
+    this.#workers.delete(workerId);
+    this.#rejectWorkerWaiters(workerId);
+    this.#deleteWorkerResources(workerId);
+  }
+
+  unregisterDevice(deviceId: string): void {
+    for (const worker of [...this.#workers.values()]) {
+      if (worker.deviceId === deviceId) {
+        this.unregisterWorker(worker.accountId, worker.deviceId, worker.workerId);
+      }
+    }
   }
 
   async poll(
     accountId: string,
     deviceId: string,
+    workerId: string,
     generation: string,
     timeoutMs: number,
   ): Promise<WorkerJob | null> {
-    const device = this.#devices.get(deviceId);
+    const worker = this.#workers.get(workerId);
     if (
-      !device ||
-      device.accountId !== accountId ||
-      device.generation !== generation
+      !worker ||
+      worker.accountId !== accountId ||
+      worker.deviceId !== deviceId ||
+      worker.generation !== generation
     ) {
-      throw new Error("unknown_device_generation");
+      throw new Error("unknown_worker_generation");
     }
+    worker.lastSeenAt = Date.now();
 
-    const queued = device.pendingJobs.shift();
+    const queued = worker.pendingJobs.shift();
     if (queued) return queued;
 
     return await new Promise((resolve) => {
       const timer = setTimeout(() => {
-        if (device.pollWaiter === waiter) delete device.pollWaiter;
+        if (worker.pollWaiter === waiter) delete worker.pollWaiter;
         resolve(null);
       }, timeoutMs);
       const waiter = (job: WorkerJob | null): void => {
         clearTimeout(timer);
-        if (device.pollWaiter === waiter) delete device.pollWaiter;
+        if (worker.pollWaiter === waiter) delete worker.pollWaiter;
         resolve(job);
       };
-      device.pollWaiter = waiter;
+      worker.pollWaiter = waiter;
     });
   }
 
   enqueue(
     accountId: string,
-    deviceId: string,
+    workerId: string,
     job: WorkerJob,
     timeoutMs: number,
   ): Promise<WorkerResult> {
-    const device = this.#devices.get(deviceId);
-    if (!device || device.accountId !== accountId) {
+    this.#pruneStaleWorkers();
+    const worker = this.#workers.get(workerId);
+    if (!worker || worker.accountId !== accountId) {
       return Promise.reject(new Error("device_offline"));
     }
 
-    const waitingPoll = device.pollWaiter;
+    const waitingPoll = worker.pollWaiter;
     if (waitingPoll) waitingPoll(job);
-    else device.pendingJobs.push(job);
+    else worker.pendingJobs.push(job);
 
     return new Promise((resolve, reject) => {
       const expiresAt = Date.now() + timeoutMs;
@@ -108,7 +146,7 @@ export class RouterState {
       timer.unref();
       this.#results.set(job.requestId, {
         accountId,
-        deviceId,
+        workerId,
         resolve,
         reject,
         expiresAt,
@@ -119,14 +157,14 @@ export class RouterState {
 
   complete(
     accountId: string,
-    deviceId: string,
+    workerId: string,
     result: WorkerResult,
   ): boolean {
     const waiter = this.#results.get(result.requestId);
     if (
       !waiter ||
       waiter.accountId !== accountId ||
-      waiter.deviceId !== deviceId
+      waiter.workerId !== workerId
     ) {
       return false;
     }
@@ -136,43 +174,59 @@ export class RouterState {
     return true;
   }
 
-  rememberCommand(
-    accountId: string,
-    deviceId: string,
-    commandId: string,
-  ): void {
-    this.#commands.set(commandId, { accountId, deviceId });
+  rememberCommand(accountId: string, workerId: string, commandId: string): void {
+    this.#commands.set(commandId, { accountId, workerId });
   }
 
-  deviceForCommand(accountId: string, commandId: string): string | null {
+  workerForCommand(accountId: string, commandId: string): string | null {
     const command = this.#commands.get(commandId);
-    return command?.accountId === accountId ? command.deviceId : null;
+    return command?.accountId === accountId ? command.workerId : null;
   }
 
   listDevices(accountId: string): Array<{
     deviceId: string;
+    name: string;
     path: ".";
   }> {
-    return [...this.#devices.values()]
-      .filter((device) => device.accountId === accountId)
-      .map((device) => ({
-        deviceId: device.deviceId,
+    this.#pruneStaleWorkers();
+    return [...this.#workers.values()]
+      .filter((worker) => worker.accountId === accountId)
+      .map((worker) => ({
+        deviceId: worker.workerId,
+        name: worker.deviceName,
         path: ".",
       }));
   }
 
-  #rejectDeviceWaiters(deviceId: string): void {
+  activeWorkerCount(accountId: string, deviceId: string): number {
+    this.#pruneStaleWorkers();
+    return [...this.#workers.values()].filter(
+      (worker) =>
+        worker.accountId === accountId && worker.deviceId === deviceId,
+    ).length;
+  }
+
+  #pruneStaleWorkers(): void {
+    const staleBefore = Date.now() - WORKER_STALE_MS;
+    for (const worker of [...this.#workers.values()]) {
+      if (worker.lastSeenAt < staleBefore) {
+        this.unregisterWorker(worker.accountId, worker.deviceId, worker.workerId);
+      }
+    }
+  }
+
+  #rejectWorkerWaiters(workerId: string): void {
     for (const [requestId, waiter] of this.#results) {
-      if (waiter.deviceId !== deviceId) continue;
+      if (waiter.workerId !== workerId) continue;
       clearTimeout(waiter.timer);
       this.#results.delete(requestId);
       waiter.reject(new Error("device_offline"));
     }
   }
 
-  #deleteDeviceResources(deviceId: string): void {
+  #deleteWorkerResources(workerId: string): void {
     for (const [commandId, command] of this.#commands) {
-      if (command.deviceId === deviceId) this.#commands.delete(commandId);
+      if (command.workerId === workerId) this.#commands.delete(commandId);
     }
   }
 }

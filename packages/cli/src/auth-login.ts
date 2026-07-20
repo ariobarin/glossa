@@ -45,7 +45,7 @@ export function credentialsMatchLoginOptions(
 export async function ensureSignedIn(
   options: LoginOptions,
   dependencies: SignInDependencies = {},
-): Promise<void> {
+): Promise<boolean> {
   const load = dependencies.loadCredentials ?? loadCredentials;
   const validate = dependencies.validCredentials ?? validCredentials;
   const login = dependencies.loginWithDeviceFlow ?? loginWithDeviceFlow;
@@ -54,11 +54,12 @@ export async function ensureSignedIn(
   if (loaded && credentialsMatchLoginOptions(loaded.credentials, options)) {
     try {
       await validate(loaded.credentials);
-      return;
+      return false;
     } catch (error) {
       if (!(error instanceof SessionExpiredError)) throw error;
     }
   }
 
   await login(options);
+  return true;
 }

@@ -32,6 +32,8 @@ Set-Location C:\path\to\a\project
 glossa
 ```
 
+`glossa start .` is the explicit form. You can run additional workers in other terminals to expose more workspaces from the same computer. Use `glossa status` to verify login, relay access, enrolled devices, and active workers.
+
 Starting `glossa` authorizes connected clients to modify files inside that root and run commands with the full environment and permissions of the Windows account that launched it. Press Ctrl+C to disconnect.
 
 ## ChatGPT

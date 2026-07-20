@@ -43,6 +43,7 @@ const listDevicesOutputSchema = z
               .string()
               .uuid()
               .describe("Identifier to pass to workspace tools."),
+            name: z.string().describe("Name of the computer running this worker."),
             path: z.literal(".").describe("The single exposed workspace root."),
           })
           .strict(),
@@ -236,7 +237,7 @@ function registerTools(
     "list_devices",
     {
       title: "List Devices",
-      description: "Call this first to obtain the deviceId for each online Glossa worker and its single exposed workspace root.",
+      description: "Call this first to obtain the deviceId for every online Glossa workspace. One computer may expose several workspaces at once.",
       inputSchema: z.object({}).strict(),
       outputSchema: listDevicesOutputSchema,
       _meta: toolMetadata,
@@ -254,7 +255,7 @@ function registerTools(
     "logout",
     {
       title: "Log Out of Glossa",
-      description: "Use when the user asks to sign out of Glossa or switch Google accounts. Tell the user to stop the worker, run glossa logout --browser, reconnect Glossa in ChatGPT, run glossa login, and choose the same intended Google account for both authorizations. The returned logoutUrl is a fallback if the CLI does not open a browser. This tool returns instructions only and does not revoke credentials or change server state.",
+      description: "Use when the user asks to sign out of Glossa or switch Google accounts. Tell the user to stop every worker, run glossa logout --browser, and reconnect Glossa in ChatGPT. The CLI starts Google login automatically the next time it needs an account. The returned logoutUrl is a fallback if the CLI does not open a browser. This tool returns instructions only and does not revoke credentials or change server state.",
       inputSchema: z.object({}).strict(),
       outputSchema: logoutOutputSchema,
       _meta: toolMetadata,
@@ -269,7 +270,7 @@ function registerTools(
       const logoutUrl = browserLogoutUrl(config.GLOSSA_AUTH0_ISSUER);
       return structuredResult({
         logoutUrl,
-        instructions: `Stop the Glossa worker and run glossa logout --browser in a terminal. If the CLI does not open a browser, open ${logoutUrl}. Then disconnect and reconnect Glossa in ChatGPT, run glossa login, and choose the same intended Google account for both authorizations.`,
+        instructions: `Stop every Glossa worker and run glossa logout --browser in a terminal. If the CLI does not open a browser, open ${logoutUrl}. Then disconnect and reconnect Glossa in ChatGPT. The CLI starts Google login automatically the next time it needs an account. Choose the same intended Google account for both authorizations.`,
       });
     },
   );
@@ -405,7 +406,7 @@ function registerTools(
       },
     },
     async ({ commandId, waitMs }) => {
-      const deviceId = state.deviceForCommand(accountId, commandId);
+      const deviceId = state.workerForCommand(accountId, commandId);
       if (!deviceId) {
         return errorResult("command_not_found", "The command was not found.");
       }
@@ -439,7 +440,7 @@ function registerTools(
       },
     },
     async ({ commandId }) => {
-      const deviceId = state.deviceForCommand(accountId, commandId);
+      const deviceId = state.workerForCommand(accountId, commandId);
       if (!deviceId) {
         return errorResult("command_not_found", "The command was not found.");
       }

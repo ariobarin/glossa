@@ -20,6 +20,19 @@ export class FixedWindowRateLimiter {
     this.#now = now;
   }
 
+  check(key: string): RateLimitResult {
+    const now = this.#now();
+    const current = this.#entries.get(key);
+    if (!current || current.resetsAt <= now) {
+      if (current) this.#entries.delete(key);
+      return { allowed: true, retryAfterSeconds: 0 };
+    }
+    return {
+      allowed: current.count <= this.#limit,
+      retryAfterSeconds: Math.max(1, Math.ceil((current.resetsAt - now) / 1_000)),
+    };
+  }
+
   consume(key: string): RateLimitResult {
     const now = this.#now();
     const current = this.#entries.get(key);

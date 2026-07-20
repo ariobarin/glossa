@@ -70,13 +70,25 @@ interface EnrollmentResponse {
   error?: unknown;
 }
 
-interface DeviceListResponse {
-  devices?: Array<{ id?: unknown; revokedAt?: unknown }>;
+interface RelayErrorResponse {
   error?: unknown;
 }
 
-function enrollmentError(status: number, data: EnrollmentResponse): Error {
-  if (status === 401) return new Error("Glossa login was rejected. Run: glossa login");
+export interface RelayDevice {
+  id: string;
+  name: string;
+  platform: string | null;
+  lastSeenAt: string | null;
+  revokedAt: string | null;
+  activeWorkers: number;
+}
+
+interface DeviceListResponse extends RelayErrorResponse {
+  devices?: unknown;
+}
+
+function relayError(status: number, data: RelayErrorResponse): Error {
+  if (status === 401) return new Error("Glossa login was rejected. Sign in again when prompted.");
   if (status === 403 && data.error === "account_disabled") {
     return new Error("This Glossa account is disabled.");
   }
@@ -86,18 +98,43 @@ function enrollmentError(status: number, data: EnrollmentResponse): Error {
     );
   }
   if (status === 409 && data.error === "device_name_conflict") {
-    return new Error("A Glossa device with this computer name already exists and must be revoked before reenrollment.");
+    return new Error("A Glossa device already uses this name. Run glossa devices list, then rename or revoke the old device.");
+  }
+  if (status === 404 && data.error === "device_not_found") {
+    return new Error("The Glossa device was not found.");
   }
   if (status === 429) return new Error("Glossa device enrollment is rate limited. Try again later.");
-  return new Error(`Glossa device enrollment failed with HTTP ${status}.`);
+  return new Error(`The Glossa relay returned HTTP ${status}.`);
 }
 
-export async function accountOwnsDevice(
+function validNullableString(value: unknown): value is string | null {
+  return value === null || typeof value === "string";
+}
+
+function parseDevices(value: unknown): RelayDevice[] {
+  if (!Array.isArray(value)) {
+    throw new Error("The Glossa relay returned an invalid device list response.");
+  }
+  const devices = value as Array<Partial<RelayDevice>>;
+  if (devices.some((device) =>
+    typeof device.id !== "string" ||
+    typeof device.name !== "string" ||
+    !validNullableString(device.platform) ||
+    !validNullableString(device.lastSeenAt) ||
+    !validNullableString(device.revokedAt) ||
+    !Number.isInteger(device.activeWorkers) ||
+    device.activeWorkers! < 0
+  )) {
+    throw new Error("The Glossa relay returned an invalid device list response.");
+  }
+  return devices as RelayDevice[];
+}
+
+export async function listDevices(
   endpoints: RelayEndpoints,
   credentials: StoredCredentials,
-  deviceId: string,
   fetchRequest: FetchLike = fetch,
-): Promise<boolean> {
+): Promise<RelayDevice[]> {
   const response = await fetchRequest(`${endpoints.relayOrigin}/v1/devices`, {
     headers: {
       authorization: `${credentials.tokenType} ${credentials.accessToken}`,
@@ -109,20 +146,18 @@ export async function accountOwnsDevice(
   } catch {
     // Status-specific errors below remain stable for non-JSON proxy responses.
   }
-  if (!response.ok) throw enrollmentError(response.status, data);
-  if (!Array.isArray(data.devices)) {
-    throw new Error("The Glossa relay returned an invalid device list response.");
-  }
-  if (
-    data.devices.some(
-      (device) =>
-        typeof device.id !== "string" ||
-        (device.revokedAt !== null && typeof device.revokedAt !== "string"),
-    )
-  ) {
-    throw new Error("The Glossa relay returned an invalid device list response.");
-  }
-  return data.devices.some(
+  if (!response.ok) throw relayError(response.status, data);
+  return parseDevices(data.devices);
+}
+
+export async function accountOwnsDevice(
+  endpoints: RelayEndpoints,
+  credentials: StoredCredentials,
+  deviceId: string,
+  fetchRequest: FetchLike = fetch,
+): Promise<boolean> {
+  const devices = await listDevices(endpoints, credentials, fetchRequest);
+  return devices.some(
     (device) => device.id === deviceId && device.revokedAt === null,
   );
 }
@@ -148,7 +183,7 @@ export async function enrollDevice(
   } catch {
     // Status-specific errors below remain stable for non-JSON proxy responses.
   }
-  if (!response.ok) throw enrollmentError(response.status, data);
+  if (!response.ok) throw relayError(response.status, data);
   if (
     typeof data.device?.id !== "string" ||
     typeof data.device.name !== "string" ||
@@ -162,4 +197,43 @@ export async function enrollDevice(
     deviceName: data.device.name,
     token: data.device_token,
   };
+}
+
+export async function renameDevice(
+  endpoints: RelayEndpoints,
+  credentials: StoredCredentials,
+  deviceId: string,
+  name: string,
+  fetchRequest: FetchLike = fetch,
+): Promise<RelayDevice> {
+  const validName = deviceNameSchema.parse(name);
+  const response = await fetchRequest(`${endpoints.relayOrigin}/v1/devices/${encodeURIComponent(deviceId)}`, {
+    method: "PATCH",
+    headers: {
+      authorization: `${credentials.tokenType} ${credentials.accessToken}`,
+      "content-type": "application/json",
+    },
+    body: JSON.stringify({ name: validName }),
+  });
+  const data = await response.json().catch(() => ({})) as RelayErrorResponse & { device?: unknown };
+  if (!response.ok) throw relayError(response.status, data);
+  return parseDevices([data.device])[0]!;
+}
+
+export async function revokeDevice(
+  endpoints: RelayEndpoints,
+  credentials: StoredCredentials,
+  deviceId: string,
+  fetchRequest: FetchLike = fetch,
+): Promise<void> {
+  const response = await fetchRequest(`${endpoints.relayOrigin}/v1/devices/${encodeURIComponent(deviceId)}`, {
+    method: "DELETE",
+    headers: {
+      authorization: `${credentials.tokenType} ${credentials.accessToken}`,
+    },
+  });
+  if (!response.ok) {
+    const data = await response.json().catch(() => ({})) as RelayErrorResponse;
+    throw relayError(response.status, data);
+  }
 }
