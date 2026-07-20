@@ -36,9 +36,13 @@ Users do not operate networking, identity, or database infrastructure.
 
 The authorization server handles discovery, login, consent, and access tokens. The relay validates issuer, audience, expiry, and the `glossa:access` scope. It atomically creates an account for a new authenticated subject and rejects accounts marked disabled.
 
+The managed service accepts only Auth0 subjects from the Google social connection. The relay enforces the configured subject prefix in addition to JWT validation, so enabling another connection in Auth0 does not grant it Glossa access. Self-hosted relays explicitly select their own allowed Auth0 subject prefix.
+
 ### CLI user identity
 
 The published CLI uses OAuth Device Authorization Flow. Its embedded client ID is public. The CLI requests `openid profile offline_access glossa:device`.
+
+The managed Auth0 Google connection requests Google's account chooser on every new authorization. This lets a user choose among multiple Google accounts instead of silently reusing a browser session.
 
 ### Worker device identity
 

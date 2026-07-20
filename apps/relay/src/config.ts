@@ -16,6 +16,14 @@ const environmentSchema = z
     GLOSSA_PUBLIC_ORIGIN: z.string().url(),
     GLOSSA_AUTH0_ISSUER: z.string().url(),
     GLOSSA_AUTH0_AUDIENCE: z.string().url(),
+    GLOSSA_AUTH0_ALLOWED_SUBJECT_PREFIX: z
+      .string()
+      .trim()
+      .min(2)
+      .refine((value) => value.endsWith("|"), {
+        message: "Auth0 subject prefix must end with |.",
+      })
+      .default("google-oauth2|"),
     GLOSSA_MCP_REQUIRED_SCOPE: z.string().default("glossa:access"),
     GLOSSA_DEVICE_ENROLL_SCOPE: z.string().default("glossa:device"),
     GLOSSA_RATE_LIMIT_WINDOW_MS: z.coerce

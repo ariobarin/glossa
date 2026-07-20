@@ -80,6 +80,11 @@ function enrollmentError(status: number, data: EnrollmentResponse): Error {
   if (status === 403 && data.error === "account_disabled") {
     return new Error("This Glossa account is disabled.");
   }
+  if (status === 403 && data.error === "identity_provider_not_allowed") {
+    return new Error(
+      "This Glossa identity provider is not allowed. Sign in with Google.",
+    );
+  }
   if (status === 409 && data.error === "device_name_conflict") {
     return new Error("A Glossa device with this computer name already exists and must be revoked before reenrollment.");
   }

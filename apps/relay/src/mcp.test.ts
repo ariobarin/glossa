@@ -10,6 +10,7 @@ const expectedTools = [
   "cancel_command",
   "get_command",
   "list_devices",
+  "logout",
   "read_file",
   "run_command",
   "write_file",
@@ -120,4 +121,15 @@ test("publishes reviewable MCP tool contracts", async (context) => {
   assert.deepEqual(result.content, [
     { type: "text", text: JSON.stringify({ devices: [] }) },
   ]);
+
+  const logout = await client.callTool({
+    name: "logout",
+    arguments: {},
+  });
+  const logoutUrl = "https://identity.glossa.test/v2/logout";
+  assert.equal(logout.isError, undefined);
+  assert.deepEqual(logout.structuredContent, {
+    logoutUrl,
+    instructions: `Stop the Glossa worker and run glossa logout --browser in a terminal. If the CLI does not open a browser, open ${logoutUrl}. Then disconnect and reconnect Glossa in ChatGPT, run glossa login, and choose the same intended Google account for both authorizations.`,
+  });
 });

@@ -25,7 +25,7 @@ Install the open-beta CLI with Node 24:
 npm install --global @ariobarin/glossa@beta
 ```
 
-Then expose one workspace. Glossa opens browser login automatically when needed:
+Then expose one workspace. Glossa opens Google sign-in automatically when needed:
 
 ```powershell
 Set-Location C:\path\to\a\project
@@ -60,3 +60,4 @@ Glossa uses the managed relay by default. See [self-hosting](docs/self-hosting.m
 - [Architecture](docs/architecture.md)
 - [Security model](docs/security.md)
 - [API and protocol](docs/protocol.md)
+- [Managed identity operations](docs/managed-identity.md)

@@ -32,6 +32,7 @@ Glossa executes commands with the permissions and environment of the local accou
 **Controls:**
 
 - include `account_id` in all primary and foreign-key relationships;
+- accept only the configured Auth0 subject prefix;
 - require account ID in every query;
 - never fetch by resource ID and check ownership afterward when an account-scoped query is possible;
 - use opaque random identifiers;

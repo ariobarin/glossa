@@ -45,6 +45,7 @@
           <li><a href="#start-it-in-a-folder">Start it in a folder</a></li>
           <li><a href="#add-it-to-chatgpt">Add it to ChatGPT</a></li>
           <li><a href="#test-the-connection">Test the connection</a></li>
+          <li><a href="#switch-google-accounts">Switch Google accounts</a></li>
         </ol>
       </nav>
       <article class="docs-content">
@@ -84,7 +85,7 @@
 </div>
 <ol start="3">
 <li>Choose <strong>OAuth</strong>, then choose <strong>Scan Tools</strong>.</li>
-<li>Complete the Glossa authorization prompt and wait for the tool scan to finish.</li>
+<li>Complete the Glossa authorization prompt with the same Google account you used in the Glossa CLI, then wait for the tool scan to finish.</li>
 <li>Choose <strong>Create</strong>.</li>
 </ol>
 </section><section class="doc-section">
@@ -97,6 +98,18 @@
   <pre><code class="language-text" id="quickstart-code-4">Use Glossa to list my connected devices.
 </code></pre>
 </div>
+</section><section class="doc-section">
+<h2 id="switch-google-accounts">Switch Google accounts</h2>
+<p>Stop the worker, then clear Glossa&#39;s local and browser login:</p>
+<div class="code-block">
+  <button class="copy-button" type="button" data-copy-target="quickstart-code-5" aria-label="Copy code">
+    <span class="copy-tooltip" aria-hidden="true">Copy</span>
+  </button>
+  <pre><code class="language-shell" id="quickstart-code-5">glossa logout --browser
+</code></pre>
+</div>
+<p>In ChatGPT, disconnect and reconnect Glossa under <strong>Settings &gt; Apps</strong>. Choose the same Google account when ChatGPT and the CLI authorize Glossa again.</p>
+<p>You can also ask ChatGPT to use Glossa&#39;s <code>logout</code> tool. ChatGPT will return the browser fallback link and the same worker, CLI, and ChatGPT reconnection steps.</p>
 </section>
       </article>
       </div>
