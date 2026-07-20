@@ -5,25 +5,67 @@ import { databaseOptions } from "./database-options.js";
 
 const databaseUrl = "postgres://user:password@database.example/glossa";
 
-test("verifies production database certificates", () => {
-  const options = databaseOptions(databaseUrl, { NODE_ENV: "production" });
-  const client = new Client(options);
-  assert.deepEqual(
-    (client as unknown as { connectionParameters: { ssl: unknown } })
-      .connectionParameters.ssl,
-    { rejectUnauthorized: true },
-  );
+function ssl(environment: NodeJS.ProcessEnv): unknown {
+  const client = new Client(databaseOptions(databaseUrl, environment));
+  return (client as unknown as { connectionParameters: { ssl: unknown } })
+    .connectionParameters.ssl;
+}
 
-  const customCaClient = new Client(
-    databaseOptions(databaseUrl, {
+test("verifies production database certificates", () => {
+  assert.deepEqual(ssl({ NODE_ENV: "production" }), {
+    rejectUnauthorized: true,
+  });
+  assert.deepEqual(
+    ssl({
       NODE_ENV: "production",
       GLOSSA_DATABASE_CA_PEM: "  trusted-ca  ",
     }),
+    { rejectUnauthorized: true, ca: "trusted-ca" },
+  );
+});
+
+test("selects the configured database TLS mode", () => {
+  assert.deepEqual(
+    ssl({
+      NODE_ENV: "production",
+      GLOSSA_DATABASE_SSL_MODE: "require",
+    }),
+    { rejectUnauthorized: false },
   );
   assert.deepEqual(
-    (customCaClient as unknown as { connectionParameters: { ssl: unknown } })
-      .connectionParameters.ssl,
-    { rejectUnauthorized: true, ca: "trusted-ca" },
+    ssl({
+      NODE_ENV: "production",
+      DYNO: "release.1",
+    }),
+    { rejectUnauthorized: false },
+  );
+  assert.deepEqual(
+    ssl({
+      NODE_ENV: "production",
+      DYNO: "release.1",
+      GLOSSA_DATABASE_SSL_MODE: "verify-full",
+    }),
+    { rejectUnauthorized: true },
+  );
+});
+
+test("rejects conflicting or invalid database TLS settings", () => {
+  assert.throws(
+    () =>
+      databaseOptions(databaseUrl, {
+        NODE_ENV: "production",
+        GLOSSA_DATABASE_SSL_MODE: "require",
+        GLOSSA_DATABASE_CA_PEM: "trusted-ca",
+      }),
+    /cannot be used/,
+  );
+  assert.throws(
+    () =>
+      databaseOptions(databaseUrl, {
+        NODE_ENV: "production",
+        GLOSSA_DATABASE_SSL_MODE: "disabled",
+      }),
+    /must be verify-full or require/,
   );
 });
 
