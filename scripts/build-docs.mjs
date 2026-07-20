@@ -115,19 +115,6 @@ ${links}
       </nav>`;
 }
 
-function renderConnection() {
-  return `
-        <div class="connection-strip" aria-label="ChatGPT connects through Glossa to your folder">
-          <strong>ChatGPT.com</strong>
-          <span class="connection-line connection-line-purple" aria-hidden="true"></span>
-          <span class="connection-mark" aria-label="Glossa connection">
-            <img src="/glossa-symbol.svg" alt="" />
-          </span>
-          <span class="connection-line connection-line-coral" aria-hidden="true"></span>
-          <strong class="connection-folder">Your folder</strong>
-        </div>`;
-}
-
 function renderPage(page, slug) {
   const renderedTitle = escapeHtml(page.title);
   const tabTitle = slug
@@ -139,7 +126,6 @@ function renderPage(page, slug) {
   const renderedBody = addHeadingIds(addCopyButtons(marked.parse(page.body, { gfm: true }), slug));
   const body = groupSections(renderedBody);
   const sectionNavigation = renderSectionNavigation(renderedBody);
-  const connection = slug === "quickstart" ? renderConnection() : "";
 
   return `<!doctype html>
 <html lang="en">
@@ -172,7 +158,7 @@ function renderPage(page, slug) {
       <div class="docs-layout${sectionNavigation ? " has-toc" : ""}">
       <header class="docs-intro">
         <h1>${renderedTitle}</h1>
-        <p class="docs-summary">${marked.parseInline(page.summary)}</p>${connection}
+        <p class="docs-summary">${marked.parseInline(page.summary)}</p>
       </header>
 
 ${sectionNavigation}

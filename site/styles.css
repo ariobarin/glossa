@@ -263,50 +263,6 @@ p {
   line-height: 1.55;
 }
 
-.connection-strip {
-  display: grid;
-  width: 100%;
-  grid-template-columns: auto minmax(28px, 1fr) 44px minmax(28px, 1fr) auto;
-  align-items: center;
-  gap: 12px;
-  margin: 34px auto 0;
-}
-
-.connection-strip strong {
-  font-size: 15px;
-  white-space: nowrap;
-}
-
-.connection-line {
-  height: 1px;
-}
-
-.connection-line-purple {
-  background: var(--purple);
-}
-
-.connection-line-coral {
-  background: var(--coral);
-}
-
-.connection-mark {
-  display: grid;
-  width: 44px;
-  height: 44px;
-  place-items: center;
-  border: 1px solid var(--purple);
-  border-radius: 12px;
-  background: var(--accent-soft);
-}
-
-.connection-mark img {
-  width: 22px;
-}
-
-.connection-folder {
-  color: var(--ink);
-}
-
 .docs-content a {
   color: var(--ink);
   text-decoration: underline;
@@ -781,22 +737,6 @@ p {
 
   .docs-toc ol {
     grid-template-columns: 1fr;
-  }
-
-  .connection-strip {
-    grid-template-columns: auto minmax(12px, 1fr) 38px minmax(12px, 1fr) auto;
-    gap: 8px;
-    margin-top: 26px;
-  }
-
-  .connection-strip strong {
-    font-size: 11px;
-  }
-
-  .connection-mark {
-    width: 38px;
-    height: 38px;
-    border-radius: 10px;
   }
 
   .policy-main {
