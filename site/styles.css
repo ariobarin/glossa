@@ -242,7 +242,7 @@ p {
 .docs-intro {
   grid-column: 1;
   grid-row: 1;
-  padding: 16px 0 44px;
+  padding: 16px 0 32px;
   border-bottom: 1px solid var(--line);
 }
 
@@ -318,7 +318,8 @@ p {
   display: grid;
   grid-template-columns: minmax(0, 780px) minmax(160px, 184px);
   align-items: start;
-  gap: clamp(40px, 5vw, 62px);
+  column-gap: clamp(40px, 5vw, 62px);
+  row-gap: 32px;
 }
 
 .docs-toc {
@@ -364,7 +365,7 @@ p {
   grid-column: 1;
   grid-row: 2;
   min-width: 0;
-  margin-top: 46px;
+  margin-top: 0;
 }
 
 .doc-section {
