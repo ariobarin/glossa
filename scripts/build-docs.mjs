@@ -161,7 +161,7 @@ for (const markdownPath of markdownFiles) {
 
   if (checkOnly) {
     const current = await readFile(outputPath, "utf8").catch(() => "");
-    if (current !== output) {
+    if (current.replaceAll("\r\n", "\n") !== output) {
       stalePages.push(relativePath);
     }
   } else {
