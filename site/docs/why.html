@@ -7,10 +7,10 @@
     <meta name="theme-color" content="#111016" />
     <title>Why | Glossa</title>
     <link rel="icon" href="/glossa-symbol.svg" type="image/svg+xml" />
-    <link rel="stylesheet" href="/styles.css?v=34" />
+    <link rel="stylesheet" href="/styles.css?v=36" />
     <script src="/copy.js?v=3" defer></script>
   </head>
-  <body class="docs-shell">
+  <body class="docs-shell doc-why">
     <!-- Generated from why.md. Run npm run docs:build after editing Markdown. -->
     <header class="site-header page-width">
       <a class="brand" href="/" aria-label="Glossa home">
@@ -24,16 +24,36 @@
 
     <main class="docs-main page-width">
       <header class="docs-intro">
+        <span class="docs-kicker">Product overview</span>
         <h1>Why Glossa?</h1>
-        <p>ChatGPT can tell you what to change. Glossa lets it make the change.</p>
+        <p class="docs-summary">ChatGPT can tell you what to change. Glossa lets it make the change.</p>
       </header>
+
+      <div class="docs-layout">
 
       <article class="docs-content">
 <p>Your files and tools live on your computer. ChatGPT on the web cannot reach them.</p>
 <p>Glossa connects the chat to a folder you choose. It can read files, make changes, and run commands there. The connection lasts only while Glossa is running.</p>
-<p><a class="primary-action" href="/docs/quickstart">Set up Glossa</a></p>
+<div class="why-points">
+  <section>
+    <span>01</span>
+    <strong>Your workspace stays local</strong>
+    <p>The worker reads files and runs commands on your computer. The hosted relay does not clone your repository.</p>
+  </section>
+  <section>
+    <span>02</span>
+    <strong>You choose the boundary</strong>
+    <p>Start Glossa in one folder. That folder becomes the explicit root for file operations.</p>
+  </section>
+  <section>
+    <span>03</span>
+    <strong>You control the connection</strong>
+    <p>Glossa is available only while the local worker is running. Stop the process to disconnect it.</p>
+  </section>
+</div><p><a class="primary-action" href="/docs/quickstart">Set up Glossa</a></p>
 
       </article>
+      </div>
     </main>
 
     <footer class="site-footer">

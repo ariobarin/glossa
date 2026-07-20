@@ -7,10 +7,10 @@
     <meta name="theme-color" content="#111016" />
     <title>Security | Glossa</title>
     <link rel="icon" href="/glossa-symbol.svg" type="image/svg+xml" />
-    <link rel="stylesheet" href="/styles.css?v=34" />
+    <link rel="stylesheet" href="/styles.css?v=36" />
     <script src="/copy.js?v=3" defer></script>
   </head>
-  <body class="docs-shell">
+  <body class="docs-shell doc-security">
     <!-- Generated from security.md. Run npm run docs:build after editing Markdown. -->
     <header class="site-header page-width">
       <a class="brand" href="/" aria-label="Glossa home">
@@ -24,14 +24,28 @@
 
     <main class="docs-main page-width">
       <header class="docs-intro">
+        <span class="docs-kicker">Trust and safety</span>
         <h1>Core security and threat model</h1>
-        <p>How Glossa protects local workspaces, accounts, credentials, and data.</p>
+        <p class="docs-summary">How Glossa protects local workspaces, accounts, credentials, and data.</p>
       </header>
 
+      <div class="docs-layout has-toc">
+      <nav class="docs-toc" aria-label="On this page">
+        <strong>On this page</strong>
+        <ol>
+          <li><a href="#warning">Warning</a></li>
+          <li><a href="#trust-assumptions">Trust assumptions</a></li>
+          <li><a href="#primary-assets">Primary assets</a></li>
+          <li><a href="#primary-threats-and-controls">Primary threats and controls</a></li>
+          <li><a href="#data-retention">Data retention</a></li>
+        </ol>
+      </nav>
       <article class="docs-content">
-<h2>Warning</h2>
+<section class="doc-section">
+<h2 id="warning">Warning</h2>
 <p>Glossa executes commands with the permissions and environment of the local account that launched it. File-tool root checks do not sandbox shell commands. A command may access credentials, developer tools, networks, or other files available to that account.</p>
-<h2>Trust assumptions</h2>
+</section><section class="doc-section">
+<h2 id="trust-assumptions">Trust assumptions</h2>
 <ul>
 <li>The Glossa operator controls the hosted relay and identity provider.</li>
 <li>The authenticated user intends to authorize the connected MCP client.</li>
@@ -39,7 +53,8 @@
 <li>There is no hostile multi-tenant execution on one worker.</li>
 <li>TLS termination and OAuth token validation are correctly configured.</li>
 </ul>
-<h2>Primary assets</h2>
+</section><section class="doc-section">
+<h2 id="primary-assets">Primary assets</h2>
 <ul>
 <li>Local source code.</li>
 <li>Local developer credentials and environment.</li>
@@ -48,8 +63,9 @@
 <li>Account/device ownership relationships.</li>
 <li>Command results and file contents in transit.</li>
 </ul>
-<h2>Primary threats and controls</h2>
-<h3>Cross-account routing</h3>
+</section><section class="doc-section">
+<h2 id="primary-threats-and-controls">Primary threats and controls</h2>
+<h3 id="cross-account-routing">Cross-account routing</h3>
 <p><strong>Threat:</strong> an authenticated account guesses another device or job ID.</p>
 <p><strong>Controls:</strong></p>
 <ul>
@@ -59,7 +75,7 @@
 <li>use opaque random identifiers;</li>
 <li>verify account isolation with direct integration checks before deployment.</li>
 </ul>
-<h3>Stolen device token</h3>
+<h3 id="stolen-device-token">Stolen device token</h3>
 <p><strong>Threat:</strong> token grants remote execution on an exposed root.</p>
 <p><strong>Controls:</strong></p>
 <ul>
@@ -72,7 +88,7 @@
 <li>rate limiting and constant-time comparison;</li>
 <li>never log Authorization headers.</li>
 </ul>
-<h3>Malicious or compromised MCP client</h3>
+<h3 id="malicious-or-compromised-mcp-client">Malicious or compromised MCP client</h3>
 <p><strong>Threat:</strong> authenticated client requests destructive actions.</p>
 <p><strong>Controls:</strong></p>
 <ul>
@@ -86,7 +102,7 @@
 <li>visible local status and immediate disconnect;</li>
 <li>no implicit broad-root exposure.</li>
 </ul>
-<h3>Path escape</h3>
+<h3 id="path-escape">Path escape</h3>
 <p><strong>Threat:</strong> absolute paths, parent traversal, symlinks, junctions, or writable ancestors escape the root.</p>
 <p><strong>Controls:</strong></p>
 <ul>
@@ -97,7 +113,7 @@
 <li>treat Windows path, junction, and reparse-point behavior as the launch security baseline;</li>
 <li>verify Windows junction and reparse-point behavior when path enforcement changes.</li>
 </ul>
-<h3>Shell authority</h3>
+<h3 id="shell-authority">Shell authority</h3>
 <p><strong>Threat:</strong> a command accesses resources outside the exposed file root.</p>
 <p><strong>Reality:</strong> this is expected shell authority, not a bug in path tools. Command filtering is not a sandbox.</p>
 <p><strong>Controls:</strong></p>
@@ -111,7 +127,7 @@
 <li>bound duration and output;</li>
 <li>terminate process groups and discovered descendants.</li>
 </ul>
-<h3>Logging leakage</h3>
+<h3 id="logging-leakage">Logging leakage</h3>
 <p><strong>Threat:</strong> source code, command output, paths, or tokens reach platform logs.</p>
 <p><strong>Controls:</strong></p>
 <ul>
@@ -121,7 +137,7 @@
 <li>never send local absolute paths or derived repository names to the relay;</li>
 <li>verify log scrubbing before deployment.</li>
 </ul>
-<h3>Relay compromise</h3>
+<h3 id="relay-compromise">Relay compromise</h3>
 <p><strong>Threat:</strong> attacker controls the routing service.</p>
 <p><strong>Controls and limits:</strong></p>
 <ul>
@@ -130,7 +146,8 @@
 <li>minimize dependencies and privileges;</li>
 <li>use managed platform patching, secret scanning, exact dependencies, and rapid device revocation.</li>
 </ul>
-<h2>Data retention</h2>
+</section><section class="doc-section">
+<h2 id="data-retention">Data retention</h2>
 <p>Durably retain only what is needed for account/device operation and security:</p>
 <ul>
 <li>device ID, name, platform, created, last seen, and revoked timestamps;</li>
@@ -147,8 +164,9 @@
 <li>OAuth or device bearer secrets.</li>
 </ul>
 <p>Additional defenses must extend these controls rather than replace them.</p>
-
+</section>
       </article>
+      </div>
     </main>
 
     <footer class="site-footer">
