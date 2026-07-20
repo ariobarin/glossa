@@ -32,12 +32,30 @@ export function databaseOptions(
     }
   }
 
+  const sslMode =
+    environment.GLOSSA_DATABASE_SSL_MODE ??
+    (environment.DYNO ? "require" : "verify-full");
+  if (sslMode !== "verify-full" && sslMode !== "require") {
+    throw new Error(
+      "GLOSSA_DATABASE_SSL_MODE must be verify-full or require.",
+    );
+  }
+
   const ca = environment.GLOSSA_DATABASE_CA_PEM?.trim();
+  if (sslMode === "require" && ca) {
+    throw new Error(
+      "GLOSSA_DATABASE_CA_PEM cannot be used when GLOSSA_DATABASE_SSL_MODE is require.",
+    );
+  }
+
   return {
     connectionString: databaseUrl,
-    ssl: {
-      rejectUnauthorized: true,
-      ...(ca ? { ca } : {}),
-    },
+    ssl:
+      sslMode === "require"
+        ? { rejectUnauthorized: false }
+        : {
+            rejectUnauthorized: true,
+            ...(ca ? { ca } : {}),
+          },
   };
 }
