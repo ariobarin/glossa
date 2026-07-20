@@ -58,7 +58,7 @@ The explicit path prevents Git discovery from selecting an enclosing repository.
 
 Before submitting:
 
-- Create a dedicated Auth0 reviewer account with no MFA, SMS, email confirmation, or private-network dependency.
+- Create a dedicated Google reviewer account that satisfies the review program's credential and MFA requirements.
 - Enter its credentials only in the portal's protected reviewer fields. Never commit them.
 - Run the worker under a dedicated operating-system account with no developer credentials or access to private data.
 - Verify the account, OAuth consent, fixture reset, worker connection, and all eight cases from an unrelated network.

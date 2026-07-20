@@ -21,6 +21,8 @@ Create an Auth0 API whose identifier is your relay audience, such as `https://mc
 
 The Native application is a public client and needs Device Code and refresh token grants. Its allowed scopes must include `openid`, `profile`, `offline_access`, and `glossa:device`.
 
+The relay accepts one Auth0 subject prefix. Managed Glossa defaults to `google-oauth2|`. A private installation using another Auth0 connection must set `GLOSSA_AUTH0_ALLOWED_SUBJECT_PREFIX` to that connection's complete subject prefix, including the trailing `|` separator.
+
 The MCP client must receive tokens from the same issuer, for the same audience, with `glossa:access`. Configure the client registration and consent flow using the current instructions from your identity provider and MCP client.
 
 ## Relay
@@ -39,6 +41,7 @@ GLOSSA_DATABASE_SSL_MODE=verify-full
 GLOSSA_PUBLIC_ORIGIN=https://mcp.example.com
 GLOSSA_AUTH0_ISSUER=https://YOUR_TENANT.auth0.com/
 GLOSSA_AUTH0_AUDIENCE=https://mcp.example.com/
+GLOSSA_AUTH0_ALLOWED_SUBJECT_PREFIX=YOUR_PROVIDER|
 ```
 
 Install, build, migrate, and start the relay:

@@ -1,10 +1,11 @@
 #!/usr/bin/env node
-import { deleteCredentials, loadCredentials } from "./config-store.js";
+import { loadCredentials } from "./config-store.js";
 import { loadUserProfile } from "./auth-session.js";
 import { loadAuthConfig } from "./auth-config.js";
 import { ensureSignedIn } from "./auth-login.js";
 import { loginWithDeviceFlow } from "./device-flow.js";
 import { loadRelayEndpoints } from "./relay-client.js";
+import { logoutFromGlossa } from "./logout.js";
 import { runManagedSession } from "./worker/managed-session.js";
 import { selectExposureRoot } from "./worker/root-selection.js";
 
@@ -18,7 +19,7 @@ function usage(): void {
 Usage:
   glossa [path] [--allow-broad-root]
   glossa login
-  glossa logout
+  glossa logout [--browser]
   glossa status
   glossa whoami
   glossa --version
@@ -43,6 +44,15 @@ function exposeOptions(args: string[]): {
     ...(selectedPath ? { path: selectedPath } : {}),
     allowBroadRoot,
   };
+}
+
+function logoutOptions(args: string[]): { browser: boolean } {
+  const options = args.slice(1);
+  if (options.length === 0) return { browser: false };
+  if (options.length === 1 && options[0] === "--browser") {
+    return { browser: true };
+  }
+  throw new Error("Logout accepts only --browser.");
 }
 
 async function runExposure(args: string[]): Promise<void> {
@@ -102,8 +112,7 @@ async function main(): Promise<void> {
       });
       return;
     case "logout":
-      await deleteCredentials();
-      console.log("Signed out of Glossa.");
+      await logoutFromGlossa(logoutOptions(args));
       return;
     case "status": {
       const loaded = await loadCredentials();

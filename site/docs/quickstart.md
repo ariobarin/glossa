@@ -28,7 +28,7 @@ https://mcp.glossa.sh/mcp
 ```
 
 3. Choose **OAuth**, check the confirmation box, then choose **Create**.
-4. Choose **Sign in with Glossa**.
+4. Choose **Sign in with Glossa**, then choose the same Google account you used in the Glossa CLI.
 
 ## Test the connection
 
@@ -37,3 +37,13 @@ In ChatGPT, send:
 ```text
 Use Glossa to list my connected devices.
 ```
+
+## Switch Google accounts
+
+Stop the worker, then clear Glossa's local and browser login:
+
+```shell
+glossa logout --browser
+```
+
+In ChatGPT, disconnect and reconnect Glossa under **Settings > Apps**. Choose the same Google account when ChatGPT and the CLI authorize Glossa again.

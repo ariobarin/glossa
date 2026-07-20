@@ -26,6 +26,13 @@ export interface AuthenticatedRequest extends Request {
   };
 }
 
+export function subjectUsesAllowedProvider(
+  config: RelayConfig,
+  subject: string,
+): boolean {
+  return subject.startsWith(config.GLOSSA_AUTH0_ALLOWED_SUBJECT_PREFIX);
+}
+
 function bearerToken(request: Request): string | null {
   const header = request.header("authorization");
   if (!header) return null;
@@ -79,6 +86,10 @@ export function requireAuth(config: RelayConfig, requiredScope?: string) {
         audience: config.GLOSSA_AUTH0_AUDIENCE,
       });
       if (!verified.payload.sub) throw new Error("Missing subject.");
+      if (!subjectUsesAllowedProvider(config, verified.payload.sub)) {
+        response.status(403).json({ error: "identity_provider_not_allowed" });
+        return;
+      }
       const grantedScopes = scopes(verified.payload);
       if (requiredScope && !grantedScopes.has(requiredScope)) {
         response.setHeader(
