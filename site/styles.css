@@ -82,8 +82,7 @@ button:focus-visible {
 .header-links,
 .site-footer-inner,
 .site-footer nav,
-.hero-action-row,
-.code-header {
+.hero-action-row {
   display: flex;
   align-items: center;
 }
@@ -208,37 +207,38 @@ p {
   gap: 18px;
 }
 
-/* Setup */
+/* Docs */
 
-.setup-shell {
+.docs-shell {
   display: grid;
   min-height: max(100vh, 100dvh);
   grid-template-rows: auto minmax(0, 1fr) auto;
 }
 
-.setup-main {
-  padding: 52px 0 68px;
+.docs-main.page-width {
+  width: min(calc(100% - 48px), 860px);
+  padding: 52px 0 76px;
 }
 
-.setup-intro {
+.docs-intro {
   padding-bottom: 48px;
+  border-bottom: 1px solid var(--line);
 }
 
-.setup-intro h1 {
-  max-width: 1000px;
+.docs-intro h1 {
   margin-bottom: 20px;
-  font-size: clamp(48px, 6vw, 74px);
+  font-size: clamp(48px, 6vw, 68px);
   font-weight: 700;
   letter-spacing: -0.055em;
   line-height: 0.96;
 }
 
-.setup-intro h1 .accent-coral {
+.docs-intro h1 .accent-coral {
   color: var(--coral);
 }
 
-.setup-intro > p {
-  max-width: 720px;
+.docs-intro > p {
+  max-width: 680px;
   margin-bottom: 0;
   color: var(--muted);
   font-size: 18px;
@@ -247,7 +247,7 @@ p {
 
 .connection-strip {
   display: grid;
-  width: min(100%, 1000px);
+  width: 100%;
   grid-template-columns: auto minmax(28px, 1fr) 44px minmax(28px, 1fr) auto;
   align-items: center;
   gap: 12px;
@@ -289,90 +289,159 @@ p {
   color: var(--ink);
 }
 
-.step-heading a {
+.docs-content a {
   color: var(--ink);
   text-decoration: underline;
   text-decoration-color: var(--coral);
   text-underline-offset: 3px;
 }
 
-.setup-steps {
-  border-top: 1px solid var(--line);
+.docs-content {
+  padding-top: 6px;
 }
 
-.setup-step {
-  display: grid;
-  grid-template-columns: minmax(180px, 0.65fr) minmax(340px, 1.35fr);
-  gap: clamp(20px, 4vw, 54px);
-  padding: 30px 0;
-  border-bottom: 1px solid var(--line);
-}
-
-.step-heading h2 {
-  margin-bottom: 8px;
-  font-size: 26px;
+.docs-content h2 {
+  margin: 42px 0 14px;
+  font-size: 30px;
   letter-spacing: -0.04em;
 }
 
-.step-heading p,
-.chatgpt-setup li {
-  color: var(--muted);
-  font-size: 13px;
-  line-height: 1.5;
+.docs-content p,
+.docs-content ol {
+  max-width: 680px;
 }
 
-.step-heading p {
-  margin-bottom: 0;
+.docs-content p,
+.docs-content li {
+  color: var(--muted);
+  font-size: 15px;
+  line-height: 1.6;
+}
+
+.docs-content p {
+  margin-bottom: 18px;
+}
+
+.docs-content ol {
+  margin: 0;
+  padding-left: 24px;
+}
+
+.docs-content li + li {
+  margin-top: 10px;
+}
+
+.docs-content strong {
+  color: var(--ink);
 }
 
 .code-block {
-  overflow: hidden;
-  border-top: 1px solid var(--purple);
-  border-radius: var(--radius);
+  position: relative;
+  overflow: visible;
+  border: 1px solid var(--line);
+  border-radius: 18px;
   background: #0b0a0e;
   color: var(--white);
   box-shadow: 0 10px 28px rgba(0, 0, 0, 0.24);
 }
 
-.code-header {
-  min-height: 35px;
-  justify-content: space-between;
-  padding: 0 12px;
-  border-bottom: 1px solid #35303e;
-  color: #aaa3b4;
-  font-family: var(--mono);
-  font-size: 9px;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-}
-
-.code-header button {
-  min-width: 48px;
-  padding: 5px 8px;
-  border: 1px solid #514a60;
-  border-radius: 7px;
+.copy-button {
+  display: grid;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  place-items: center;
+  border: 0;
   background: transparent;
-  color: var(--white);
+  color: var(--muted);
   cursor: pointer;
-  font: inherit;
-  text-transform: uppercase;
 }
 
-.code-header button:hover {
-  border-color: var(--purple-readable);
+.copy-button::before,
+.copy-button::after {
+  content: "";
+  position: absolute;
+  width: 9px;
+  height: 10px;
+  border: 1px solid currentColor;
+  border-radius: 2px;
+}
+
+.copy-button::before {
+  top: 6px;
+  left: 6px;
+}
+
+.copy-button::after {
+  top: 10px;
+  left: 10px;
+  background: #0b0a0e;
+}
+
+.code-block > .copy-button {
+  position: absolute;
+  z-index: 1;
+  top: 50%;
+  right: 12px;
+  transform: translateY(-50%);
+}
+
+.copy-button:hover {
   color: var(--purple-readable);
 }
 
-.code-header button[data-state="copied"] {
-  border-color: var(--coral);
-  background: var(--coral);
-  color: #211011;
+.copy-button[data-state="copied"] {
+  background: transparent;
+  color: var(--coral);
+}
+
+.copy-button[data-state="copied"]::before {
+  content: "✓";
+  width: auto;
+  height: auto;
+  border: 0;
+  font-size: 15px;
+  font-weight: 700;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+}
+
+.copy-button[data-state="copied"]::after {
+  display: none;
+}
+
+.copy-tooltip {
+  position: absolute;
+  right: 50%;
+  bottom: calc(100% + 7px);
+  padding: 5px 7px;
+  border-radius: 5px;
+  background: #211f26;
+  color: var(--white);
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1;
+  opacity: 0;
+  pointer-events: none;
+  transform: translate(50%, 3px);
+  transition: opacity 120ms ease, transform 120ms ease;
+}
+
+.copy-button:hover .copy-tooltip,
+.copy-button:focus-visible .copy-tooltip {
+  opacity: 1;
+  transform: translate(50%, 0);
 }
 
 .code-block pre {
   overflow-x: auto;
   margin: 0;
-  padding: 16px;
+  padding: 20px 22px;
+}
+
+.code-block > .copy-button + pre {
+  padding-right: 60px;
 }
 
 .code-block code {
@@ -382,31 +451,8 @@ p {
   white-space: pre;
 }
 
-.code-block-compact pre {
-  padding: 12px 14px;
-}
-
-.chatgpt-setup ol {
-  margin: 0;
-  padding-left: 22px;
-}
-
-.chatgpt-setup ol + .code-block,
-.chatgpt-setup .code-block + ol {
-  margin-top: 12px;
-}
-
-.chatgpt-setup li + li {
-  margin-top: 5px;
-}
-
-.chatgpt-setup strong {
-  color: var(--ink);
-}
-
-.verification-prompt {
-  margin-top: 34px;
-  border-top-color: var(--coral);
+.docs-content .code-block {
+  margin: 18px 0 24px;
 }
 
 /* Policy and support */
@@ -583,19 +629,19 @@ p {
     gap: 10px;
   }
 
-  .setup-main {
+  .docs-main.page-width {
     padding: 36px 0 52px;
   }
 
-  .setup-intro {
+  .docs-intro {
     padding-bottom: 34px;
   }
 
-  .setup-intro h1 {
+  .docs-intro h1 {
     font-size: 46px;
   }
 
-  .setup-intro > p {
+  .docs-intro > p {
     font-size: 15px;
   }
 
@@ -634,10 +680,9 @@ p {
     font-size: 23px;
   }
 
-  .setup-step {
-    grid-template-columns: 1fr;
-    gap: 12px;
-    padding: 24px 0;
+  .docs-content h2 {
+    margin-top: 34px;
+    font-size: 27px;
   }
 
 }
