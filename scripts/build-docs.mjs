@@ -140,7 +140,6 @@ function renderPage(page, slug) {
   const body = groupSections(renderedBody);
   const sectionNavigation = renderSectionNavigation(renderedBody);
   const connection = slug === "quickstart" ? renderConnection() : "";
-  const pageClass = `doc-${slug.replaceAll("/", "-")}`;
 
   return `<!doctype html>
 <html lang="en">
@@ -154,7 +153,7 @@ function renderPage(page, slug) {
     <link rel="stylesheet" href="/styles.css?v=36" />
     <script src="/copy.js?v=3" defer></script>
   </head>
-  <body class="docs-shell ${pageClass}">
+  <body class="docs-shell">
     <!-- Generated from ${slug}.md. Run npm run docs:build after editing Markdown. -->
     <header class="site-header page-width">
       <a class="brand" href="/" aria-label="Glossa home">

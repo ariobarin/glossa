@@ -426,26 +426,6 @@ p {
   color: var(--coral);
 }
 
-.doc-quickstart .docs-content {
-  counter-reset: quickstart-step;
-}
-
-.doc-quickstart .doc-section h2 {
-  display: flex;
-  align-items: center;
-  gap: 13px;
-  counter-increment: quickstart-step;
-}
-
-.doc-quickstart .doc-section h2::before {
-  content: counter(quickstart-step, decimal-leading-zero);
-  flex: 0 0 24px;
-  color: var(--purple-readable);
-  font-family: var(--mono);
-  font-size: 11px;
-  letter-spacing: 0;
-}
-
 .code-block {
   position: relative;
   overflow: visible;
