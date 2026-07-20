@@ -36,7 +36,7 @@ Starting `glossa` authorizes connected clients to modify files inside that root 
 
 ## ChatGPT
 
-Glossa is not listed in the public plugin directory yet, so add it as a custom app in Developer Mode during the open beta. Follow [Get started](https://glossa.sh/get-started) to connect the managed Glossa endpoint.
+Glossa is not listed in the public plugin directory yet, so add it as a custom app in Developer Mode during the open beta. Follow the [quickstart](https://glossa.sh/docs/quickstart) to connect the managed Glossa endpoint.
 
 See the [open beta guide](docs/open-beta.md) for safe setup, verification, and troubleshooting.
 

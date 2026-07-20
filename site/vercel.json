@@ -1,5 +1,12 @@
 {
   "cleanUrls": true,
+  "redirects": [
+    {
+      "source": "/get-started",
+      "destination": "/docs/quickstart",
+      "permanent": true
+    }
+  ],
   "headers": [
     {
       "source": "/(.*)",

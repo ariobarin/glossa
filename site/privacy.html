@@ -4,18 +4,25 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="description" content="How Glossa processes and protects user data." />
-    <meta name="theme-color" content="#0b0d12" />
+    <meta name="theme-color" content="#111016" />
     <title>Privacy Policy | Glossa</title>
-    <link rel="stylesheet" href="/policy.css" />
+    <link rel="stylesheet" href="/styles.css?v=27" />
   </head>
-  <body>
-    <header>
-      <a class="brand" href="/">Glossa</a>
-      <a href="https://github.com/ariobarin/glossa">GitHub</a>
+  <body class="policy-shell">
+    <header class="site-header page-width">
+      <a class="brand" href="/" aria-label="Glossa home">
+        <img class="brand-symbol" src="/glossa-symbol.svg" alt="" />
+        <span>Glossa</span>
+      </a>
+      <nav class="header-links" aria-label="Site navigation">
+        <a href="/">Home</a>
+        <a href="/docs/quickstart">Quickstart</a>
+        <a href="https://github.com/ariobarin/glossa">GitHub</a>
+      </nav>
     </header>
 
-    <main>
-      <p class="eyebrow">Last updated July 15, 2026</p>
+    <main class="policy-main page-width">
+      <p class="policy-kicker">Last updated July 15, 2026</p>
       <h1>Privacy policy</h1>
       <p class="summary">Glossa routes requests between an authenticated ChatGPT or MCP client and a workspace that you explicitly expose from your own computer.</p>
 
@@ -59,11 +66,16 @@
       <p>This policy may change when Glossa's behavior, providers, or legal obligations change. Material changes will be published on this page with a new revision date. Questions and data requests can be started through the <a href="/support">support page</a>.</p>
     </main>
 
-    <footer>
-      <a href="/privacy">Privacy</a>
-      <a href="/terms">Terms</a>
-      <a href="/support">Support</a>
-      <a href="/security">Security</a>
+    <footer class="site-footer">
+      <div class="site-footer-inner page-width">
+        <span>Need help? <a href="https://github.com/ariobarin/glossa/issues">Open a GitHub issue.</a></span>
+        <nav aria-label="Legal and support">
+          <a href="/security">Security</a>
+          <a href="/privacy">Privacy</a>
+          <a href="/terms">Terms</a>
+          <a href="/support">Support</a>
+        </nav>
+      </div>
     </footer>
   </body>
 </html>

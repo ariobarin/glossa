@@ -4,18 +4,24 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="description" content="How Glossa protects local workspaces, accounts, and data." />
-    <meta name="theme-color" content="#0b0d12" />
+    <meta name="theme-color" content="#111016" />
     <title>Security | Glossa</title>
-    <link rel="stylesheet" href="/policy.css" />
+    <link rel="stylesheet" href="/styles.css?v=27" />
   </head>
-  <body>
-    <header>
-      <a class="brand" href="/">Glossa</a>
-      <a href="/get-started">Get started</a>
+  <body class="policy-shell">
+    <header class="site-header page-width">
+      <a class="brand" href="/" aria-label="Glossa home">
+        <img class="brand-symbol" src="/glossa-symbol.svg" alt="" />
+        <span>Glossa</span>
+      </a>
+      <nav class="header-links" aria-label="Site navigation">
+        <a href="/">Home</a>
+        <a href="/docs/quickstart">Quickstart</a>
+        <a href="https://github.com/ariobarin/glossa">GitHub</a>
+      </nav>
     </header>
 
-    <main>
-      <p class="eyebrow">Glossa security</p>
+    <main class="policy-main page-width">
       <h1>Your worker controls workspace access.</h1>
       <p class="summary">Glossa does not clone your repository into the hosted relay. The local worker reads files and runs commands. Requested file contents, command details, and command results are transmitted through the relay to the connected client.</p>
 
@@ -29,7 +35,7 @@
         <li>You choose one Git worktree or explicit directory when you start Glossa.</li>
         <li>Connected clients can read and modify files inside that root.</li>
         <li>Connected clients can run commands with the worker account's authority.</li>
-          <li>Press Ctrl+C in the worker terminal to start disconnecting. The worker is disconnected when the process exits.</li>
+        <li>Press Ctrl+C in the worker terminal to start disconnecting. The worker is disconnected when the process exits.</li>
       </ul>
 
       <h2>What the relay stores</h2>
@@ -57,11 +63,16 @@
       <p>Maintainers and reviewers can read the complete <a href="https://github.com/ariobarin/glossa/blob/main/docs/security.md">threat model and controls</a>.</p>
     </main>
 
-    <footer>
-      <a href="/privacy">Privacy</a>
-      <a href="/terms">Terms</a>
-      <a href="/support">Support</a>
-      <a href="/security">Security</a>
+    <footer class="site-footer">
+      <div class="site-footer-inner page-width">
+        <span>Need help? <a href="https://github.com/ariobarin/glossa/issues">Open a GitHub issue.</a></span>
+        <nav aria-label="Legal and support">
+          <a href="/security">Security</a>
+          <a href="/privacy">Privacy</a>
+          <a href="/terms">Terms</a>
+          <a href="/support">Support</a>
+        </nav>
+      </div>
     </footer>
   </body>
 </html>

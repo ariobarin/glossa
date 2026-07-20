@@ -5,113 +5,39 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta
       name="description"
-      content="Glossa connects ChatGPT to one local coding workspace on your Windows computer."
+      content="Make ChatGPT your local coding agent with one explicitly exposed workspace."
     />
-    <meta name="theme-color" content="#0b0d12" />
-    <title>Glossa | ChatGPT with your workspace</title>
-    <link rel="stylesheet" href="/styles.css" />
+    <meta name="theme-color" content="#111016" />
+    <title>Glossa | Your local coding agent</title>
+    <link rel="stylesheet" href="/styles.css?v=27" />
   </head>
-  <body>
-    <header>
-      <a class="brand" href="/" aria-label="Glossa home">Glossa</a>
-      <nav aria-label="Site navigation">
-        <a href="#what-is-glossa">What it is</a>
-        <a href="/get-started">Installation</a>
+  <body class="landing-shell">
+    <header class="site-header page-width">
+      <a class="brand" href="/" aria-label="Glossa home">
+        <img class="brand-symbol" src="/glossa-symbol.svg" alt="" />
+        <span>Glossa</span>
+      </a>
+      <nav class="header-links" aria-label="Site navigation">
+        <a href="/security">Security</a>
+        <a href="/privacy">Privacy</a>
+        <a href="/support">Support</a>
         <a href="https://github.com/ariobarin/glossa">GitHub</a>
       </nav>
     </header>
 
-    <main>
-      <section class="hero" aria-labelledby="hero-title">
+    <main class="landing-main page-width">
+      <section class="landing-hero" aria-labelledby="hero-title">
         <div class="hero-copy">
-          <p class="eyebrow">Local workspace bridge</p>
-          <h1 id="hero-title">ChatGPT, with your <span>workspace.</span></h1>
-          <p class="lede">
-            Glossa connects one local coding workspace to a ChatGPT conversation.
-            Your files stay on your computer. ChatGPT handles the conversation and
-            planning while Glossa carries requests and results between them.
-          </p>
-          <div class="hero-actions">
-            <a class="button" href="/get-started">Install Glossa</a>
-            <a href="#what-is-glossa">See how it works</a>
+          <h1 id="hero-title">Make ChatGPT your <span>local coding agent.</span></h1>
+          <div class="hero-action-row">
+            <a class="primary-action" href="/docs/quickstart">Set up Glossa</a>
           </div>
+          <p class="hero-footnote">
+            Glossa works with ChatGPT and other apps that support MCP tools.
+          </p>
         </div>
 
-        <div class="model" aria-label="How Glossa connects ChatGPT to your workspace">
-          <div class="model-step">
-            <span class="model-number">01</span>
-            <div>
-              <strong>ChatGPT</strong>
-              <p>Conversation, planning, and approvals.</p>
-            </div>
-          </div>
-          <div class="model-line" aria-hidden="true"></div>
-          <div class="model-step model-step-accent">
-            <span class="model-number">02</span>
-            <div>
-              <strong>Glossa</strong>
-              <p>Authenticated routing through the managed relay.</p>
-            </div>
-          </div>
-          <div class="model-line" aria-hidden="true"></div>
-          <div class="model-step">
-            <span class="model-number">03</span>
-            <div>
-              <strong>Your computer</strong>
-              <p>The worker reads and changes only the root you expose.</p>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <section class="section" id="what-is-glossa" aria-labelledby="what-title">
-        <div class="section-heading">
-          <p class="eyebrow">What it is</p>
-          <h2 id="what-title">A thin bridge, not another agent.</h2>
-        </div>
-        <div class="section-copy">
-          <p>
-            Glossa does not add a model, planner, or conversation store. It gives
-            ChatGPT access to one workspace that you explicitly expose from your
-            Windows computer.
-          </p>
-          <p>
-            The local worker owns file containment and command execution. The
-            hosted relay handles authentication and delivery. Nothing clones your
-            repository into the relay.
-          </p>
-        </div>
-      </section>
-
-      <section class="install-section" aria-labelledby="install-title">
-        <div class="section-heading">
-          <p class="eyebrow">Installation</p>
-          <h2 id="install-title">Install once. Run <code>glossa</code>.</h2>
-          <p class="summary">
-            Install the beta CLI, start it inside the Git repository you want to
-            expose, then add Glossa to ChatGPT as a custom app in Developer Mode.
-          </p>
-        </div>
-        <div class="code-panel">
-          <pre><code>npm install --global @ariobarin/glossa@beta
-Set-Location C:\path\to\your\project
-glossa</code></pre>
-          <div class="panel-footer">
-            <a class="button" href="/get-started">View the three steps</a>
-            <span>Windows and Node.js 24</span>
-          </div>
-        </div>
       </section>
     </main>
-
-    <footer>
-      <span>One local workspace. One ChatGPT conversation.</span>
-      <nav aria-label="Legal and support">
-        <a href="/privacy">Privacy</a>
-        <a href="/terms">Terms</a>
-        <a href="/support">Support</a>
-        <a href="/security">Security</a>
-      </nav>
-    </footer>
   </body>
 </html>

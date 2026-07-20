@@ -4,30 +4,36 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="description" content="Support and security reporting for Glossa." />
-    <meta name="theme-color" content="#0b0d12" />
+    <meta name="theme-color" content="#111016" />
     <title>Support | Glossa</title>
-    <link rel="stylesheet" href="/policy.css" />
+    <link rel="stylesheet" href="/styles.css?v=27" />
   </head>
-  <body>
-    <header>
-      <a class="brand" href="/">Glossa</a>
-      <a href="https://github.com/ariobarin/glossa">GitHub</a>
+  <body class="policy-shell">
+    <header class="site-header page-width">
+      <a class="brand" href="/" aria-label="Glossa home">
+        <img class="brand-symbol" src="/glossa-symbol.svg" alt="" />
+        <span>Glossa</span>
+      </a>
+      <nav class="header-links" aria-label="Site navigation">
+        <a href="/">Home</a>
+        <a href="/docs/quickstart">Quickstart</a>
+        <a href="https://github.com/ariobarin/glossa">GitHub</a>
+      </nav>
     </header>
 
-    <main>
-      <p class="eyebrow">Glossa support</p>
+    <main class="policy-main page-width">
       <h1>How can we help?</h1>
       <p class="summary">Use the public issue tracker for setup problems, reproducible bugs, documentation corrections, and feature requests.</p>
 
       <h2>Before opening an issue</h2>
       <ul>
-        <li>Read <a href="/get-started">Get started</a> for installation and first use, or the <a href="https://github.com/ariobarin/glossa/blob/main/docs/open-beta.md">open beta guide</a> for troubleshooting.</li>
+        <li>Read the <a href="/docs/quickstart">quickstart</a> for installation and first use, or the <a href="https://github.com/ariobarin/glossa/blob/main/docs/open-beta.md">open beta guide</a> for troubleshooting.</li>
         <li>Confirm the worker terminal is still open and shows the expected workspace root.</li>
         <li>Run <code>glossa status</code> and check <a href="https://mcp.glossa.sh/healthz">relay health</a>.</li>
         <li>Remove source code, local paths, account identifiers, tokens, and credentials from any diagnostic details.</li>
       </ul>
 
-      <p><a href="https://github.com/ariobarin/glossa/issues/new">Open a GitHub issue</a></p>
+      <p><a class="primary-action support-action" href="https://github.com/ariobarin/glossa/issues/new">Open a GitHub issue</a></p>
 
       <h2>Security reports</h2>
       <p>Do not publish credentials, private source code, exploit details, or personal data in a GitHub issue. Open a minimal issue titled <code>Security contact request</code> without sensitive details so the operator can provide a private follow-up route.</p>
@@ -40,11 +46,16 @@
       <p>Press Ctrl+C in the worker terminal to end useful workspace access. Use <code>glossa logout</code> to remove locally stored OAuth credentials, and disconnect the Glossa app or plugin in ChatGPT to revoke client authorization.</p>
     </main>
 
-    <footer>
-      <a href="/privacy">Privacy</a>
-      <a href="/terms">Terms</a>
-      <a href="/support">Support</a>
-      <a href="/security">Security</a>
+    <footer class="site-footer">
+      <div class="site-footer-inner page-width">
+        <span>Need help? <a href="https://github.com/ariobarin/glossa/issues">Open a GitHub issue.</a></span>
+        <nav aria-label="Legal and support">
+          <a href="/security">Security</a>
+          <a href="/privacy">Privacy</a>
+          <a href="/terms">Terms</a>
+          <a href="/support">Support</a>
+        </nav>
+      </div>
     </footer>
   </body>
 </html>
