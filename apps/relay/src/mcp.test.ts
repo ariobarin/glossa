@@ -130,6 +130,6 @@ test("publishes reviewable MCP tool contracts", async (context) => {
   assert.equal(logout.isError, undefined);
   assert.deepEqual(logout.structuredContent, {
     logoutUrl,
-    instructions: `Tell the user to open ${logoutUrl} in their browser. After it loads, they can disconnect and reconnect Glossa in ChatGPT and choose the intended Google account.`,
+    instructions: `Stop the Glossa worker and run glossa logout --browser in a terminal. If the CLI does not open a browser, open ${logoutUrl}. Then disconnect and reconnect Glossa in ChatGPT, run glossa login, and choose the same intended Google account for both authorizations.`,
   });
 });

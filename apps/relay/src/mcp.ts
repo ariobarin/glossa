@@ -254,7 +254,7 @@ function registerTools(
     "logout",
     {
       title: "Log Out of Glossa",
-      description: "Use when the user asks to sign out of Glossa or switch Google accounts. Tell the user to open the returned logoutUrl in their browser, and do not claim logout is complete until they do. This tool returns instructions only and does not revoke credentials or change server state.",
+      description: "Use when the user asks to sign out of Glossa or switch Google accounts. Tell the user to stop the worker, run glossa logout --browser, reconnect Glossa in ChatGPT, run glossa login, and choose the same intended Google account for both authorizations. The returned logoutUrl is a fallback if the CLI does not open a browser. This tool returns instructions only and does not revoke credentials or change server state.",
       inputSchema: z.object({}).strict(),
       outputSchema: logoutOutputSchema,
       _meta: toolMetadata,
@@ -269,7 +269,7 @@ function registerTools(
       const logoutUrl = browserLogoutUrl(config.GLOSSA_AUTH0_ISSUER);
       return structuredResult({
         logoutUrl,
-        instructions: `Tell the user to open ${logoutUrl} in their browser. After it loads, they can disconnect and reconnect Glossa in ChatGPT and choose the intended Google account.`,
+        instructions: `Stop the Glossa worker and run glossa logout --browser in a terminal. If the CLI does not open a browser, open ${logoutUrl}. Then disconnect and reconnect Glossa in ChatGPT, run glossa login, and choose the same intended Google account for both authorizations.`,
       });
     },
   );
