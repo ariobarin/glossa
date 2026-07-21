@@ -80,7 +80,7 @@ export interface RelayDevice {
   platform: string | null;
   lastSeenAt: string | null;
   revokedAt: string | null;
-  activeWorkers: number;
+  activeWorkers: number | null;
 }
 
 interface DeviceListResponse extends RelayErrorResponse {
@@ -122,12 +122,15 @@ function parseDevices(value: unknown): RelayDevice[] {
     !validNullableString(device.platform) ||
     !validNullableString(device.lastSeenAt) ||
     !validNullableString(device.revokedAt) ||
-    !Number.isInteger(device.activeWorkers) ||
-    device.activeWorkers! < 0
+    device.activeWorkers !== undefined &&
+    (!Number.isInteger(device.activeWorkers) || device.activeWorkers! < 0)
   )) {
     throw new Error("The Glossa relay returned an invalid device list response.");
   }
-  return devices as RelayDevice[];
+  return devices.map((device) => ({
+    ...(device as Omit<RelayDevice, "activeWorkers">),
+    activeWorkers: device.activeWorkers ?? null,
+  }));
 }
 
 export async function listDevices(

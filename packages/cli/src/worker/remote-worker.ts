@@ -8,6 +8,7 @@ import {
 const WORKER_REQUEST_TIMEOUT_MS = 19_000;
 const DEFAULT_RECONNECT_BASE_MS = 500;
 const DEFAULT_RECONNECT_MAX_MS = 10_000;
+const DEFAULT_HEARTBEAT_MS = 15_000;
 
 type Fetcher = typeof fetch;
 type Sleeper = (milliseconds: number, signal: AbortSignal) => Promise<void>;
@@ -26,12 +27,13 @@ export interface RemoteWorkerOptions {
   random?: () => number;
   reconnectBaseMs?: number;
   reconnectMaxMs?: number;
+  heartbeatMs?: number;
   onStatus?: (status: RemoteWorkerStatus) => void;
 }
 
 export type RemoteWorkerStatus =
   | { state: "connecting" }
-  | { state: "connected"; reconnected: boolean }
+  | { state: "connected"; reconnected: boolean; legacyRelay: boolean }
   | { state: "retrying"; error: Error; retryInMs: number }
   | { state: "disconnected" };
 
@@ -85,6 +87,7 @@ export class RemoteWorker {
   readonly #random: () => number;
   readonly #reconnectBaseMs: number;
   readonly #reconnectMaxMs: number;
+  readonly #heartbeatMs: number;
   readonly #workerId = randomUUID();
   readonly #onStatus: (status: RemoteWorkerStatus) => void;
 
@@ -99,6 +102,7 @@ export class RemoteWorker {
     this.#reconnectBaseMs =
       options.reconnectBaseMs ?? DEFAULT_RECONNECT_BASE_MS;
     this.#reconnectMaxMs = options.reconnectMaxMs ?? DEFAULT_RECONNECT_MAX_MS;
+    this.#heartbeatMs = options.heartbeatMs ?? DEFAULT_HEARTBEAT_MS;
     this.#onStatus = options.onStatus ?? (() => {});
   }
 
@@ -109,11 +113,15 @@ export class RemoteWorker {
     try {
       while (!this.#signal.aborted) {
         try {
-          const generation = await this.#register();
-          this.#onStatus({ state: "connected", reconnected: connectedBefore });
+          const session = await this.#register();
+          this.#onStatus({
+            state: "connected",
+            reconnected: connectedBefore,
+            legacyRelay: session.legacyRelay,
+          });
           connectedBefore = true;
           failures = 0;
-          await this.#pollGeneration(generation);
+          await this.#pollGeneration(session);
         } catch (error) {
           if (this.#signal.aborted) return;
           if (error instanceof DeviceRejectedError) throw error;
@@ -143,10 +151,28 @@ export class RemoteWorker {
     }
   }
 
-  async #register(): Promise<string> {
-    const response = await this.#post("/device/register", {
-      workerId: this.#workerId,
-    });
+  async #register(): Promise<{ generation: string; legacyRelay: boolean }> {
+    let response: Response;
+    try {
+      response = await this.#post("/device/register", {
+        workerId: this.#workerId,
+      });
+    } catch (error) {
+      if (!(error instanceof RelayResponseError) || error.status !== 400) {
+        throw error;
+      }
+      response = await this.#post("/device/register", {});
+      const legacyValue = (await response.json()) as unknown;
+      if (
+        typeof legacyValue !== "object" ||
+        legacyValue === null ||
+        !("generation" in legacyValue) ||
+        typeof legacyValue.generation !== "string"
+      ) {
+        throw new Error("The relay returned an invalid registration response.");
+      }
+      return { generation: legacyValue.generation, legacyRelay: true };
+    }
     const value = (await response.json()) as unknown;
     if (
       typeof value !== "object" ||
@@ -158,15 +184,20 @@ export class RemoteWorker {
     ) {
       throw new Error("The relay returned an invalid registration response.");
     }
-    return value.generation;
+    return { generation: value.generation, legacyRelay: false };
   }
 
-  async #pollGeneration(generation: string): Promise<void> {
+  async #pollGeneration(session: {
+    generation: string;
+    legacyRelay: boolean;
+  }): Promise<void> {
     while (!this.#signal.aborted) {
-      const response = await this.#post("/device/poll", {
-        workerId: this.#workerId,
-        generation,
-      });
+      const response = await this.#post(
+        "/device/poll",
+        session.legacyRelay
+          ? { generation: session.generation }
+          : { workerId: this.#workerId, generation: session.generation },
+      );
       if (response.status === 204) continue;
       const value = (await response.json()) as unknown;
       const parsed = workerJobSchema.safeParse(
@@ -177,11 +208,25 @@ export class RemoteWorker {
       if (!parsed.success) {
         throw new Error("The relay returned an invalid worker job.");
       }
-      const result = await this.#worker.handle(parsed.data);
-      await this.#post("/device/result", {
-        workerId: this.#workerId,
-        result,
-      });
+      const heartbeat = session.legacyRelay
+        ? undefined
+        : setInterval(() => {
+            void this.#post("/device/heartbeat", {
+              workerId: this.#workerId,
+              generation: session.generation,
+            }).catch(() => {});
+          }, this.#heartbeatMs);
+      heartbeat?.unref();
+      let result: WorkerResult;
+      try {
+        result = await this.#worker.handle(parsed.data);
+      } finally {
+        if (heartbeat) clearInterval(heartbeat);
+      }
+      await this.#post(
+        "/device/result",
+        session.legacyRelay ? result : { workerId: this.#workerId, result },
+      );
     }
   }
 

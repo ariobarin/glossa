@@ -72,4 +72,14 @@ test("accepts legacy and concurrent worker registration without charging valid t
   assert.equal(legacy.workerId, deviceId);
   assert.equal(current.workerId, workerId);
   assert.equal(state.activeWorkerCount(accountId, deviceId), 2);
+
+  const heartbeat = await fetch(`${origin}/device/heartbeat`, {
+    method: "POST",
+    headers: {
+      authorization: `Device ${token}`,
+      "content-type": "application/json",
+    },
+    body: JSON.stringify({ workerId, generation: current.generation }),
+  });
+  assert.equal(heartbeat.status, 204);
 });

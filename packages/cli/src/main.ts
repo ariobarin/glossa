@@ -94,6 +94,7 @@ async function runExposure(path: string | undefined, allowBroadRoot: boolean): P
 
 function deviceStatus(device: RelayDevice): string {
   if (device.revokedAt) return "revoked";
+  if (device.activeWorkers === null) return "worker count unavailable";
   if (device.activeWorkers === 0) return "offline";
   return `${device.activeWorkers} active ${device.activeWorkers === 1 ? "worker" : "workers"}`;
 }
@@ -104,7 +105,10 @@ async function showStatus(json: boolean): Promise<void> {
   const endpoints = loadRelayEndpoints();
   const devices = await listDevices(endpoints, credentials);
   const account = profile.email ?? profile.name ?? profile.sub;
-  const activeWorkers = devices.reduce((sum, device) => sum + device.activeWorkers, 0);
+  const workerCountsCurrent = devices.every((device) => device.activeWorkers !== null);
+  const activeWorkers = workerCountsCurrent
+    ? devices.reduce((sum, device) => sum + device.activeWorkers!, 0)
+    : null;
   const result = {
     account,
     relay: endpoints.relayOrigin,
@@ -118,7 +122,11 @@ async function showStatus(json: boolean): Promise<void> {
   }
   console.log(`Signed in as ${account}.`);
   console.log(`Relay connected: ${endpoints.relayOrigin}`);
-  console.log(`Active workers: ${activeWorkers}`);
+  console.log(
+    activeWorkers === null
+      ? "Active workers: unavailable until the relay is updated"
+      : `Active workers: ${activeWorkers}`,
+  );
   if (devices.length === 0) {
     console.log("No devices enrolled. Run glossa start in a workspace.");
     return;

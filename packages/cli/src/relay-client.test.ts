@@ -60,8 +60,21 @@ test("renames and revokes devices through the control API", async () => {
 test("rejects incomplete status responses", async () => {
   await assert.rejects(
     listDevices(endpoints, credentials, async () => Response.json({
-      devices: [{ id: device.id, name: device.name }],
+      devices: [{ id: device.id, name: device.name, activeWorkers: 1 }],
     })),
     /invalid device list response/,
   );
+});
+
+test("accepts an older relay without inventing worker counts", async () => {
+  const devices = await listDevices(endpoints, credentials, async () => Response.json({
+    devices: [{
+      id: device.id,
+      name: device.name,
+      platform: device.platform,
+      lastSeenAt: device.lastSeenAt,
+      revokedAt: device.revokedAt,
+    }],
+  }));
+  assert.equal(devices[0]?.activeWorkers, null);
 });

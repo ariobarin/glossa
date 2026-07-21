@@ -125,7 +125,7 @@ export function parseInvocation(args: string[]): CliInvocation {
     throw new UsageError("Logout accepts only --browser.");
   }
   if (command === "--") return parseStart(options);
-  if (command.startsWith("-")) throw new UsageError(`Unknown option: ${command}`);
+  if (command.startsWith("-")) return parseStart(args);
   if (likelyDirectory(command)) return parseStart(args);
   throw new UsageError(`Unknown command: ${command}`);
 }

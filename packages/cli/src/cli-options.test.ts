@@ -25,6 +25,10 @@ test("supports conventional option termination for workspace paths", () => {
     path: "-workspace",
     allowBroadRoot: false,
   });
+  assert.deepEqual(parseInvocation(["--allow-broad-root"]), {
+    command: "start",
+    allowBroadRoot: true,
+  });
 });
 
 test("keeps login optional and automatic startup separate", () => {

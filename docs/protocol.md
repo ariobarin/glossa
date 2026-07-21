@@ -63,6 +63,8 @@ Authorization: Device gld_<device-id>_<secret>
 
 Registers an active worker generation using an ephemeral worker UUID created by the CLI process. One enrolled device may register any number of workers. Reconnecting one worker replaces only that worker's generation. The request does not include the canonical local root or a derived repository name.
 
+During a relay-first beta rollout, a current relay accepts both the worker-aware request shapes and the earlier single-worker shapes. A current CLI can also fall back to the earlier shapes when it reaches an older relay. That compatibility mode supports one active workspace per enrolled device and reports worker counts as unavailable until the relay is updated.
+
 ### `POST /device/poll`
 
 Includes the worker ID and generation. Waits no more than 18 seconds. Returns one job or `204 No Content`. A worker has at most one delivered active job. Worker HTTP requests use a 19 second client timeout and reconnect with bounded exponential jitter.
@@ -70,6 +72,10 @@ Includes the worker ID and generation. Waits no more than 18 seconds. Returns on
 ### `POST /device/result`
 
 Posts the worker ID and structured result for the delivered job. Late results after caller timeout are ignored.
+
+### `POST /device/heartbeat`
+
+Refreshes transient worker liveness while a delivered job is still running. This prevents a responsive worker from expiring merely because one local operation takes longer than the normal polling interval.
 
 ### `POST /device/unregister`
 

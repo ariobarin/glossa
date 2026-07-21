@@ -39,6 +39,7 @@ export class RouterState {
     deviceName: string,
     workerId: string,
   ): string {
+    this.#pruneStaleWorkers();
     const generation = randomUUID();
     const previous = this.#workers.get(workerId);
     if (
@@ -117,6 +118,25 @@ export class RouterState {
       };
       worker.pollWaiter = waiter;
     });
+  }
+
+  heartbeat(
+    accountId: string,
+    deviceId: string,
+    workerId: string,
+    generation: string,
+  ): boolean {
+    const worker = this.#workers.get(workerId);
+    if (
+      !worker ||
+      worker.accountId !== accountId ||
+      worker.deviceId !== deviceId ||
+      worker.generation !== generation
+    ) {
+      return false;
+    }
+    worker.lastSeenAt = Date.now();
+    return true;
   }
 
   enqueue(

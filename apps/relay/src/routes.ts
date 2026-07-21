@@ -39,6 +39,10 @@ const workerResultRequestSchema = z.union([
   workerResultSchema,
 ]);
 const unregisterSchema = z.object({ workerId: workerIdSchema }).strict();
+const heartbeatSchema = z.object({
+  workerId: workerIdSchema,
+  generation: z.string().uuid(),
+}).strict();
 
 class RequestDeadlineError extends Error {}
 
@@ -408,6 +412,34 @@ export function buildRoutes(
       result,
     );
     response.status(accepted ? 202 : 410).json({ accepted });
+  });
+
+  router.post("/device/heartbeat", async (request, response) => {
+    const deadlineAt = Date.now() + config.GLOSSA_RELAY_REQUEST_TIMEOUT_MS;
+    const device = await authenticatedDevice(
+      request,
+      response,
+      store,
+      deviceRateLimiter,
+      deadlineAt,
+    );
+    if (!device) return;
+    const parsed = heartbeatSchema.safeParse(request.body);
+    if (!parsed.success) {
+      rejectInvalidInput(response);
+      return;
+    }
+    const accepted = state.heartbeat(
+      device.accountId,
+      device.id,
+      parsed.data.workerId,
+      parsed.data.generation,
+    );
+    if (!accepted) {
+      response.status(409).json({ error: "unknown_worker_generation" });
+      return;
+    }
+    response.status(204).end();
   });
 
   router.post("/device/unregister", async (request, response) => {

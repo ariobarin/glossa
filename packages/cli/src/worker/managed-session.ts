@@ -114,6 +114,9 @@ export async function runManagedSession(
           console.error("Connecting to Glossa...");
         } else if (status.state === "connected") {
           console.error(status.reconnected ? "Reconnected to Glossa." : "Connected to Glossa. ChatGPT can now use this workspace.");
+          if (status.legacyRelay) {
+            console.error("The relay needs an update before this computer can expose several workspaces at once.");
+          }
         } else if (status.state === "retrying" && connectionState !== "retrying") {
           const prefix = connectionState === "connecting" ? "Could not connect" : "Connection lost";
           console.error(`${prefix}: ${status.error.message} Retrying automatically.`);
