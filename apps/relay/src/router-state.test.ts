@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { setTimeout as delay } from "node:timers/promises";
 import test from "node:test";
 import type { WorkerJob, WorkerResult } from "@glossa/protocol";
 import { RouterState } from "./router-state.js";
@@ -64,5 +65,33 @@ test("preserves command routing when a stale worker reconnects", (t) => {
   assert.equal(
     state.workerForCommand(accountId, "command-1"),
     firstWorkerId,
+  );
+});
+
+test("does not deliver a queued job after its request times out", async () => {
+  const state = new RouterState();
+  const generation = state.register(
+    accountId,
+    deviceId,
+    "Test PC",
+    firstWorkerId,
+  );
+  const job: WorkerJob = {
+    type: "write_file",
+    requestId: "00000000-0000-4000-8000-000000000006",
+    path: "README.md",
+    content: "late write",
+  };
+
+  await Promise.all([
+    assert.rejects(
+      state.enqueue(accountId, firstWorkerId, job, 5),
+      /job_timeout/,
+    ),
+    delay(10),
+  ]);
+  assert.equal(
+    await state.poll(accountId, deviceId, firstWorkerId, generation, 5),
+    null,
   );
 });
