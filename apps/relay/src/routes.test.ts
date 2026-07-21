@@ -2,10 +2,11 @@ import assert from "node:assert/strict";
 import type { AddressInfo } from "node:net";
 import test from "node:test";
 import express from "express";
+import { MAX_TEXT_BYTES } from "@glossa/protocol";
 import { loadConfig } from "./config.js";
 import { FixedWindowRateLimiter } from "./rate-limit.js";
 import { RouterState } from "./router-state.js";
-import { buildRoutes } from "./routes.js";
+import { buildRoutes, MAX_RELAY_JSON_BYTES } from "./routes.js";
 import type { DeviceRecord, RelayStore } from "./store.js";
 
 const accountId = "00000000-0000-4000-8000-000000000001";
@@ -24,6 +25,34 @@ const device: DeviceRecord = {
 const unused = async (): Promise<never> => {
   throw new Error("Unexpected store call.");
 };
+
+test("accepts a maximum text payload after JSON escaping", async (context) => {
+  const app = express();
+  app.use(express.json({ limit: MAX_RELAY_JSON_BYTES }));
+  app.post("/", (_request, response) => response.status(204).end());
+  const server = app.listen(0, "127.0.0.1");
+  await new Promise<void>((resolve) => server.once("listening", resolve));
+  context.after(() => server.close());
+  const address = server.address() as AddressInfo;
+  const body = JSON.stringify({ content: "\"".repeat(MAX_TEXT_BYTES) });
+  const capturedStream = "\0".repeat(MAX_TEXT_BYTES);
+  const commandResultBody = JSON.stringify({
+    result: {
+      requestId: "00000000-0000-4000-8000-000000000004",
+      ok: true,
+      value: { stdout: capturedStream, stderr: capturedStream },
+    },
+  });
+
+  assert.ok(Buffer.byteLength(body) > 2 * MAX_TEXT_BYTES);
+  assert.ok(Buffer.byteLength(commandResultBody) < MAX_RELAY_JSON_BYTES);
+  const response = await fetch(`http://127.0.0.1:${address.port}`, {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body,
+  });
+  assert.equal(response.status, 204);
+});
 
 test("accepts legacy and concurrent worker registration without charging valid traffic", async (context) => {
   const store: RelayStore = {
