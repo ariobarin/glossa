@@ -9,7 +9,8 @@ permissions:
   contents: read
 
 jobs:
-  relay-check:
+  relay-matrix:
+    name: relay-check (${{ matrix.node-version }})
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -24,7 +25,14 @@ jobs:
       - run: npm run build
       - run: npm run test --workspace @glossa/relay
 
-  windows-check:
+  relay-check:
+    needs: relay-matrix
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo "relay matrix passed"
+
+  windows-matrix:
+    name: windows-check (${{ matrix.node-version }})
     runs-on: windows-latest
     strategy:
       matrix:
@@ -38,6 +46,12 @@ jobs:
       - run: npm ci
       - run: npm run check
       - run: node packages/cli/dist/main.js --version
+
+  windows-check:
+    needs: windows-matrix
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo "windows matrix passed"
 
   deploy-changes:
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
