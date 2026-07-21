@@ -40,6 +40,12 @@ const pages = await Promise.all((await findHtmlFiles(siteDirectory)).map(async (
 const expectedHeader = readChrome(pages[0].html, "header", "site-header page-width", pages[0].path);
 const expectedFooter = readChrome(pages[0].html, "footer", "site-footer", pages[0].path);
 const inconsistentPages = [];
+const generatedInformationPages = new Set([
+  "site/privacy.html",
+  "site/security.html",
+  "site/support.html",
+  "site/terms.html",
+]);
 
 for (const page of pages) {
   const header = readChrome(page.html, "header", "site-header page-width", page.path);
@@ -47,6 +53,15 @@ for (const page of pages) {
 
   if (header !== expectedHeader || footer !== expectedFooter) {
     inconsistentPages.push(relative(repositoryRoot, page.path).replaceAll("\\", "/"));
+  }
+
+  const pageName = relative(repositoryRoot, page.path).replaceAll("\\", "/");
+  const isGeneratedInformationPage = pageName.startsWith("site/docs/") || generatedInformationPages.has(pageName);
+  if (isGeneratedInformationPage && (
+    !page.html.includes('<body class="docs-shell">') ||
+    !page.html.includes('<nav class="docs-sidebar" aria-label="Documentation">')
+  )) {
+    inconsistentPages.push(pageName);
   }
 }
 
