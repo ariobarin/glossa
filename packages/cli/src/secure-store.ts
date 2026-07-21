@@ -120,7 +120,10 @@ export class SecureStore<T> {
     let keyringDeleteFailed = false;
     if (entry) {
       try {
-        await entry.deleteCredential();
+        const deleted = await entry.deleteCredential();
+        if (!deleted && (await entry.getPassword()) != null) {
+          keyringDeleteFailed = true;
+        }
       } catch {
         keyringDeleteFailed = true;
       }

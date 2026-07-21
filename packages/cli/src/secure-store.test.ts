@@ -85,6 +85,7 @@ test("treats a missing native credential as empty", async (t) => {
   });
 
   assert.equal(await store.load(), null);
+  await store.delete();
   assert.deepEqual(warnings, []);
 });
 
@@ -101,9 +102,7 @@ test("reports failed native credential deletion", async (t) => {
     entryProvider: async () => ({
       setPassword: async () => undefined,
       getPassword: async () => "oauth-secret",
-      deleteCredential: async () => {
-        throw new Error("keyring unavailable");
-      },
+      deleteCredential: async () => false,
     }),
   });
 
