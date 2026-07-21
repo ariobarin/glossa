@@ -28,7 +28,9 @@ Set-Location C:\path\to\a\test-repo
 glossa
 ```
 
-Glossa opens Google sign-in automatically when needed. Choose the Google account you want to use for Glossa. After sign-in, the terminal prints the exposed root, device name, and security warning. Leave that terminal open while using Glossa. Press Ctrl+C to disconnect.
+You can also run `glossa start .`. Start more workers in other terminals when you want to expose several workspaces from the same computer.
+
+Glossa opens Google sign-in automatically when needed. `glossa login` is available as an optional preflight. Choose the Google account you want to use for Glossa. After sign-in, the terminal prints the exposed root, device name, connection state, and security warning. Leave that terminal open while using Glossa. Press Ctrl+C to disconnect.
 
 Starting Glossa authorizes connected clients to modify files inside the exposed root and run commands with the full environment and permissions of your Windows account. Do not expose your home directory, a drive root, or a repository containing credentials.
 
@@ -59,6 +61,7 @@ Only test writes and commands inside the disposable repository.
 
 ## Troubleshooting
 
+- Run `glossa status` to validate Google login, relay access, enrolled devices, and active workers.
 - No online devices: confirm the `glossa` terminal is still running.
 - App setup cannot discover tools: confirm `https://mcp.glossa.sh/healthz` returns `{"ok":true,"service":"glossa-relay"}`.
 - OAuth loops or expires: reopen the custom Glossa app and authorize it again.
@@ -70,3 +73,5 @@ Only test writes and commands inside the disposable repository.
 Press Ctrl+C in the worker terminal. The device remains enrolled for later sessions, but it is offline and cannot access the local workspace while the worker is stopped.
 
 Run `glossa logout` to remove only the CLI's local OAuth credentials. Run `glossa logout --browser` when switching Google accounts; it also opens Glossa's browser-session logout endpoint.
+
+Use `glossa devices list`, `glossa devices rename <id> <name>`, or `glossa devices revoke <id>` to recover stale enrollments and remove computers you no longer trust.

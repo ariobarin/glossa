@@ -18,20 +18,27 @@ import {
   DeviceRejectedError,
   RemoteWorker,
   type WorkerHandler,
+  type RemoteWorkerStatus,
 } from "./remote-worker.js";
 
 const visibleActivity = new Set(["write_file", "run_command", "cancel_command"]);
+
+function activityLabel(type: WorkerJob["type"], finished: boolean, ok = true): string {
+  if (type === "run_command") return finished ? (ok ? "Command started" : "Command rejected") : "Command requested";
+  if (type === "write_file") return finished ? (ok ? "File write completed" : "File write rejected") : "File write started";
+  return finished ? (ok ? "Command cancellation completed" : "Command cancellation rejected") : "Command cancellation requested";
+}
 
 function visibleWorker(worker: LocalWorker): WorkerHandler {
   return {
     async handle(job: WorkerJob): Promise<WorkerResult> {
       if (visibleActivity.has(job.type)) {
-        console.error(`Activity started: ${job.type} (${job.requestId})`);
+        console.error(`${activityLabel(job.type, false)} (${job.requestId}).`);
       }
       const result = await worker.handle(job);
       if (visibleActivity.has(job.type)) {
         console.error(
-          `Activity finished: ${job.type} (${job.requestId}), ${result.ok ? "accepted" : "rejected"}`,
+          `${activityLabel(job.type, true, result.ok)} (${job.requestId}).`,
         );
       }
       return result;
@@ -95,12 +102,29 @@ export async function runManagedSession(
   console.error(
     "Files may be modified and commands have the full environment and permissions of this account. Press Ctrl+C to disconnect.",
   );
+  let connectionState: RemoteWorkerStatus["state"] | undefined;
   try {
     await new RemoteWorker({
       origin: endpoints.workerOrigin,
       deviceToken: device.token,
       worker: visibleWorker(worker),
       signal: controller.signal,
+      onStatus(status) {
+        if (status.state === "connecting") {
+          console.error("Connecting to Glossa...");
+        } else if (status.state === "connected") {
+          console.error(status.reconnected ? "Reconnected to Glossa." : "Connected to Glossa. ChatGPT can now use this workspace.");
+          if (status.legacyRelay) {
+            console.error("The relay needs an update before this computer can expose several workspaces at once.");
+          }
+        } else if (status.state === "retrying" && connectionState !== "retrying") {
+          const prefix = connectionState === "connecting" ? "Could not connect" : "Connection lost";
+          console.error(`${prefix}: ${status.error.message} Retrying automatically.`);
+        } else if (status.state === "disconnected") {
+          console.error("Disconnected from Glossa.");
+        }
+        connectionState = status.state;
+      },
     }).run();
   } catch (error) {
     if (error instanceof DeviceRejectedError) {

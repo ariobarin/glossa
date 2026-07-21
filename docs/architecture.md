@@ -69,7 +69,7 @@ The canonical database schema is [`apps/relay/sql/001_init.sql`](../apps/relay/s
 ### Relay memory
 
 - active worker connections
-- device IDs and connection generations, without local absolute paths
+- device IDs, ephemeral worker IDs, and connection generations, without local absolute paths
 - pending jobs
 - request waiters
 - recent nonces and bounded rate-limit counters
@@ -81,6 +81,8 @@ The canonical database schema is [`apps/relay/sql/001_init.sql`](../apps/relay/s
 - local process execution
 - complete inherited local environment and developer credentials
 - temporary active command state
+
+One enrolled device may run any number of concurrent workers. Each worker receives an ephemeral ID for its process lifetime, so requests remain bound to one exposed root without persisting that root or a derived repository name.
 
 ## Hosted request deadlines
 

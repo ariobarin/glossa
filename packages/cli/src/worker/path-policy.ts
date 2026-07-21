@@ -35,7 +35,12 @@ export async function canonicalizeRoot(
   candidate: string,
   allowBroadRoot = false,
 ): Promise<string> {
-  const root = await realpath(path.resolve(candidate));
+  const root = await realpath(path.resolve(candidate)).catch((error: NodeJS.ErrnoException) => {
+    if (error.code === "ENOENT") {
+      throw new WorkerError("root_not_found", "The workspace directory does not exist.");
+    }
+    throw error;
+  });
   const rootStat = await stat(root);
   if (!rootStat.isDirectory()) {
     throw new WorkerError("root_not_directory", "The exposed root must be a directory.");

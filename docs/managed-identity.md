@@ -34,7 +34,7 @@ Never commit the Google client secret, an Auth0 Management API token, or an expo
 2. Run `glossa logout --browser`.
 3. In ChatGPT, open **Settings > Apps**, disconnect Glossa, and connect it again.
 4. Choose the intended Google account during ChatGPT authorization.
-5. Run `glossa login` and choose the same Google account.
+5. Start Glossa and choose the same Google account. `glossa login` is an optional preflight because authenticated commands start login automatically.
 
 The MCP `logout` tool returns the same browser logout URL and tells the model to present it to the user. The tool does not open the URL or revoke credentials itself.
 

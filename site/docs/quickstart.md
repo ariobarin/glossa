@@ -13,6 +13,8 @@ npm install --global @ariobarin/glossa@beta
 glossa .
 ```
 
+`glossa start .` is the explicit form. You can start more workers in other terminals to expose additional workspaces from the same computer.
+
 ## Connect ChatGPT
 
 1. Open **Settings > Apps > Advanced Settings**, enable **Developer Mode**, then choose **Create**.
@@ -27,6 +29,12 @@ https://mcp.glossa.sh/mcp
 Business admins and owners can also begin at **Workspace settings > Apps > Create**.
 
 ## Try it
+
+In another terminal, verify the account, relay, and active worker:
+
+```shell
+glossa status
+```
 
 In ChatGPT, send:
 

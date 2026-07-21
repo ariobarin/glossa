@@ -19,8 +19,30 @@ const enrollSchema = z
 
 const renameSchema = z.object({ name: deviceNameSchema }).strict();
 const deviceIdSchema = z.string().uuid();
-const registerSchema = z.object({}).strict();
-const pollSchema = z.object({ generation: z.string().uuid() }).strict();
+const workerIdSchema = z.string().uuid();
+const registerSchema = z.union([
+  z.object({ workerId: workerIdSchema }).strict(),
+  z.object({}).strict(),
+]);
+const pollSchema = z.union([
+  z.object({
+    workerId: workerIdSchema,
+    generation: z.string().uuid(),
+  }).strict(),
+  z.object({ generation: z.string().uuid() }).strict(),
+]);
+const workerResultRequestSchema = z.union([
+  z.object({
+    workerId: workerIdSchema,
+    result: workerResultSchema,
+  }).strict(),
+  workerResultSchema,
+]);
+const unregisterSchema = z.object({ workerId: workerIdSchema }).strict();
+const heartbeatSchema = z.object({
+  workerId: workerIdSchema,
+  generation: z.string().uuid(),
+}).strict();
 
 class RequestDeadlineError extends Error {}
 
@@ -54,13 +76,14 @@ export interface RouteDependencies {
   deviceRateLimiter?: FixedWindowRateLimiter;
 }
 
-function publicDevice(device: DeviceRecord) {
+function publicDevice(device: DeviceRecord, state: RouterState) {
   return {
     id: device.id,
     name: device.name,
     platform: device.platform,
     lastSeenAt: device.lastSeenAt,
     revokedAt: device.revokedAt,
+    activeWorkers: state.activeWorkerCount(device.accountId, device.id),
   };
 }
 
@@ -106,17 +129,27 @@ async function authenticatedDevice(
   deadlineAt: number,
 ): Promise<DeviceRecord | null> {
   const source = request.ip || request.socket.remoteAddress || "unknown";
-  if (rejectRateLimit(response, limiter, source)) return null;
 
   const header = request.header("authorization");
   const [scheme, token] = header?.split(/\s+/, 2) ?? [];
   if (scheme?.toLowerCase() !== "device" || !token) {
-    response.status(401).json({ error: "invalid_device" });
+    if (!rejectRateLimit(response, limiter, source)) {
+      response.status(401).json({ error: "invalid_device" });
+    }
     return null;
   }
   const parsed = parseDeviceToken(token);
   if (!parsed) {
-    response.status(401).json({ error: "invalid_device" });
+    if (!rejectRateLimit(response, limiter, source)) {
+      response.status(401).json({ error: "invalid_device" });
+    }
+    return null;
+  }
+  const failureKey = source;
+  const rateLimit = limiter.check(failureKey);
+  if (!rateLimit.allowed) {
+    response.setHeader("Retry-After", String(rateLimit.retryAfterSeconds));
+    response.status(429).json({ error: "rate_limited" });
     return null;
   }
   let device: DeviceRecord | null;
@@ -130,7 +163,9 @@ async function authenticatedDevice(
     response.status(503).json({ error: "request_timeout" });
     return null;
   }
-  if (!device) response.status(401).json({ error: "invalid_device" });
+  if (!device && !rejectRateLimit(response, limiter, failureKey)) {
+    response.status(401).json({ error: "invalid_device" });
+  }
   return device;
 }
 
@@ -212,7 +247,7 @@ export function buildRoutes(
           parsed.data.platform ?? null,
         );
         response.status(201).json({
-          device: publicDevice(enrolled.device),
+          device: publicDevice(enrolled.device, state),
           device_token: enrolled.token,
         });
       } catch (error) {
@@ -229,7 +264,7 @@ export function buildRoutes(
       const accountId = await activeAccountId(request, response, store);
       if (!accountId) return;
       const devices = await store.listDevices(accountId);
-      response.json({ devices: devices.map(publicDevice) });
+      response.json({ devices: devices.map((device) => publicDevice(device, state)) });
     },
   );
 
@@ -255,7 +290,7 @@ export function buildRoutes(
           response.status(404).json({ error: "device_not_found" });
           return;
         }
-        response.json({ device: publicDevice(device) });
+        response.json({ device: publicDevice(device, state) });
       } catch (error) {
         if (!isUniqueViolation(error)) throw error;
         response.status(409).json({ error: "device_name_conflict" });
@@ -279,7 +314,7 @@ export function buildRoutes(
         response.status(404).json({ error: "device_not_found" });
         return;
       }
-      state.unregister(deviceId);
+      state.unregisterDevice(deviceId);
       response.status(204).end();
     },
   );
@@ -299,8 +334,18 @@ export function buildRoutes(
       rejectInvalidInput(response);
       return;
     }
-    const generation = state.register(device.accountId, device.id);
-    response.json({ deviceId: device.id, generation });
+    const workerId = "workerId" in parsed.data ? parsed.data.workerId : device.id;
+    const generation = state.register(
+      device.accountId,
+      device.id,
+      device.name,
+      workerId,
+    );
+    response.json({
+      deviceId: device.id,
+      workerId,
+      generation,
+    });
   });
 
   router.post("/device/poll", async (request, response) => {
@@ -330,6 +375,7 @@ export function buildRoutes(
       const job = await state.poll(
         device.accountId,
         device.id,
+        "workerId" in parsed.data ? parsed.data.workerId : device.id,
         parsed.data.generation,
         Math.min(config.GLOSSA_WORKER_POLL_MS, remainingRequestMs),
       );
@@ -339,7 +385,7 @@ export function buildRoutes(
       }
       response.json({ job });
     } catch {
-      response.status(409).json({ error: "unknown_device_generation" });
+      response.status(409).json({ error: "unknown_worker_generation" });
     }
   });
 
@@ -353,13 +399,66 @@ export function buildRoutes(
       deadlineAt,
     );
     if (!device) return;
-    const parsed = workerResultSchema.safeParse(request.body);
+    const parsed = workerResultRequestSchema.safeParse(request.body);
     if (!parsed.success) {
       rejectInvalidInput(response);
       return;
     }
-    const accepted = state.complete(device.accountId, device.id, parsed.data);
+    const workerId = "workerId" in parsed.data ? parsed.data.workerId : device.id;
+    const result = "result" in parsed.data ? parsed.data.result : parsed.data;
+    const accepted = state.complete(
+      device.accountId,
+      workerId,
+      result,
+    );
     response.status(accepted ? 202 : 410).json({ accepted });
+  });
+
+  router.post("/device/heartbeat", async (request, response) => {
+    const deadlineAt = Date.now() + config.GLOSSA_RELAY_REQUEST_TIMEOUT_MS;
+    const device = await authenticatedDevice(
+      request,
+      response,
+      store,
+      deviceRateLimiter,
+      deadlineAt,
+    );
+    if (!device) return;
+    const parsed = heartbeatSchema.safeParse(request.body);
+    if (!parsed.success) {
+      rejectInvalidInput(response);
+      return;
+    }
+    const accepted = state.heartbeat(
+      device.accountId,
+      device.id,
+      parsed.data.workerId,
+      parsed.data.generation,
+    );
+    if (!accepted) {
+      response.status(409).json({ error: "unknown_worker_generation" });
+      return;
+    }
+    response.status(204).end();
+  });
+
+  router.post("/device/unregister", async (request, response) => {
+    const deadlineAt = Date.now() + config.GLOSSA_RELAY_REQUEST_TIMEOUT_MS;
+    const device = await authenticatedDevice(
+      request,
+      response,
+      store,
+      deviceRateLimiter,
+      deadlineAt,
+    );
+    if (!device) return;
+    const parsed = unregisterSchema.safeParse(request.body);
+    if (!parsed.success) {
+      rejectInvalidInput(response);
+      return;
+    }
+    state.unregisterWorker(device.accountId, device.id, parsed.data.workerId);
+    response.status(204).end();
   });
 
   router.all(

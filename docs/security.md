@@ -50,7 +50,7 @@ Glossa executes commands with the permissions and environment of the local accou
 - display or return once;
 - operating-system credential storage, with an explicit warning before a local file fallback;
 - device-specific revocation;
-- rate limiting and constant-time comparison;
+- failed-authentication rate limiting and constant-time comparison;
 - never log Authorization headers.
 
 ### Malicious or compromised MCP client
