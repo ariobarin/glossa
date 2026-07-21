@@ -6,6 +6,7 @@ import { marked } from "marked";
 
 const repositoryRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const docsDirectory = join(repositoryRoot, "site", "docs");
+const pagesDirectory = join(repositoryRoot, "site", "pages");
 const checkOnly = process.argv.includes("--check");
 
 function escapeHtml(value) {
@@ -166,26 +167,38 @@ ${links}
       </nav>`;
 }
 
-function renderDocsSidebar(slug) {
+function renderDocsSidebar(route) {
   const groups = [
     {
       title: "Getting started",
-      links: [{ slug: "quickstart", label: "Quickstart" }],
+      links: [{ route: "docs/quickstart", href: "/docs/quickstart", label: "Quickstart" }],
     },
     {
       title: "Learn",
-      links: [{ slug: "why", label: "Why Glossa" }],
+      links: [{ route: "docs/why", href: "/docs/why", label: "Why Glossa" }],
     },
     {
       title: "Safety",
-      links: [{ slug: "security", label: "Security model" }],
+      links: [
+        { route: "security", href: "/security", label: "Security overview" },
+        { route: "docs/security", href: "/docs/security", label: "Technical security" },
+        { route: "privacy", href: "/privacy", label: "Privacy" },
+      ],
+    },
+    {
+      title: "Help",
+      links: [{ route: "support", href: "/support", label: "Support" }],
+    },
+    {
+      title: "Legal",
+      links: [{ route: "terms", href: "/terms", label: "Terms" }],
     },
   ];
 
   const contents = groups.map(({ title, links }) => {
-    const items = links.map(({ slug: linkSlug, label }) => {
-      const current = slug === linkSlug;
-      return `          <li><a${current ? " class=\"is-current\" aria-current=\"page\"" : ""} href="/docs/${linkSlug}">${label}</a></li>`;
+    const items = links.map(({ route: linkRoute, href, label }) => {
+      const current = route === linkRoute;
+      return `          <li><a${current ? " class=\"is-current\" aria-current=\"page\"" : ""} href="${href}">${label}</a></li>`;
     }).join("\n");
     return `        <section>
           <h2>${title}</h2>
@@ -200,23 +213,27 @@ ${contents}
       </nav>`;
 }
 
-function renderPage(page, slug) {
+function renderPage(page, route, sourceLabel) {
   const renderedTitle = escapeHtml(page.title);
   const sectionLabel = {
-    quickstart: "Getting started",
-    why: "Learn",
+    "docs/quickstart": "Getting started",
+    "docs/why": "Learn",
+    "docs/security": "Safety",
     security: "Safety",
-  }[slug] ?? "Documentation";
-  const tabTitle = slug
+    privacy: "Safety",
+    support: "Help",
+    terms: "Legal",
+  }[route] ?? "Documentation";
+  const tabTitle = route
     .split("/")
     .at(-1)
     .split("-")
     .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
     .join(" ");
-  const renderedBody = addHeadingIds(addCopyButtons(renderAudienceSwitchers(page.body), slug));
+  const renderedBody = addHeadingIds(addCopyButtons(renderAudienceSwitchers(page.body), route));
   const body = groupSections(renderedBody);
   const sectionNavigation = renderSectionNavigation(renderedBody);
-  const sidebar = renderDocsSidebar(slug);
+  const sidebar = renderDocsSidebar(route);
 
   return `<!doctype html>
 <html lang="en">
@@ -231,7 +248,7 @@ function renderPage(page, slug) {
     <script src="/copy.js?v=4" defer></script>
   </head>
   <body class="docs-shell">
-    <!-- Generated from ${slug}.md. Run npm run docs:build after editing Markdown. -->
+    <!-- Generated from ${sourceLabel}. Run npm run docs:build after editing Markdown. -->
     <header class="site-header page-width">
       <a class="brand" href="/" aria-label="Glossa home">
         <img class="brand-symbol" src="/glossa-symbol.svg" alt="" />
@@ -282,22 +299,32 @@ ${body}
 
 const markdownPages = (await findMarkdownFiles(docsDirectory)).map((sourcePath) => ({
   sourcePath,
-  slug: relative(docsDirectory, sourcePath).replaceAll("\\", "/").slice(0, -3),
+  route: `docs/${relative(docsDirectory, sourcePath).replaceAll("\\", "/").slice(0, -3)}`,
   outputPath: sourcePath.slice(0, -3) + ".html",
 }));
 
 markdownPages.push({
   sourcePath: join(repositoryRoot, "docs", "security.md"),
-  slug: "security",
+  route: "docs/security",
   outputPath: join(docsDirectory, "security.html"),
 });
 
+for (const sourcePath of await findMarkdownFiles(pagesDirectory)) {
+  const route = relative(pagesDirectory, sourcePath).replaceAll("\\", "/").slice(0, -3);
+  markdownPages.push({
+    sourcePath,
+    route,
+    outputPath: join(repositoryRoot, "site", `${route}.html`),
+  });
+}
+
 const stalePages = [];
 
-for (const { sourcePath, slug, outputPath } of markdownPages) {
+for (const { sourcePath, route, outputPath } of markdownPages) {
   const source = await readFile(sourcePath, "utf8");
   const page = readPage(source, sourcePath);
-  const output = renderPage(page, slug);
+  const sourceLabel = relative(repositoryRoot, sourcePath).replaceAll("\\", "/");
+  const output = renderPage(page, route, sourceLabel);
 
   if (checkOnly) {
     const current = await readFile(outputPath, "utf8").catch(() => "");

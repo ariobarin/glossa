@@ -11,7 +11,7 @@
     <script src="/copy.js?v=4" defer></script>
   </head>
   <body class="docs-shell">
-    <!-- Generated from quickstart.md. Run npm run docs:build after editing Markdown. -->
+    <!-- Generated from site/docs/quickstart.md. Run npm run docs:build after editing Markdown. -->
     <header class="site-header page-width">
       <a class="brand" href="/" aria-label="Glossa home">
         <img class="brand-symbol" src="/glossa-symbol.svg" alt="" />
@@ -43,7 +43,21 @@
         <section>
           <h2>Safety</h2>
           <ul>
-          <li><a href="/docs/security">Security model</a></li>
+          <li><a href="/security">Security overview</a></li>
+          <li><a href="/docs/security">Technical security</a></li>
+          <li><a href="/privacy">Privacy</a></li>
+          </ul>
+        </section>
+        <section>
+          <h2>Help</h2>
+          <ul>
+          <li><a href="/support">Support</a></li>
+          </ul>
+        </section>
+        <section>
+          <h2>Legal</h2>
+          <ul>
+          <li><a href="/terms">Terms</a></li>
           </ul>
         </section>
       </nav>
@@ -83,28 +97,28 @@
 <h2 id="step-1-install-glossa"><a class="heading-anchor" href="#step-1-install-glossa" aria-label="Link to Step 1: Install Glossa"></a>Step 1: Install Glossa</h2>
 <p>Open PowerShell and install the current beta:</p>
 <div class="code-block">
-  <button class="copy-button" type="button" data-copy-target="quickstart-code-1" aria-label="Copy code">
+  <button class="copy-button" type="button" data-copy-target="docs-quickstart-code-1" aria-label="Copy code">
     <span class="copy-tooltip" aria-hidden="true">Copy</span>
   </button>
-  <pre><code class="language-shell" id="quickstart-code-1">npm install --global @ariobarin/glossa@beta
+  <pre><code class="language-shell" id="docs-quickstart-code-1">npm install --global @ariobarin/glossa@beta
 </code></pre>
 </div>
 <p>Confirm the command is available:</p>
 <div class="code-block">
-  <button class="copy-button" type="button" data-copy-target="quickstart-code-2" aria-label="Copy code">
+  <button class="copy-button" type="button" data-copy-target="docs-quickstart-code-2" aria-label="Copy code">
     <span class="copy-tooltip" aria-hidden="true">Copy</span>
   </button>
-  <pre><code class="language-shell" id="quickstart-code-2">glossa --version
+  <pre><code class="language-shell" id="docs-quickstart-code-2">glossa --version
 </code></pre>
 </div>
 </section><section class="doc-section">
 <h2 id="step-2-start-a-workspace"><a class="heading-anchor" href="#step-2-start-a-workspace" aria-label="Link to Step 2: Start a workspace"></a>Step 2: Start a workspace</h2>
 <p>Open a terminal in the folder where you want ChatGPT to work, then run:</p>
 <div class="code-block">
-  <button class="copy-button" type="button" data-copy-target="quickstart-code-3" aria-label="Copy code">
+  <button class="copy-button" type="button" data-copy-target="docs-quickstart-code-3" aria-label="Copy code">
     <span class="copy-tooltip" aria-hidden="true">Copy</span>
   </button>
-  <pre><code class="language-shell" id="quickstart-code-3">glossa .
+  <pre><code class="language-shell" id="docs-quickstart-code-3">glossa .
 </code></pre>
 </div>
 <p><code>glossa start .</code> is the explicit form. You can start more workers in other terminals to expose additional workspaces from the same computer.</p>
@@ -129,10 +143,10 @@
 <li>Name the app <strong>Glossa</strong> and enter this MCP server URL:</li>
 </ol>
 <div class="code-block">
-  <button class="copy-button" type="button" data-copy-target="quickstart-code-4" aria-label="Copy code">
+  <button class="copy-button" type="button" data-copy-target="docs-quickstart-code-4" aria-label="Copy code">
     <span class="copy-tooltip" aria-hidden="true">Copy</span>
   </button>
-  <pre><code class="language-text" id="quickstart-code-4">https://mcp.glossa.sh/mcp
+  <pre><code class="language-text" id="docs-quickstart-code-4">https://mcp.glossa.sh/mcp
 </code></pre>
 </div>
 <ol start="4">
@@ -153,10 +167,10 @@
 <li>Name the app <strong>Glossa</strong> and enter this MCP server URL:</li>
 </ol>
 <div class="code-block">
-  <button class="copy-button" type="button" data-copy-target="quickstart-code-5" aria-label="Copy code">
+  <button class="copy-button" type="button" data-copy-target="docs-quickstart-code-5" aria-label="Copy code">
     <span class="copy-tooltip" aria-hidden="true">Copy</span>
   </button>
-  <pre><code class="language-text" id="quickstart-code-5">https://mcp.glossa.sh/mcp
+  <pre><code class="language-text" id="docs-quickstart-code-5">https://mcp.glossa.sh/mcp
 </code></pre>
 </div>
 <ol start="5">
@@ -172,10 +186,10 @@
 <h2 id="step-4-verify-the-connection"><a class="heading-anchor" href="#step-4-verify-the-connection" aria-label="Link to Step 4: Verify the connection"></a>Step 4: Verify the connection</h2>
 <p>In another terminal, check the account, relay, enrolled device, and active worker:</p>
 <div class="code-block">
-  <button class="copy-button" type="button" data-copy-target="quickstart-code-6" aria-label="Copy code">
+  <button class="copy-button" type="button" data-copy-target="docs-quickstart-code-6" aria-label="Copy code">
     <span class="copy-tooltip" aria-hidden="true">Copy</span>
   </button>
-  <pre><code class="language-shell" id="quickstart-code-6">glossa status
+  <pre><code class="language-shell" id="docs-quickstart-code-6">glossa status
 </code></pre>
 </div>
 <div class="audience-switcher" data-audience-switcher>
@@ -188,10 +202,10 @@
 <h3 id="try-a-personal-read"><a class="heading-anchor" href="#try-a-personal-read" aria-label="Link to Try a personal read"></a>Try a personal read</h3>
 <p>In ChatGPT, select Glossa and send:</p>
 <div class="code-block">
-  <button class="copy-button" type="button" data-copy-target="quickstart-code-7" aria-label="Copy code">
+  <button class="copy-button" type="button" data-copy-target="docs-quickstart-code-7" aria-label="Copy code">
     <span class="copy-tooltip" aria-hidden="true">Copy</span>
   </button>
-  <pre><code class="language-text" id="quickstart-code-7">Use Glossa to list my connected devices, then read package.json from my active workspace.
+  <pre><code class="language-text" id="docs-quickstart-code-7">Use Glossa to list my connected devices, then read package.json from my active workspace.
 </code></pre>
 </div>
 <p>If ChatGPT blocks a write or command tool, that is the current Pro plan boundary rather than a worker connection failure.</p>
@@ -200,10 +214,10 @@
 <h3 id="try-the-full-workspace-flow"><a class="heading-anchor" href="#try-the-full-workspace-flow" aria-label="Link to Try the full workspace flow"></a>Try the full workspace flow</h3>
 <p>Start with a read-only check:</p>
 <div class="code-block">
-  <button class="copy-button" type="button" data-copy-target="quickstart-code-8" aria-label="Copy code">
+  <button class="copy-button" type="button" data-copy-target="docs-quickstart-code-8" aria-label="Copy code">
     <span class="copy-tooltip" aria-hidden="true">Copy</span>
   </button>
-  <pre><code class="language-text" id="quickstart-code-8">Use Glossa to list my connected devices, then read package.json from my active workspace.
+  <pre><code class="language-text" id="docs-quickstart-code-8">Use Glossa to list my connected devices, then read package.json from my active workspace.
 </code></pre>
 </div>
 <p>When that works, test a small edit inside a disposable repository and review ChatGPT&#39;s confirmation before it runs.</p>
