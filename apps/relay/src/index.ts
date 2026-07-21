@@ -2,7 +2,7 @@ import express from "express";
 import { loadConfig } from "./config.js";
 import { Store } from "./store.js";
 import { RouterState } from "./router-state.js";
-import { buildRoutes } from "./routes.js";
+import { buildRoutes, MAX_RELAY_JSON_BYTES } from "./routes.js";
 
 const config = loadConfig();
 const store = new Store(config.DATABASE_URL);
@@ -11,7 +11,7 @@ const state = new RouterState();
 const app = express();
 app.disable("x-powered-by");
 app.set("trust proxy", 1);
-app.use(express.json({ limit: "2mb" }));
+app.use(express.json({ limit: MAX_RELAY_JSON_BYTES }));
 app.use(buildRoutes(config, store, state));
 
 const server = app.listen(config.PORT, config.GLOSSA_BIND_HOST, () => {

@@ -1,7 +1,11 @@
 import type { Request, RequestHandler, Response } from "express";
 import { Router } from "express";
 import { z } from "zod";
-import { deviceNameSchema, workerResultSchema } from "@glossa/protocol";
+import {
+  MAX_TEXT_BYTES,
+  deviceNameSchema,
+  workerResultSchema,
+} from "@glossa/protocol";
 import type { RelayConfig } from "./config.js";
 import { requireAuth, type AuthenticatedRequest } from "./auth.js";
 import { parseDeviceToken } from "./device-token.js";
@@ -9,6 +13,8 @@ import { FixedWindowRateLimiter } from "./rate-limit.js";
 import { handleMcpRequest } from "./mcp.js";
 import type { DeviceRecord, RelayStore } from "./store.js";
 import type { RouterState } from "./router-state.js";
+
+export const MAX_RELAY_JSON_BYTES = 16 * MAX_TEXT_BYTES;
 
 const enrollSchema = z
   .object({
