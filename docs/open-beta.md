@@ -4,7 +4,7 @@ Glossa is currently a Windows-first open beta. Start with a disposable Git repos
 
 ## Requirements
 
-- Windows with Git, Node.js 24, and npm
+- Windows with Git, Node.js 22.9 or newer, and npm
 - A disposable Git repository
 - ChatGPT on the web
 - Permission to create a custom app in Developer Mode

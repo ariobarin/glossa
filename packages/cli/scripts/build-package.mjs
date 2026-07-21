@@ -16,6 +16,7 @@ await build({
   outfile: "dist/main.js",
   bundle: true,
   platform: "node",
+  target: "node22.9",
   format: "esm",
   external: ["@napi-rs/keyring"],
   define: {
