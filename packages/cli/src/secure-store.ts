@@ -77,7 +77,19 @@ export class SecureStore<T> {
         // An existing file can still provide the warned fallback.
       }
       if (serialized != null) {
-        return { value: this.#options.parse(serialized), backend: "keyring" };
+        try {
+          return { value: this.#options.parse(serialized), backend: "keyring" };
+        } catch {
+          // The keyring returned a value that doesn't parse as valid
+          // credentials (e.g. some backends return the string "null"
+          // instead of undefined when no entry exists). Treat it as
+          // absent rather than crashing, and clear the bad entry.
+          try {
+            await entry.deleteCredential();
+          } catch {
+            // Best effort cleanup of a corrupt keyring entry.
+          }
+        }
       }
     }
 
