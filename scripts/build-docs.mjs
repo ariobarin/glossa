@@ -88,8 +88,59 @@ function addHeadingIds(html) {
     const count = usedIds.get(baseId) ?? 0;
     usedIds.set(baseId, count + 1);
     const id = count === 0 ? baseId : `${baseId}-${count + 1}`;
-    return `<h${level} id="${id}">${content}</h${level}>`;
+    return `<h${level} id="${id}"><a class="heading-anchor" href="#${id}" aria-label="Link to ${escapeHtml(content.replace(/<[^>]+>/g, ""))}"></a>${content}</h${level}>`;
   });
+}
+
+function renderAudienceSwitchers(source) {
+  const replacements = new Map();
+  let index = 0;
+  const prepared = source.replace(
+    /<!-- audience-switcher:start -->([\s\S]*?)<!-- audience-switcher:end -->/g,
+    (_, content) => {
+      const personalMarker = "<!-- audience:personal -->";
+      const workspaceMarker = "<!-- audience:workspace -->";
+      const personalStart = content.indexOf(personalMarker);
+      const workspaceStart = content.indexOf(workspaceMarker);
+
+      if (personalStart === -1 || workspaceStart === -1 || workspaceStart < personalStart) {
+        throw new Error("Audience switchers need personal and workspace sections");
+      }
+
+      index += 1;
+      const token = `audience-switcher-${index}`;
+      const personal = content
+        .slice(personalStart + personalMarker.length, workspaceStart)
+        .trim();
+      const workspace = content
+        .slice(workspaceStart + workspaceMarker.length)
+        .trim();
+      const personalId = `${token}-personal`;
+      const workspaceId = `${token}-workspace`;
+
+      replacements.set(token, `<div class="audience-switcher" data-audience-switcher>
+  <p class="audience-prompt">Which ChatGPT setup are you using?</p>
+  <div class="audience-tabs" role="tablist" aria-label="ChatGPT setup">
+    <button id="${personalId}-tab" type="button" role="tab" aria-selected="true" aria-controls="${personalId}" data-audience-tab="personal">Personal</button>
+    <button id="${workspaceId}-tab" type="button" role="tab" aria-selected="false" aria-controls="${workspaceId}" data-audience-tab="workspace" tabindex="-1">Workspace</button>
+  </div>
+  <div id="${personalId}" class="audience-panel" role="tabpanel" aria-labelledby="${personalId}-tab" data-audience-panel="personal">
+${marked.parse(personal, { gfm: true })}  </div>
+  <div id="${workspaceId}" class="audience-panel" role="tabpanel" aria-labelledby="${workspaceId}-tab" data-audience-panel="workspace" hidden>
+${marked.parse(workspace, { gfm: true })}  </div>
+</div>`);
+
+      return `<doc-audience-placeholder data-id="${token}"></doc-audience-placeholder>`;
+    },
+  );
+
+  let html = marked.parse(prepared, { gfm: true });
+  for (const [token, replacement] of replacements) {
+    const placeholder = `<doc-audience-placeholder data-id="${token}"></doc-audience-placeholder>`;
+    html = html.replace(`<p>${placeholder}</p>`, replacement);
+  }
+
+  return html;
 }
 
 function groupSections(html) {
@@ -115,6 +166,40 @@ ${links}
       </nav>`;
 }
 
+function renderDocsSidebar(slug) {
+  const groups = [
+    {
+      title: "Getting started",
+      links: [{ slug: "quickstart", label: "Quickstart" }],
+    },
+    {
+      title: "Learn",
+      links: [{ slug: "why", label: "Why Glossa" }],
+    },
+    {
+      title: "Safety",
+      links: [{ slug: "security", label: "Security model" }],
+    },
+  ];
+
+  const contents = groups.map(({ title, links }) => {
+    const items = links.map(({ slug: linkSlug, label }) => {
+      const current = slug === linkSlug;
+      return `          <li><a${current ? " class=\"is-current\" aria-current=\"page\"" : ""} href="/docs/${linkSlug}">${label}</a></li>`;
+    }).join("\n");
+    return `        <section>
+          <h2>${title}</h2>
+          <ul>
+${items}
+          </ul>
+        </section>`;
+  }).join("\n");
+
+  return `      <nav class="docs-sidebar" aria-label="Documentation">
+${contents}
+      </nav>`;
+}
+
 function renderPage(page, slug) {
   const renderedTitle = escapeHtml(page.title);
   const tabTitle = slug
@@ -123,9 +208,10 @@ function renderPage(page, slug) {
     .split("-")
     .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
     .join(" ");
-  const renderedBody = addHeadingIds(addCopyButtons(marked.parse(page.body, { gfm: true }), slug));
+  const renderedBody = addHeadingIds(addCopyButtons(renderAudienceSwitchers(page.body), slug));
   const body = groupSections(renderedBody);
   const sectionNavigation = renderSectionNavigation(renderedBody);
+  const sidebar = renderDocsSidebar(slug);
 
   return `<!doctype html>
 <html lang="en">
@@ -136,8 +222,8 @@ function renderPage(page, slug) {
     <meta name="theme-color" content="#111016" />
     <title>${escapeHtml(tabTitle)} | Glossa</title>
     <link rel="icon" href="/glossa-symbol.svg" type="image/svg+xml" />
-    <link rel="stylesheet" href="/styles.css?v=36" />
-    <script src="/copy.js?v=3" defer></script>
+    <link rel="stylesheet" href="/styles.css?v=37" />
+    <script src="/copy.js?v=4" defer></script>
   </head>
   <body class="docs-shell">
     <!-- Generated from ${slug}.md. Run npm run docs:build after editing Markdown. -->
@@ -154,10 +240,15 @@ function renderPage(page, slug) {
       </nav>
     </header>
 
-    <main class="docs-main page-width">
+    <main class="docs-main">
       <div class="docs-layout${sectionNavigation ? " has-toc" : ""}">
+${sidebar}
       <header class="docs-intro">
-        <h1>${renderedTitle}</h1>
+        <div class="docs-kicker">Glossa documentation</div>
+        <div class="docs-title-row">
+          <h1>${renderedTitle}</h1>
+          <button class="copy-page-button" type="button" data-copy-page aria-label="Copy page link">Copy page</button>
+        </div>
         <p class="docs-summary">${marked.parseInline(page.summary)}</p>
       </header>
 

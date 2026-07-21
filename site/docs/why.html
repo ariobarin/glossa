@@ -7,8 +7,8 @@
     <meta name="theme-color" content="#111016" />
     <title>Why | Glossa</title>
     <link rel="icon" href="/glossa-symbol.svg" type="image/svg+xml" />
-    <link rel="stylesheet" href="/styles.css?v=36" />
-    <script src="/copy.js?v=3" defer></script>
+    <link rel="stylesheet" href="/styles.css?v=37" />
+    <script src="/copy.js?v=4" defer></script>
   </head>
   <body class="docs-shell">
     <!-- Generated from why.md. Run npm run docs:build after editing Markdown. -->
@@ -25,10 +25,34 @@
       </nav>
     </header>
 
-    <main class="docs-main page-width">
+    <main class="docs-main">
       <div class="docs-layout">
+      <nav class="docs-sidebar" aria-label="Documentation">
+        <section>
+          <h2>Getting started</h2>
+          <ul>
+          <li><a href="/docs/quickstart">Quickstart</a></li>
+          </ul>
+        </section>
+        <section>
+          <h2>Learn</h2>
+          <ul>
+          <li><a class="is-current" aria-current="page" href="/docs/why">Why Glossa</a></li>
+          </ul>
+        </section>
+        <section>
+          <h2>Safety</h2>
+          <ul>
+          <li><a href="/docs/security">Security model</a></li>
+          </ul>
+        </section>
+      </nav>
       <header class="docs-intro">
-        <h1>Why Glossa?</h1>
+        <div class="docs-kicker">Glossa documentation</div>
+        <div class="docs-title-row">
+          <h1>Why Glossa?</h1>
+          <button class="copy-page-button" type="button" data-copy-page aria-label="Copy page link">Copy page</button>
+        </div>
         <p class="docs-summary">ChatGPT Chat has separate usage limits from agentic features.</p>
       </header>
 

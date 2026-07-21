@@ -7,8 +7,8 @@
     <meta name="theme-color" content="#111016" />
     <title>Security | Glossa</title>
     <link rel="icon" href="/glossa-symbol.svg" type="image/svg+xml" />
-    <link rel="stylesheet" href="/styles.css?v=36" />
-    <script src="/copy.js?v=3" defer></script>
+    <link rel="stylesheet" href="/styles.css?v=37" />
+    <script src="/copy.js?v=4" defer></script>
   </head>
   <body class="docs-shell">
     <!-- Generated from security.md. Run npm run docs:build after editing Markdown. -->
@@ -25,10 +25,34 @@
       </nav>
     </header>
 
-    <main class="docs-main page-width">
+    <main class="docs-main">
       <div class="docs-layout has-toc">
+      <nav class="docs-sidebar" aria-label="Documentation">
+        <section>
+          <h2>Getting started</h2>
+          <ul>
+          <li><a href="/docs/quickstart">Quickstart</a></li>
+          </ul>
+        </section>
+        <section>
+          <h2>Learn</h2>
+          <ul>
+          <li><a href="/docs/why">Why Glossa</a></li>
+          </ul>
+        </section>
+        <section>
+          <h2>Safety</h2>
+          <ul>
+          <li><a class="is-current" aria-current="page" href="/docs/security">Security model</a></li>
+          </ul>
+        </section>
+      </nav>
       <header class="docs-intro">
-        <h1>Core security and threat model</h1>
+        <div class="docs-kicker">Glossa documentation</div>
+        <div class="docs-title-row">
+          <h1>Core security and threat model</h1>
+          <button class="copy-page-button" type="button" data-copy-page aria-label="Copy page link">Copy page</button>
+        </div>
         <p class="docs-summary">How Glossa protects local workspaces, accounts, credentials, and data.</p>
       </header>
 
@@ -44,10 +68,10 @@
       </nav>
       <article class="docs-content">
 <section class="doc-section">
-<h2 id="warning">Warning</h2>
+<h2 id="warning"><a class="heading-anchor" href="#warning" aria-label="Link to Warning"></a>Warning</h2>
 <p>Glossa executes commands with the permissions and environment of the local account that launched it. File-tool root checks do not sandbox shell commands. A command may access credentials, developer tools, networks, or other files available to that account.</p>
 </section><section class="doc-section">
-<h2 id="trust-assumptions">Trust assumptions</h2>
+<h2 id="trust-assumptions"><a class="heading-anchor" href="#trust-assumptions" aria-label="Link to Trust assumptions"></a>Trust assumptions</h2>
 <ul>
 <li>The Glossa operator controls the hosted relay and identity provider.</li>
 <li>The authenticated user intends to authorize the connected MCP client.</li>
@@ -56,7 +80,7 @@
 <li>TLS termination and OAuth token validation are correctly configured.</li>
 </ul>
 </section><section class="doc-section">
-<h2 id="primary-assets">Primary assets</h2>
+<h2 id="primary-assets"><a class="heading-anchor" href="#primary-assets" aria-label="Link to Primary assets"></a>Primary assets</h2>
 <ul>
 <li>Local source code.</li>
 <li>Local developer credentials and environment.</li>
@@ -66,8 +90,8 @@
 <li>Command results and file contents in transit.</li>
 </ul>
 </section><section class="doc-section">
-<h2 id="primary-threats-and-controls">Primary threats and controls</h2>
-<h3 id="cross-account-routing">Cross-account routing</h3>
+<h2 id="primary-threats-and-controls"><a class="heading-anchor" href="#primary-threats-and-controls" aria-label="Link to Primary threats and controls"></a>Primary threats and controls</h2>
+<h3 id="cross-account-routing"><a class="heading-anchor" href="#cross-account-routing" aria-label="Link to Cross-account routing"></a>Cross-account routing</h3>
 <p><strong>Threat:</strong> an authenticated account guesses another device or job ID.</p>
 <p><strong>Controls:</strong></p>
 <ul>
@@ -78,7 +102,7 @@
 <li>use opaque random identifiers;</li>
 <li>verify account isolation with direct integration checks before deployment.</li>
 </ul>
-<h3 id="stolen-device-token">Stolen device token</h3>
+<h3 id="stolen-device-token"><a class="heading-anchor" href="#stolen-device-token" aria-label="Link to Stolen device token"></a>Stolen device token</h3>
 <p><strong>Threat:</strong> token grants remote execution on an exposed root.</p>
 <p><strong>Controls:</strong></p>
 <ul>
@@ -91,7 +115,7 @@
 <li>failed-authentication rate limiting and constant-time comparison;</li>
 <li>never log Authorization headers.</li>
 </ul>
-<h3 id="malicious-or-compromised-mcp-client">Malicious or compromised MCP client</h3>
+<h3 id="malicious-or-compromised-mcp-client"><a class="heading-anchor" href="#malicious-or-compromised-mcp-client" aria-label="Link to Malicious or compromised MCP client"></a>Malicious or compromised MCP client</h3>
 <p><strong>Threat:</strong> authenticated client requests destructive actions.</p>
 <p><strong>Controls:</strong></p>
 <ul>
@@ -105,7 +129,7 @@
 <li>visible local status and immediate disconnect;</li>
 <li>no implicit broad-root exposure.</li>
 </ul>
-<h3 id="path-escape">Path escape</h3>
+<h3 id="path-escape"><a class="heading-anchor" href="#path-escape" aria-label="Link to Path escape"></a>Path escape</h3>
 <p><strong>Threat:</strong> absolute paths, parent traversal, symlinks, junctions, or writable ancestors escape the root.</p>
 <p><strong>Controls:</strong></p>
 <ul>
@@ -116,7 +140,7 @@
 <li>treat Windows path, junction, and reparse-point behavior as the launch security baseline;</li>
 <li>verify Windows junction and reparse-point behavior when path enforcement changes.</li>
 </ul>
-<h3 id="shell-authority">Shell authority</h3>
+<h3 id="shell-authority"><a class="heading-anchor" href="#shell-authority" aria-label="Link to Shell authority"></a>Shell authority</h3>
 <p><strong>Threat:</strong> a command accesses resources outside the exposed file root.</p>
 <p><strong>Reality:</strong> this is expected shell authority, not a bug in path tools. Command filtering is not a sandbox.</p>
 <p><strong>Controls:</strong></p>
@@ -130,7 +154,7 @@
 <li>bound duration and output;</li>
 <li>terminate process groups and discovered descendants.</li>
 </ul>
-<h3 id="logging-leakage">Logging leakage</h3>
+<h3 id="logging-leakage"><a class="heading-anchor" href="#logging-leakage" aria-label="Link to Logging leakage"></a>Logging leakage</h3>
 <p><strong>Threat:</strong> source code, command output, paths, or tokens reach platform logs.</p>
 <p><strong>Controls:</strong></p>
 <ul>
@@ -140,7 +164,7 @@
 <li>never add local absolute paths or derived repository names to relay metadata or logs;</li>
 <li>verify log scrubbing before deployment.</li>
 </ul>
-<h3 id="relay-compromise">Relay compromise</h3>
+<h3 id="relay-compromise"><a class="heading-anchor" href="#relay-compromise" aria-label="Link to Relay compromise"></a>Relay compromise</h3>
 <p><strong>Threat:</strong> attacker controls the routing service.</p>
 <p><strong>Controls and limits:</strong></p>
 <ul>
@@ -150,7 +174,7 @@
 <li>use managed platform patching, secret scanning, exact dependencies, and rapid device revocation.</li>
 </ul>
 </section><section class="doc-section">
-<h2 id="data-retention">Data retention</h2>
+<h2 id="data-retention"><a class="heading-anchor" href="#data-retention" aria-label="Link to Data retention"></a>Data retention</h2>
 <p>Durably retain only what is needed for account/device operation and security:</p>
 <ul>
 <li>device ID, name, platform, created, last seen, and revoked timestamps;</li>

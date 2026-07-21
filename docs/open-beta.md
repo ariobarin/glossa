@@ -6,10 +6,10 @@ Glossa is currently a Windows-first open beta. Start with a disposable Git repos
 
 - Windows with Git, Node.js 22.9 or newer, and npm
 - A disposable Git repository
-- ChatGPT Business, Enterprise, or Edu on the web
-- A workspace role with permission to create a custom app in Developer Mode
+- ChatGPT Pro on the web for read and fetch tools only, or ChatGPT Business, Enterprise, or Edu for full MCP access
+- For managed workspaces, an admin, owner, or authorized Enterprise/Edu role with permission to create a custom app in Developer Mode
 
-Glossa is not listed in the public plugin directory yet, so add it as a custom app in Developer Mode during the open beta.
+Glossa is not listed in the public plugin directory yet, so add it as a custom app in Developer Mode during the open beta. Personal Pro accounts can inspect a workspace with read-oriented tools. File writes and commands require Business, Enterprise, or Edu because OpenAI currently limits full MCP actions to managed workspaces.
 
 ## Install and connect
 
