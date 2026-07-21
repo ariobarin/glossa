@@ -158,6 +158,10 @@ export class RouterState {
         const pending = this.#results.get(job.requestId);
         if (!pending || pending.expiresAt !== expiresAt) return;
         this.#results.delete(job.requestId);
+        const queuedIndex = worker.pendingJobs.findIndex(
+          (queuedJob) => queuedJob.requestId === job.requestId,
+        );
+        if (queuedIndex !== -1) worker.pendingJobs.splice(queuedIndex, 1);
         reject(new Error("job_timeout"));
       }, timeoutMs);
       timer.unref();
