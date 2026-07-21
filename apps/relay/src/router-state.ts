@@ -71,10 +71,7 @@ export class RouterState {
     ) {
       return;
     }
-    worker.pollWaiter?.(null);
-    this.#workers.delete(workerId);
-    this.#rejectWorkerWaiters(workerId);
-    this.#deleteWorkerResources(workerId);
+    this.#removeWorker(worker, true);
   }
 
   unregisterDevice(deviceId: string): void {
@@ -230,9 +227,16 @@ export class RouterState {
     const staleBefore = Date.now() - WORKER_STALE_MS;
     for (const worker of [...this.#workers.values()]) {
       if (worker.lastSeenAt < staleBefore) {
-        this.unregisterWorker(worker.accountId, worker.deviceId, worker.workerId);
+        this.#removeWorker(worker, false);
       }
     }
+  }
+
+  #removeWorker(worker: ConnectedWorker, deleteResources: boolean): void {
+    worker.pollWaiter?.(null);
+    this.#workers.delete(worker.workerId);
+    this.#rejectWorkerWaiters(worker.workerId);
+    if (deleteResources) this.#deleteWorkerResources(worker.workerId);
   }
 
   #rejectWorkerWaiters(workerId: string): void {

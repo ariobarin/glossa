@@ -50,3 +50,19 @@ test("reconnecting one worker does not displace another", () => {
   state.register(accountId, deviceId, "Test PC", firstWorkerId);
   assert.equal(state.activeWorkerCount(accountId, deviceId), 2);
 });
+
+test("preserves command routing when a stale worker reconnects", (t) => {
+  let now = 1_000_000;
+  t.mock.method(Date, "now", () => now);
+  const state = new RouterState();
+  state.register(accountId, deviceId, "Test PC", firstWorkerId);
+  state.rememberCommand(accountId, firstWorkerId, "command-1");
+
+  now += 45_001;
+  state.register(accountId, deviceId, "Test PC", firstWorkerId);
+
+  assert.equal(
+    state.workerForCommand(accountId, "command-1"),
+    firstWorkerId,
+  );
+});
