@@ -6,7 +6,7 @@
   "description": "Managed MCP relay for explicitly exposed local coding workspaces.",
   "type": "module",
   "engines": {
-    "node": ">=24"
+    "node": ">=22.9.0"
   },
   "workspaces": [
     "apps/*",

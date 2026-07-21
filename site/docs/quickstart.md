@@ -2,7 +2,7 @@
 
 Start Glossa, connect it to ChatGPT, and confirm it works.
 
-You need Node.js 24 and ChatGPT Business, Enterprise, or Edu with [Developer Mode](https://help.openai.com/en/articles/12584461-developer-mode-and-full-mcp-connectors-in-chatgpt-beta) access.
+You need Node.js 22.9 or newer and ChatGPT Business, Enterprise, or Edu with [Developer Mode](https://help.openai.com/en/articles/12584461-developer-mode-and-full-mcp-connectors-in-chatgpt-beta) access.
 
 ## Start Glossa
 

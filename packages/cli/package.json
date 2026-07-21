@@ -1,11 +1,11 @@
 {
   "name": "@ariobarin/glossa",
-  "version": "0.1.0-beta.5",
+  "version": "0.1.0-beta.6",
   "private": false,
   "description": "Connect an explicitly exposed local coding workspace to the Glossa MCP relay.",
   "type": "module",
   "engines": {
-    "node": ">=24"
+    "node": ">=22.9.0"
   },
   "bin": {
     "glossa": "dist/main.js"
@@ -26,7 +26,7 @@
   },
   "devDependencies": {
     "@glossa/protocol": "*",
-    "@types/node": "24.10.1",
+    "@types/node": "22.20.1",
     "esbuild": "0.28.1",
     "tsx": "4.20.6",
     "typescript": "5.9.3"

@@ -4,7 +4,7 @@ Glossa is a managed service. Self-hosting is the optional alternative for people
 
 ## Requirements
 
-- Node.js 24 and npm 11
+- Node.js 22.9 or newer and npm
 - Postgres 17 with TLS enabled
 - one public HTTPS origin for the relay
 - an Auth0 tenant that issues JWT access tokens for your relay audience
