@@ -32,7 +32,7 @@ Never commit the Google client secret, an Auth0 Management API token, or an expo
 
 1. Stop the worker with Ctrl+C.
 2. Run `glossa logout --browser`.
-3. In ChatGPT, open **Settings > Apps**, disconnect Glossa, and connect it again.
+3. In ChatGPT, open Glossa under **Settings > Plugins**, disconnect it, and connect it again. Use **Settings > Apps** if that is the label your workspace shows.
 4. Choose the intended Google account during ChatGPT authorization.
 5. Start Glossa and choose the same Google account. `glossa login` is an optional preflight because authenticated commands start login automatically.
 
