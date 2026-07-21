@@ -117,14 +117,23 @@ export class SecureStore<T> {
 
   async delete(): Promise<void> {
     const entry = await this.#entry();
+    let keyringDeleteFailed = false;
     if (entry) {
       try {
-        await entry.deleteCredential();
+        const deleted = await entry.deleteCredential();
+        if (!deleted && (await entry.getPassword()) != null) {
+          keyringDeleteFailed = true;
+        }
       } catch {
-        // Deleting an unavailable keyring entry is idempotent.
+        keyringDeleteFailed = true;
       }
     }
     await rm(this.#options.file, { force: true });
+    if (keyringDeleteFailed) {
+      throw new Error(
+        "The operating-system credential store could not remove the Glossa credential.",
+      );
+    }
   }
 
   async #entry(): Promise<KeyringEntry | null> {

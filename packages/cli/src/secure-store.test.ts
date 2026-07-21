@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { mkdtemp, rm } from "node:fs/promises";
+import { mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import test from "node:test";
@@ -85,5 +85,31 @@ test("treats a missing native credential as empty", async (t) => {
   });
 
   assert.equal(await store.load(), null);
+  await store.delete();
   assert.deepEqual(warnings, []);
+});
+
+test("reports failed native credential deletion", async (t) => {
+  const root = await mkdtemp(path.join(os.tmpdir(), "glossa-secure-store-"));
+  t.after(async () => await rm(root, { recursive: true, force: true }));
+  const file = path.join(root, "credentials.json");
+  await writeFile(file, "fallback-secret", "utf8");
+  const store = new SecureStore<string>({
+    account: "oauth",
+    file,
+    warning: "file fallback",
+    parse: (serialized) => serialized,
+    entryProvider: async () => ({
+      setPassword: async () => undefined,
+      getPassword: async () => "oauth-secret",
+      deleteCredential: async () => false,
+    }),
+  });
+
+  await assert.rejects(
+    store.delete(),
+    /credential store could not remove the Glossa credential/,
+  );
+  assert.equal((await store.load())?.value, "oauth-secret");
+  await assert.rejects(readFile(file), { code: "ENOENT" });
 });
