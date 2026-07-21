@@ -6,7 +6,7 @@ const KEYRING_SERVICE = "Glossa";
 
 interface KeyringEntry {
   setPassword(password: string): Promise<void>;
-  getPassword(): Promise<string | undefined>;
+  getPassword(): Promise<string | null | undefined>;
   deleteCredential(): Promise<boolean>;
 }
 
@@ -70,13 +70,13 @@ export class SecureStore<T> {
   async load(): Promise<{ value: T; backend: StorageBackend } | null> {
     const entry = await this.#entry();
     if (entry) {
-      let serialized: string | undefined;
+      let serialized: string | null | undefined;
       try {
         serialized = await entry.getPassword();
       } catch {
         // An existing file can still provide the warned fallback.
       }
-      if (serialized !== undefined) {
+      if (serialized != null) {
         return { value: this.#options.parse(serialized), backend: "keyring" };
       }
     }
