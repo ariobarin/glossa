@@ -110,7 +110,7 @@ button:focus-visible {
 .landing-shell {
   display: grid;
   min-height: max(100vh, 100dvh);
-  grid-template-rows: auto minmax(0, 1fr);
+  grid-template-rows: auto minmax(0, 1fr) auto;
 }
 
 .landing-main {
@@ -235,12 +235,14 @@ p {
 }
 
 .docs-main.page-width {
-  width: min(calc(100% - 48px), 980px);
+  width: min(calc(100% - 48px), 1180px);
   padding: 58px 0 84px;
 }
 
 .docs-intro {
-  padding: 16px 0 44px;
+  grid-column: 1;
+  grid-row: 1;
+  padding: 16px 0 32px;
   border-bottom: 1px solid var(--line);
 }
 
@@ -261,50 +263,6 @@ p {
   line-height: 1.55;
 }
 
-.connection-strip {
-  display: grid;
-  width: 100%;
-  grid-template-columns: auto minmax(28px, 1fr) 44px minmax(28px, 1fr) auto;
-  align-items: center;
-  gap: 12px;
-  margin: 34px auto 0;
-}
-
-.connection-strip strong {
-  font-size: 15px;
-  white-space: nowrap;
-}
-
-.connection-line {
-  height: 1px;
-}
-
-.connection-line-purple {
-  background: var(--purple);
-}
-
-.connection-line-coral {
-  background: var(--coral);
-}
-
-.connection-mark {
-  display: grid;
-  width: 44px;
-  height: 44px;
-  place-items: center;
-  border: 1px solid var(--purple);
-  border-radius: 12px;
-  background: var(--accent-soft);
-}
-
-.connection-mark img {
-  width: 22px;
-}
-
-.connection-folder {
-  color: var(--ink);
-}
-
 .docs-content a {
   color: var(--ink);
   text-decoration: underline;
@@ -313,24 +271,18 @@ p {
 }
 
 .docs-layout {
-  margin-top: 46px;
-}
-
-.docs-layout.has-toc {
   display: grid;
-  grid-template-columns: 184px minmax(0, 1fr);
+  grid-template-columns: minmax(0, 780px) minmax(160px, 184px);
   align-items: start;
-  gap: 62px;
-}
-
-.docs-layout:not(.has-toc) .docs-content {
-  max-width: 820px;
-  margin-inline: auto;
+  column-gap: clamp(40px, 5vw, 62px);
+  row-gap: 32px;
 }
 
 .docs-toc {
   position: sticky;
   top: 24px;
+  grid-column: 2;
+  grid-row: 1 / span 2;
   padding: 4px 0 4px 18px;
   border-left: 1px solid var(--line);
 }
@@ -366,7 +318,10 @@ p {
 }
 
 .docs-content {
+  grid-column: 1;
+  grid-row: 2;
   min-width: 0;
+  margin-top: 0;
 }
 
 .doc-section {
@@ -426,38 +381,6 @@ p {
 
 .docs-content li::marker {
   color: var(--coral);
-}
-
-.doc-quickstart .docs-content {
-  counter-reset: quickstart-step;
-}
-
-.doc-quickstart .doc-section h2 {
-  display: flex;
-  align-items: center;
-  gap: 13px;
-  counter-increment: quickstart-step;
-}
-
-.doc-quickstart .doc-section h2::before {
-  content: counter(quickstart-step, decimal-leading-zero);
-  flex: 0 0 24px;
-  color: var(--purple-readable);
-  font-family: var(--mono);
-  font-size: 11px;
-  letter-spacing: 0;
-}
-
-.doc-security .doc-section:first-child {
-  padding: 4px 0 4px 22px;
-  border: 0;
-  border-left: 2px solid var(--coral);
-  border-radius: 0;
-  background: transparent;
-}
-
-.doc-security .doc-section:first-child h2 {
-  color: var(--coral-hover);
 }
 
 .code-block {
@@ -697,19 +620,19 @@ p {
   .landing-hero {
     align-content: center;
   }
+}
 
-  .docs-layout.has-toc {
-    grid-template-columns: 1fr;
-    gap: 38px;
+@media (max-width: 720px) {
+  .docs-layout {
+    display: block;
   }
 
   .docs-toc {
     position: static;
-    padding: 4px 0 4px 18px;
+    margin: 38px 0;
+    padding: 0 0 28px;
     border: 0;
-    border-left: 1px solid var(--line);
-    border-radius: 0;
-    background: transparent;
+    border-bottom: 1px solid var(--line);
   }
 
   .docs-toc ol {
@@ -719,6 +642,14 @@ p {
   }
 
   .docs-toc li + li {
+    margin-top: 0;
+  }
+
+  .docs-content {
+    margin-top: 38px;
+  }
+
+  .docs-layout.has-toc .docs-content {
     margin-top: 0;
   }
 }
@@ -733,8 +664,8 @@ p {
   }
 
   .header-links {
-    gap: 8px;
-    font-size: 9px;
+    gap: 10px;
+    font-size: 11px;
   }
 
   .landing-hero {
@@ -808,22 +739,6 @@ p {
     grid-template-columns: 1fr;
   }
 
-  .connection-strip {
-    grid-template-columns: auto minmax(12px, 1fr) 38px minmax(12px, 1fr) auto;
-    gap: 8px;
-    margin-top: 26px;
-  }
-
-  .connection-strip strong {
-    font-size: 11px;
-  }
-
-  .connection-mark {
-    width: 38px;
-    height: 38px;
-    border-radius: 10px;
-  }
-
   .policy-main {
     padding: 44px 0 60px;
   }
@@ -855,6 +770,13 @@ p {
     margin-top: 34px;
   }
 
+}
+
+@media (max-width: 340px) {
+  .header-links {
+    gap: 8px;
+    font-size: 10px;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {

@@ -115,19 +115,6 @@ ${links}
       </nav>`;
 }
 
-function renderConnection() {
-  return `
-        <div class="connection-strip" aria-label="ChatGPT connects through Glossa to your folder">
-          <strong>ChatGPT.com</strong>
-          <span class="connection-line connection-line-purple" aria-hidden="true"></span>
-          <span class="connection-mark" aria-label="Glossa connection">
-            <img src="/glossa-symbol.svg" alt="" />
-          </span>
-          <span class="connection-line connection-line-coral" aria-hidden="true"></span>
-          <strong class="connection-folder">Your folder</strong>
-        </div>`;
-}
-
 function renderPage(page, slug) {
   const renderedTitle = escapeHtml(page.title);
   const tabTitle = slug
@@ -139,8 +126,6 @@ function renderPage(page, slug) {
   const renderedBody = addHeadingIds(addCopyButtons(marked.parse(page.body, { gfm: true }), slug));
   const body = groupSections(renderedBody);
   const sectionNavigation = renderSectionNavigation(renderedBody);
-  const connection = slug === "quickstart" ? renderConnection() : "";
-  const pageClass = `doc-${slug.replaceAll("/", "-")}`;
 
   return `<!doctype html>
 <html lang="en">
@@ -154,7 +139,7 @@ function renderPage(page, slug) {
     <link rel="stylesheet" href="/styles.css?v=36" />
     <script src="/copy.js?v=3" defer></script>
   </head>
-  <body class="docs-shell ${pageClass}">
+  <body class="docs-shell">
     <!-- Generated from ${slug}.md. Run npm run docs:build after editing Markdown. -->
     <header class="site-header page-width">
       <a class="brand" href="/" aria-label="Glossa home">
@@ -162,17 +147,20 @@ function renderPage(page, slug) {
         <span>Glossa</span>
       </a>
       <nav class="header-links" aria-label="Site navigation">
-        <a href="/">Home</a>
+        <a href="/docs/quickstart">Quickstart</a>
+        <a href="/security">Security</a>
+        <a href="/support">Support</a>
+        <a href="https://github.com/ariobarin/glossa">GitHub</a>
       </nav>
     </header>
 
     <main class="docs-main page-width">
+      <div class="docs-layout${sectionNavigation ? " has-toc" : ""}">
       <header class="docs-intro">
         <h1>${renderedTitle}</h1>
-        <p class="docs-summary">${marked.parseInline(page.summary)}</p>${connection}
+        <p class="docs-summary">${marked.parseInline(page.summary)}</p>
       </header>
 
-      <div class="docs-layout${sectionNavigation ? " has-toc" : ""}">
 ${sectionNavigation}
       <article class="docs-content">
 ${body}
