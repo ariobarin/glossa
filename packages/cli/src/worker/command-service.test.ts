@@ -3,6 +3,7 @@ import { mkdtemp, rm } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import test from "node:test";
+import { MAX_TEXT_BYTES } from "@glossa/protocol";
 import { CommandService } from "./command-service.js";
 import { PathPolicy } from "./path-policy.js";
 
@@ -44,4 +45,22 @@ test("terminates a PowerShell process after its timeout", async (context) => {
   const completed = await commands.get(started.commandId, 15_000);
 
   assert.equal(completed.status, "timed_out");
+});
+
+test("truncates command output at a complete UTF-8 character", async (context) => {
+  const { commands } = await commandFixture(context);
+  const started = await commands.start({
+    argv: [
+      process.execPath,
+      "-e",
+      `process.stdout.write("a".repeat(${MAX_TEXT_BYTES - 1}) + "\\u20ac")`,
+    ],
+    timeoutMs: 10_000,
+  });
+  const completed = await commands.get(started.commandId, 15_000);
+
+  assert.equal(completed.status, "succeeded");
+  assert.equal(completed.stdout, "a".repeat(MAX_TEXT_BYTES - 1));
+  assert.equal(completed.stdoutTruncated, true);
+  assert.ok(Buffer.byteLength(completed.stdout) <= MAX_TEXT_BYTES);
 });

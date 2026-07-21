@@ -1,5 +1,6 @@
 import { spawn, type ChildProcessWithoutNullStreams } from "node:child_process";
 import { randomUUID } from "node:crypto";
+import { StringDecoder } from "node:string_decoder";
 import { setTimeout as delay } from "node:timers/promises";
 import {
   DEFAULT_COMMAND_TIMEOUT_MS,
@@ -73,6 +74,13 @@ function capture(stream: CapturedStream, chunk: Buffer): void {
 
 function emptyCapture(): CapturedStream {
   return { chunks: [], bytes: 0, truncated: false };
+}
+
+function decodeCapture(stream: CapturedStream): string {
+  const content = Buffer.concat(stream.chunks);
+  return stream.truncated
+    ? new StringDecoder("utf8").write(content)
+    : content.toString("utf8");
 }
 
 function shellInvocation(command: string): { file: string; args: string[] } {
@@ -265,8 +273,8 @@ export class CommandService {
       base.finishedAt = new Date(record.finishedAt).toISOString();
       base.exitCode = record.exitCode ?? null;
       base.signal = record.signal ?? null;
-      base.stdout = Buffer.concat(record.stdout.chunks).toString("utf8");
-      base.stderr = Buffer.concat(record.stderr.chunks).toString("utf8");
+      base.stdout = decodeCapture(record.stdout);
+      base.stderr = decodeCapture(record.stderr);
       base.stdoutTruncated = record.stdout.truncated;
       base.stderrTruncated = record.stderr.truncated;
     }
