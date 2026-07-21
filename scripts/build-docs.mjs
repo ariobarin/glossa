@@ -202,6 +202,11 @@ ${contents}
 
 function renderPage(page, slug) {
   const renderedTitle = escapeHtml(page.title);
+  const sectionLabel = {
+    quickstart: "Getting started",
+    why: "Learn",
+    security: "Safety",
+  }[slug] ?? "Documentation";
   const tabTitle = slug
     .split("/")
     .at(-1)
@@ -244,7 +249,7 @@ function renderPage(page, slug) {
       <div class="docs-layout${sectionNavigation ? " has-toc" : ""}">
 ${sidebar}
       <header class="docs-intro">
-        <div class="docs-kicker">Glossa documentation</div>
+        <div class="docs-kicker">${sectionLabel}</div>
         <div class="docs-title-row">
           <h1>${renderedTitle}</h1>
           <button class="copy-page-button" type="button" data-copy-page aria-label="Copy page link">Copy page</button>
