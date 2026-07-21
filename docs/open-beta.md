@@ -6,8 +6,8 @@ Glossa is currently a Windows-first open beta. Start with a disposable Git repos
 
 - Windows with Git, Node.js 22.9 or newer, and npm
 - A disposable Git repository
-- ChatGPT on the web
-- Permission to create a custom app in Developer Mode
+- ChatGPT Business, Enterprise, or Edu on the web
+- A workspace role with permission to create a custom app in Developer Mode
 
 Glossa is not listed in the public plugin directory yet, so add it as a custom app in Developer Mode during the open beta.
 
@@ -36,10 +36,11 @@ Starting Glossa authorizes connected clients to modify files inside the exposed 
 
 ## Enable Developer Mode and add Glossa
 
-1. Follow OpenAI's [Developer Mode guide](https://help.openai.com/en/articles/12584461-developer-mode-apps-and-full-mcp-connectors-in-chatgpt-beta) for your plan and workspace role.
-2. In ChatGPT Settings, open **Apps**, choose **Create**, and name the custom app **Glossa**.
-3. Enter `https://mcp.glossa.sh/mcp` as the MCP server endpoint and choose OAuth authentication.
-4. Choose **Scan tools**, complete authorization using the same Google account as the worker, then create the app.
+1. Follow OpenAI's [Developer Mode guide](https://help.openai.com/en/articles/12584461-developer-mode-and-full-mcp-connectors-in-chatgpt-beta) for your plan and workspace role.
+2. Open **Settings > Plugins**, choose **Developer mode**, and enable **Developer mode** under **Security and login**. If your workspace has an **Apps** settings page instead, use **Settings > Apps > Advanced Settings**.
+3. Authorized users can choose **Settings > Apps > Create**. Business admins and owners can instead choose **Workspace settings > Apps > Create**.
+4. Name the custom app **Glossa**, enter `https://mcp.glossa.sh/mcp` as the MCP server endpoint, and choose OAuth authentication.
+5. Choose **Scan Tools**, complete authorization using the same Google account as the worker, wait for the scan to finish, then choose **Create**.
 
 You do not need to create OAuth credentials, configure networking, or operate hosted infrastructure.
 
@@ -62,10 +63,11 @@ Only test writes and commands inside the disposable repository.
 ## Troubleshooting
 
 - Run `glossa status` to validate Google login, relay access, enrolled devices, and active workers.
+- No Create option: confirm your plan supports full MCP apps and your workspace role has Developer Mode access.
 - No online devices: confirm the `glossa` terminal is still running.
 - App setup cannot discover tools: confirm `https://mcp.glossa.sh/healthz` returns `{"ok":true,"service":"glossa-relay"}`.
 - OAuth loops or expires: reopen the custom Glossa app and authorize it again.
-- Wrong Google account: stop the worker, run `glossa logout --browser`, disconnect and reconnect Glossa under **Settings > Apps** in ChatGPT, then sign in on both sides with the same Google account.
+- Wrong Google account: stop the worker, run `glossa logout --browser`, open Glossa under **Settings > Plugins** in ChatGPT and disconnect it, then reconnect and sign in on both sides with the same Google account. Use **Settings > Apps** if that is the label your workspace shows.
 - Account access fails: open a GitHub issue without including tokens, credentials, or local paths.
 
 ## Disconnect

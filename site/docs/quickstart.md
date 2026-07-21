@@ -17,16 +17,15 @@ glossa .
 
 ## Connect ChatGPT
 
-1. Open **Settings > Apps > Advanced Settings**, enable **Developer Mode**, then choose **Create**.
-2. Name the app **Glossa** and paste this server URL:
+1. Open **Settings > Plugins**, choose **Developer mode**, and enable **Developer mode** under **Security and login**. If your workspace has an **Apps** settings page instead, use **Settings > Apps > Advanced Settings**.
+2. Authorized users can create the custom app from **Settings > Apps > Create**. Business admins and owners can instead use **Workspace settings > Apps > Create**.
+3. Name the app **Glossa** and paste this MCP server URL:
 
 ```text
 https://mcp.glossa.sh/mcp
 ```
 
-3. Choose **OAuth**, then **Scan Tools**. Authorize with the same Google account you used in the Glossa CLI, wait for the scan, then choose **Create**.
-
-Business admins and owners can also begin at **Workspace settings > Apps > Create**.
+4. Choose **OAuth**, then **Scan Tools**. Complete authorization with the same Google account you used in the Glossa CLI, wait for the scan to finish, then choose **Create**.
 
 ## Try it
 
