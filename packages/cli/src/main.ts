@@ -75,13 +75,15 @@ async function withLoginSignal<T>(action: (signal: AbortSignal) => Promise<T>): 
   }
 }
 
-async function authenticatedCredentials(): Promise<{
+async function authenticatedCredentials(signal?: AbortSignal): Promise<{
   credentials: StoredCredentials;
   loginPerformed: boolean;
 }> {
-  const loginPerformed = await withLoginSignal(async (signal) => {
-    return await ensureSignedIn({ ...loadAuthConfig(), signal });
-  });
+  const loginPerformed = signal
+    ? await ensureSignedIn({ ...loadAuthConfig(), signal })
+    : await withLoginSignal(async (loginSignal) => {
+        return await ensureSignedIn({ ...loadAuthConfig(), signal: loginSignal });
+      });
   const loaded = await loadCredentials();
   if (!loaded) throw new Error("Glossa could not load the completed login.");
   return {
@@ -163,7 +165,7 @@ async function runInteractive(path: string | undefined, allowBroadRoot: boolean)
   await runMvuUi({
     workspace: root,
     run: async (signal, onEvent) => {
-      await authenticatedCredentials();
+      await authenticatedCredentials(signal);
       await runManagedSession(root, loadRelayEndpoints(), allowBroadRoot, {
         signal,
         onEvent,

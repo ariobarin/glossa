@@ -68,7 +68,11 @@ function reduceSessionEvent(model: MvuModel, event: ManagedSessionEvent): MvuMod
   if (event.type === "notice") return { ...model, message: event.message };
   const noun = event.jobType === "write_file" ? "File write" : event.jobType === "run_command" ? "Command" : "Cancellation";
   const activity: MvuActivity = {
-    label: event.phase === "requested" ? `${noun} requested` : `${noun} ${event.ok ? "completed" : "rejected"}`,
+    label: event.phase === "requested"
+      ? `${noun} requested`
+      : event.jobType === "run_command"
+        ? `Command ${event.ok ? "started" : "rejected"}`
+        : `${noun} ${event.ok ? "completed" : "rejected"}`,
     requestId: event.requestId,
     failed: event.phase === "finished" && !event.ok,
   };
@@ -138,6 +142,8 @@ export function renderMvu(
     "",
     `${style(color, activeCode, copy.glyph)} ${style(color, "1", copy.label)}`,
     `  ${truncate(model.message ?? copy.detail, usable)}`,
+    "",
+    `${style(color, "2", "Authority")}  ${truncate("files and commands as this account", Math.max(8, usable - 11))}`,
   ];
   if (model.deviceName) lines.push("", `${style(color, "2", "Device")}  ${truncate(model.deviceName, Math.max(8, usable - 8))}`);
 
@@ -173,6 +179,7 @@ export async function runMvuUi(
 
   emitKeypressEvents(input);
   const wasRaw = input.isRaw;
+  const wasPaused = input.isPaused();
   let model = initialMvuModel(actions.workspace);
   let controller: AbortController | undefined;
   let session: Promise<void> | undefined;
@@ -223,8 +230,8 @@ export async function runMvuUi(
   output.write("\u001b[?1049h\u001b[?25l");
   render();
 
-  const onKeypress = (_value: string, key: Key): void => {
-    dispatch({ type: "key", name: key.name ?? "", ...(key.ctrl ? { ctrl: true } : {}) });
+  const onKeypress = (value: string, key: Key): void => {
+    dispatch({ type: "key", name: key.name ?? value, ...(key.ctrl ? { ctrl: true } : {}) });
   };
   const stop = (): void => dispatch({ type: "key", name: "c", ctrl: true });
   input.on("keypress", onKeypress);
@@ -241,6 +248,7 @@ export async function runMvuUi(
     process.removeListener("SIGINT", stop);
     process.removeListener("SIGTERM", stop);
     input.setRawMode(wasRaw);
+    if (wasPaused) input.pause();
     output.write("\u001b[?25h\u001b[?1049l");
   }
 }
