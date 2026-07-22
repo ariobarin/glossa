@@ -17,6 +17,16 @@ test("MVU update keeps terminal effects explicit and testable", () => {
   assert.deepEqual(stopping.effects, ["stop"]);
 });
 
+test("MVU translates transport disconnection into the settled stopped state", () => {
+  const connected = { ...initialMvuModel("/work/glossa"), phase: "connected" as const };
+  const stopped = updateMvu(connected, {
+    type: "session",
+    event: { type: "status", status: { state: "disconnected" } },
+  });
+  assert.equal(stopped.model.phase, "stopped");
+  assert.deepEqual(stopped.effects, []);
+});
+
 test("MVU view scales down without hiding the primary action", () => {
   const view = renderMvu(initialMvuModel("/work/glossa"), 40, 10, false);
   assert.match(view, /○ Ready/);

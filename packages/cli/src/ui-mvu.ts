@@ -60,6 +60,9 @@ function reduceSessionEvent(model: MvuModel, event: ManagedSessionEvent): MvuMod
     if (event.status.state === "retrying") {
       return { ...model, phase: "retrying", message: event.status.error.message };
     }
+    if (event.status.state === "disconnected") {
+      return { ...model, phase: "stopped", message: undefined };
+    }
     return { ...model, phase: event.status.state, message: undefined };
   }
   if (event.type === "notice") return { ...model, message: event.message };
