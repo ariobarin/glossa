@@ -18,7 +18,10 @@ test("hud defaults to one calm status surface", () => {
   const view = renderHud({ ...initialHudState("/a/very/long/workspace/path"), connection: "connected" }, 42, false);
   assert.match(view, /● Connected/);
   assert.match(view, /ChatGPT can use this workspace\./);
-  assert.match(view, /Authority  files and commands as this/);
+  assert.match(view, /Authority/);
+  assert.match(view, /Files may be modified and commands/);
+  assert.match(view, /have the full environment and/);
+  assert.match(view, /permissions of this account\./);
   assert.match(view, /d details  \? help  q disconnect/);
   assert.doesNotMatch(view, /Recent activity/);
 });
