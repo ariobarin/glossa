@@ -28,7 +28,7 @@ export async function selectExposureRoot(
   if (!selected) {
     throw new WorkerError(
       "root_required",
-      "Outside a Git worktree, provide an explicit directory to expose.",
+      `No Git worktree was found in ${cwd}. Run "glossa start ." to expose the current folder, or "glossa start <path>" to expose another directory.`,
     );
   }
   return await canonicalizeRoot(selected, allowBroadRoot);
