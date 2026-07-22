@@ -30,7 +30,7 @@ export function connectHintStore(
       }
     },
     async mark() {
-      await mkdir(directory, { recursive: true });
+      await mkdir(directory, { recursive: true, mode: 0o700 });
       await writeFile(file, "", { encoding: "utf8" });
     },
   };
