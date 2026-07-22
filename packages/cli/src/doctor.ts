@@ -21,12 +21,14 @@ export interface DoctorCheck {
   nextStep?: string;
 }
 
+export type CredentialProbe = "present" | "absent" | "error";
+
 export interface DoctorDependencies {
   nodeVersion?: string;
   endpoints?: RelayEndpoints;
   checkGit?: () => Promise<boolean>;
   fetchHealthz?: (origin: string) => Promise<boolean>;
-  hasCredentials?: () => Promise<boolean>;
+  probeCredentials?: () => Promise<CredentialProbe>;
 }
 
 export function nodeVersionSatisfies(version: string): boolean {
@@ -76,16 +78,31 @@ export async function runDoctorChecks(
     ...(relayOk ? {} : { nextStep: "Check your internet connection. If you self-host, confirm GLOSSA_RELAY_ORIGIN." }),
   });
 
-  const hasCredentials = dependencies.hasCredentials ?? defaultHasCredentials;
-  const signedIn = await hasCredentials();
-  checks.push({
-    name: "Sign-in",
-    status: signedIn ? "pass" : "warn",
-    detail: signedIn ? "Signed in to Glossa." : "Not signed in yet.",
-    ...(signedIn ? {} : { nextStep: 'Run "glossa" inside a workspace. Sign-in opens automatically.' }),
-  });
+  const probeCredentials = dependencies.probeCredentials ?? defaultProbeCredentials;
+  const credentialState = await probeCredentials();
+  checks.push(signInCheck(credentialState));
 
   return checks;
+}
+
+function signInCheck(state: CredentialProbe): DoctorCheck {
+  if (state === "present") {
+    return { name: "Sign-in", status: "pass", detail: "Signed in to Glossa." };
+  }
+  if (state === "absent") {
+    return {
+      name: "Sign-in",
+      status: "warn",
+      detail: "Not signed in yet.",
+      nextStep: 'Run "glossa" inside a workspace. Sign-in opens automatically.',
+    };
+  }
+  return {
+    name: "Sign-in",
+    status: "fail",
+    detail: "Stored credentials are unreadable.",
+    nextStep: 'Run "glossa logout" to clear them, then start Glossa again.',
+  };
 }
 
 export function formatDoctorResult(checks: DoctorCheck[], json: boolean): string {
@@ -141,10 +158,12 @@ async function defaultFetchHealthz(origin: string): Promise<boolean> {
   }
 }
 
-async function defaultHasCredentials(): Promise<boolean> {
+async function defaultProbeCredentials(): Promise<CredentialProbe> {
   try {
-    return (await loadCredentials()) !== null;
+    return (await loadCredentials()) !== null ? "present" : "absent";
   } catch {
-    return false;
+    // A malformed credential store would also break glossa start/status, so
+    // surface it as a failure rather than masking it as "not signed in".
+    return "error";
   }
 }

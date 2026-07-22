@@ -3,6 +3,7 @@ import test from "node:test";
 import {
   formatDoctorResult,
   nodeVersionSatisfies,
+  runDoctor,
   runDoctorChecks,
   type DoctorDependencies,
 } from "./doctor.js";
@@ -30,7 +31,7 @@ const healthy: DoctorDependencies = {
   },
   checkGit: async () => true,
   fetchHealthz: async () => true,
-  hasCredentials: async () => true,
+  probeCredentials: async () => "present" as const,
 };
 
 test("reports a ready machine with every check passing", async () => {
@@ -59,11 +60,21 @@ test("fails on missing git and unreachable relay", async () => {
 test("warns instead of failing when not signed in yet", async () => {
   const checks = await runDoctorChecks({
     ...healthy,
-    hasCredentials: async () => false,
+    probeCredentials: async () => "absent" as const,
   });
   const signIn = checks.find((c) => c.name === "Sign-in");
   assert.equal(signIn?.status, "warn");
   assert.ok(signIn?.nextStep);
+});
+
+test("fails the sign-in check when stored credentials are unreadable", async () => {
+  const deps = { ...healthy, probeCredentials: async () => "error" as const };
+  const checks = await runDoctorChecks(deps);
+  const signIn = checks.find((c) => c.name === "Sign-in");
+  assert.equal(signIn?.status, "fail");
+  assert.match(signIn?.nextStep ?? "", /glossa logout/);
+  const ok = await runDoctor(false, deps, () => undefined);
+  assert.equal(ok, false);
 });
 
 test("fails the node check below the supported version", async () => {
