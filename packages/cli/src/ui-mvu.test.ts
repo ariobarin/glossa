@@ -39,7 +39,7 @@ test("MVU view scales down without hiding the primary action", () => {
   const view = renderMvu(initialMvuModel("/work/glossa"), 40, 10, false);
   assert.match(view, /○ Ready/);
   assert.match(view, /Press Enter to expose this workspac/);
-  assert.match(view, /Authority  files and commands as this/);
+  assert.match(view, /Authority  files and commands as th/);
   assert.match(view, /enter connect  c clear  \? help  q quit/);
   assert.doesNotMatch(view, /Activity/);
 });
