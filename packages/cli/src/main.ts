@@ -13,6 +13,7 @@ import {
   type RelayDevice,
 } from "./relay-client.js";
 import { logoutFromGlossa } from "./logout.js";
+import { noActiveWorkerHint } from "./status-guidance.js";
 import { runManagedSession } from "./worker/managed-session.js";
 import { selectExposureRoot } from "./worker/root-selection.js";
 
@@ -131,6 +132,8 @@ async function showStatus(json: boolean): Promise<void> {
     console.log("No devices enrolled. Run glossa start in a workspace.");
     return;
   }
+  const hint = noActiveWorkerHint(activeWorkers, devices.length);
+  if (hint) console.log(hint);
   for (const device of devices) {
     console.log(`${device.id}  ${device.name}  ${deviceStatus(device)}`);
   }
