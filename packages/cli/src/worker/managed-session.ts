@@ -55,6 +55,7 @@ export interface ManagedDeviceDependencies {
   accountOwnsDevice?: typeof accountOwnsDevice;
   enrollDevice?: typeof enrollDevice;
   defaultDeviceName?: typeof defaultDeviceName;
+  deviceName?: string;
 }
 
 export async function deviceForSession(
@@ -80,7 +81,7 @@ export async function deviceForSession(
   const enrolled = await enroll(
     endpoints,
     credentials,
-    name(),
+    dependencies.deviceName ?? name(),
   );
   await saveDevice(enrolled);
   return enrolled;
@@ -90,8 +91,12 @@ export async function runManagedSession(
   root: string,
   endpoints: RelayEndpoints,
   allowBroadRoot = false,
+  deviceName?: string,
 ): Promise<void> {
-  const device = await deviceForSession(endpoints);
+  const device = await deviceForSession(
+    endpoints,
+    deviceName !== undefined ? { deviceName } : {},
+  );
   const worker = await LocalWorker.create(root, allowBroadRoot);
   const controller = new AbortController();
   const stop = (): void => controller.abort();

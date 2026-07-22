@@ -1,12 +1,13 @@
 import { existsSync } from "node:fs";
 import path from "node:path";
+import { deviceNameSchema } from "@glossa/protocol";
 
 export class UsageError extends Error {}
 
 export type HelpTopic = "start" | "status" | "devices" | "login" | "logout";
 
 export type CliInvocation =
-  | { command: "start"; path?: string; allowBroadRoot: boolean }
+  | { command: "start"; path?: string; allowBroadRoot: boolean; deviceName?: string }
   | { command: "status"; json: boolean }
   | { command: "devices"; action: "list"; json: boolean }
   | { command: "devices"; action: "rename"; deviceId: string; name: string }
@@ -18,18 +19,39 @@ export type CliInvocation =
 
 const helpTopics = new Set<HelpTopic>(["start", "status", "devices", "login", "logout"]);
 
+function parseDeviceName(value: string): string {
+  const parsed = deviceNameSchema.safeParse(value);
+  if (!parsed.success) {
+    throw new UsageError(
+      "Device names must be 1 to 80 characters with no control characters.",
+    );
+  }
+  return parsed.data;
+}
+
 function parseStart(args: string[]): CliInvocation {
   if (args.includes("--help") || args.includes("-h")) {
     return { command: "help", topic: "start" };
   }
   let selectedPath: string | undefined;
   let allowBroadRoot = false;
+  let deviceName: string | undefined;
   let optionsEnded = false;
-  for (const argument of args) {
+  for (let i = 0; i < args.length; i += 1) {
+    const argument = args[i]!;
     if (!optionsEnded && argument === "--") {
       optionsEnded = true;
     } else if (!optionsEnded && argument === "--allow-broad-root") {
       allowBroadRoot = true;
+    } else if (!optionsEnded && argument === "--device-name") {
+      const value = args[i + 1];
+      if (value === undefined) {
+        throw new UsageError("--device-name requires a value.");
+      }
+      deviceName = parseDeviceName(value);
+      i += 1;
+    } else if (!optionsEnded && argument.startsWith("--device-name=")) {
+      deviceName = parseDeviceName(argument.slice("--device-name=".length));
     } else if (!optionsEnded && argument.startsWith("-")) {
       throw new UsageError(`Unknown start option: ${argument}`);
     } else if (selectedPath) {
@@ -42,6 +64,7 @@ function parseStart(args: string[]): CliInvocation {
     command: "start",
     ...(selectedPath ? { path: selectedPath } : {}),
     allowBroadRoot,
+    ...(deviceName ? { deviceName } : {}),
   };
 }
 
