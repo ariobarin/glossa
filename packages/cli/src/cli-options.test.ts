@@ -58,7 +58,7 @@ test("validates device management arguments", () => {
 });
 
 test("parses a device name for start and trims whitespace", () => {
-  assert.deepEqual(parseInvocation(["start", "--device-name", "Laptop"]), {
+  assert.deepEqual(parseInvocation(["start", "--device-name", "  Laptop  "]), {
     command: "start",
     allowBroadRoot: false,
     deviceName: "Laptop",
@@ -78,6 +78,10 @@ test("parses a device name for start and trims whitespace", () => {
 
 test("rejects a missing or invalid device name", () => {
   assert.throws(() => parseInvocation(["start", "--device-name"]), UsageError);
+  assert.throws(
+    () => parseInvocation(["start", "--device-name", "--allow-broad-root"]),
+    UsageError,
+  );
   assert.throws(() => parseInvocation(["start", "--device-name", ""]), UsageError);
   assert.throws(
     () => parseInvocation(["start", "--device-name", "x".repeat(81)]),
