@@ -56,21 +56,24 @@ _glossa() {
     COMPREPLY=( \$(compgen -W "${commands.join(" ")} --help --version" -- "\$cur") )
     return
   fi
-  case "\${COMP_WORDS[1]}" in
-    devices)
-      COMPREPLY=( \$(compgen -W "list rename revoke" -- "\$cur") )
-      return ;;
-    completions)
-      COMPREPLY=( \$(compgen -W "powershell bash zsh fish" -- "\$cur") )
-      return ;;
-    start)
-      COMPREPLY=( \$(compgen -W "--allow-broad-root" -- "\$cur") )
-      return ;;
+  local cmd="\${COMP_WORDS[1]}"
+  if [[ "\$cur" == -* ]]; then
+    case "\$cmd" in
+      start)   COMPREPLY=( \$(compgen -W "--allow-broad-root" -- "\$cur") ) ;;
+      status)  COMPREPLY=( \$(compgen -W "--json" -- "\$cur") ) ;;
+      devices) COMPREPLY=( \$(compgen -W "--json" -- "\$cur") ) ;;
+      logout)  COMPREPLY=( \$(compgen -W "--browser" -- "\$cur") ) ;;
+    esac
+    return
+  fi
+  case "\$cmd" in
+    devices)     COMPREPLY=( \$(compgen -W "list rename revoke" -- "\$cur") ) ;;
+    completions) COMPREPLY=( \$(compgen -W "powershell bash zsh fish" -- "\$cur") ) ;;
+    start)       ;;  # workspace directory: fall through to filename completion
   esac
-  COMPREPLY=( \$(compgen -W "--json --browser --help" -- "\$cur") )
 }
 # -o default lets readline fall back to filename completion for the workspace
-# path argument (for example: glossa ./<TAB>) when no command matches.
+# path argument (for example: glossa start ./<TAB>) when no match is produced.
 complete -o default -F _glossa glossa
 `;
 }
