@@ -26,6 +26,7 @@ export type CredentialProbe = "present" | "absent" | "error";
 export interface DoctorDependencies {
   nodeVersion?: string;
   endpoints?: RelayEndpoints;
+  loadEndpoints?: () => RelayEndpoints;
   checkGit?: () => Promise<boolean>;
   fetchHealthz?: (origin: string) => Promise<boolean>;
   probeCredentials?: () => Promise<CredentialProbe>;
@@ -66,28 +67,44 @@ export async function runDoctorChecks(
     ...(gitOk ? {} : { nextStep: "Install Git from https://git-scm.com/ and restart your terminal." }),
   });
 
-  const endpoints = dependencies.endpoints ?? loadRelayEndpoints();
-  const fetchHealthz = dependencies.fetchHealthz ?? defaultFetchHealthz;
-  const relayOk = await fetchHealthz(endpoints.relayOrigin);
-  checks.push({
-    name: "Relay",
-    status: relayOk ? "pass" : "fail",
-    detail: relayOk
-      ? `${endpoints.relayOrigin} is reachable.`
-      : `${endpoints.relayOrigin} is not reachable.`,
-    ...(relayOk ? {} : { nextStep: "Check your internet connection. If you self-host, confirm GLOSSA_RELAY_ORIGIN." }),
-  });
+  let endpoints = dependencies.endpoints;
+  if (!endpoints) {
+    try {
+      endpoints = (dependencies.loadEndpoints ?? loadRelayEndpoints)();
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      checks.push({
+        name: "Relay",
+        status: "fail",
+        detail: `Endpoint configuration is invalid: ${message}`,
+        nextStep: "Set GLOSSA_RELAY_ORIGIN and GLOSSA_WORKER_ORIGIN to origin URLs only, without paths.",
+      });
+    }
+  }
 
-  if (endpoints.workerOrigin !== endpoints.relayOrigin) {
-    const workerOk = await fetchHealthz(endpoints.workerOrigin);
+  if (endpoints) {
+    const fetchHealthz = dependencies.fetchHealthz ?? defaultFetchHealthz;
+    const relayOk = await fetchHealthz(endpoints.relayOrigin);
     checks.push({
-      name: "Worker",
-      status: workerOk ? "pass" : "fail",
-      detail: workerOk
-        ? `${endpoints.workerOrigin} is reachable.`
-        : `${endpoints.workerOrigin} is not reachable.`,
-      ...(workerOk ? {} : { nextStep: "Confirm GLOSSA_WORKER_ORIGIN and the worker endpoint reverse proxy." }),
+      name: "Relay",
+      status: relayOk ? "pass" : "fail",
+      detail: relayOk
+        ? `${endpoints.relayOrigin} is reachable.`
+        : `${endpoints.relayOrigin} is not reachable.`,
+      ...(relayOk ? {} : { nextStep: "Check your internet connection. If you self-host, confirm GLOSSA_RELAY_ORIGIN." }),
     });
+
+    if (endpoints.workerOrigin !== endpoints.relayOrigin) {
+      const workerOk = await fetchHealthz(endpoints.workerOrigin);
+      checks.push({
+        name: "Worker",
+        status: workerOk ? "pass" : "fail",
+        detail: workerOk
+          ? `${endpoints.workerOrigin} is reachable.`
+          : `${endpoints.workerOrigin} is not reachable.`,
+        ...(workerOk ? {} : { nextStep: "Confirm GLOSSA_WORKER_ORIGIN and the worker endpoint reverse proxy." }),
+      });
+    }
   }
 
   const probeCredentials = dependencies.probeCredentials ?? defaultProbeCredentials;
