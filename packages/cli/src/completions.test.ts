@@ -25,24 +25,33 @@ test("powershell registers a native argument completer", () => {
   assert.match(completionScript("powershell"), /Register-ArgumentCompleter -Native -CommandName glossa/);
 });
 
-test("bash installs a complete -F handler", () => {
+test("bash installs a complete -F handler with a filename fallback", () => {
   const script = completionScript("bash");
   assert.match(script, /^_glossa\(\) \{/m);
-  assert.match(script, /complete -F _glossa glossa/);
+  assert.match(script, /complete -o default -F _glossa glossa/);
   assert.match(script, /\$\{COMP_WORDS\[COMP_CWORD\]\}/);
 });
 
-test("zsh declares a compdef handler", () => {
+test("zsh declares a compdef handler and offers files for the path", () => {
   const script = completionScript("zsh");
   assert.match(script, /^#compdef glossa/);
   assert.match(script, /_glossa "\$@"/);
+  assert.match(script, /_files/);
 });
 
-test("fish emits complete calls", () => {
+test("fish keeps the workspace path completable", () => {
   const script = completionScript("fish");
-  assert.match(script, /^complete -c glossa -f$/m);
+  // No blanket -f disabling file completion at the root position.
+  assert.doesNotMatch(script, /\ncomplete -c glossa -f\n/);
   assert.match(script, /__fish_use_subcommand/);
   assert.match(script, /__fish_seen_subcommand_from completions/);
+});
+
+test("scripts only advertise commands the parser actually accepts", () => {
+  for (const shell of SUPPORTED_SHELLS) {
+    const script = completionScript(shell);
+    assert.ok(!script.includes("doctor"), `${shell} script advertised an unimplemented command`);
+  }
 });
 
 test("every script offers the four completion shells", () => {

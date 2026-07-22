@@ -4,7 +4,6 @@ export type SupportedShell = (typeof SUPPORTED_SHELLS)[number];
 const commands = [
   "start",
   "status",
-  "doctor",
   "devices",
   "login",
   "logout",
@@ -56,7 +55,9 @@ _glossa() {
   esac
   COMPREPLY=( \$(compgen -W "--json --browser --help" -- "\$cur") )
 }
-complete -F _glossa glossa
+# -o default lets readline fall back to filename completion for the workspace
+# path argument (for example: glossa ./<TAB>) when no command matches.
+complete -o default -F _glossa glossa
 `;
 }
 
@@ -68,7 +69,6 @@ _glossa() {
   commands=(
     'start:expose a workspace'
     'status:show account, relay, and active workers'
-    'doctor:run readiness checks'
     'devices:manage enrolled computers'
     'login:ensure a Glossa session'
     'logout:remove local credentials'
@@ -76,12 +76,19 @@ _glossa() {
   )
   _arguments -C '1: :->commands' '*::arg:->args'
   case "\$state" in
-    commands) _describe 'glossa command' commands ;;
+    commands)
+      _describe 'glossa command' commands
+      # Also offer files so the workspace path argument completes (glossa ./<TAB>).
+      _files
+      ;;
     args)
       case \$words[1] in
         devices) _arguments '1:action:(list rename revoke)' ;;
         completions) _arguments '1:shell:(powershell bash zsh fish)' ;;
-        start) _arguments '--allow-broad-root[allow home or drive roots]' ;;
+        start)
+          _arguments '--allow-broad-root[allow home or drive roots]'
+          _files
+          ;;
       esac ;;
   esac
 }
@@ -92,10 +99,11 @@ _glossa "\$@"
 function fishScript(): string {
   const lines = [
     "# Fish completion for Glossa. Source it or drop into ~/.config/fish/completions.",
-    "complete -c glossa -f",
+    // No global -f: the first argument may be a workspace directory, so fish
+    // should still offer files there.
     ...commands.map((c) => `complete -c glossa -n '__fish_use_subcommand' -a '${c}'`),
-    "complete -c glossa -n '__fish_seen_subcommand_from devices' -a 'list rename revoke'",
-    "complete -c glossa -n '__fish_seen_subcommand_from completions' -a 'powershell bash zsh fish'",
+    "complete -c glossa -f -n '__fish_seen_subcommand_from devices' -a 'list rename revoke'",
+    "complete -c glossa -f -n '__fish_seen_subcommand_from completions' -a 'powershell bash zsh fish'",
     "complete -c glossa -n '__fish_seen_subcommand_from start' -l allow-broad-root",
     "complete -c glossa -n '__fish_seen_subcommand_from status' -l json",
     "complete -c glossa -n '__fish_seen_subcommand_from logout' -l browser",
