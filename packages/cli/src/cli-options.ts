@@ -45,7 +45,7 @@ function parseStart(args: string[]): CliInvocation {
       allowBroadRoot = true;
     } else if (!optionsEnded && argument === "--device-name") {
       const value = args[i + 1];
-      if (value === undefined) {
+      if (value === undefined || value.startsWith("-")) {
         throw new UsageError("--device-name requires a value.");
       }
       deviceName = parseDeviceName(value);
