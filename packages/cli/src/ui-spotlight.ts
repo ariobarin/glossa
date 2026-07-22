@@ -140,7 +140,7 @@ async function chooseSpotlightAction(
     if (renderedLines > 0) output.write(`\u001b[${renderedLines}A\r\u001b[0J`);
     const view = renderSpotlight(workspace, query, selected);
     output.write(`${view}\n`);
-    renderedLines = view.split("\n").length + 1;
+    renderedLines = view.split("\n").length;
   };
 
   try {
