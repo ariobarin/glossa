@@ -3,11 +3,12 @@ import path from "node:path";
 
 export class UsageError extends Error {}
 
-export type HelpTopic = "start" | "status" | "devices" | "login" | "logout";
+export type HelpTopic = "start" | "status" | "doctor" | "devices" | "login" | "logout";
 
 export type CliInvocation =
   | { command: "start"; path?: string; allowBroadRoot: boolean }
   | { command: "status"; json: boolean }
+  | { command: "doctor"; json: boolean }
   | { command: "devices"; action: "list"; json: boolean }
   | { command: "devices"; action: "rename"; deviceId: string; name: string }
   | { command: "devices"; action: "revoke"; deviceId: string }
@@ -16,7 +17,7 @@ export type CliInvocation =
   | { command: "help"; topic?: HelpTopic }
   | { command: "version" };
 
-const helpTopics = new Set<HelpTopic>(["start", "status", "devices", "login", "logout"]);
+const helpTopics = new Set<HelpTopic>(["start", "status", "doctor", "devices", "login", "logout"]);
 
 function parseStart(args: string[]): CliInvocation {
   if (args.includes("--help") || args.includes("-h")) {
@@ -105,6 +106,12 @@ export function parseInvocation(args: string[]): CliInvocation {
       return { command: "help", topic: "status" };
     }
     return { command: "status", json: singleJsonOption("Status", options) };
+  }
+  if (command === "doctor") {
+    if (options.includes("--help") || options.includes("-h")) {
+      return { command: "help", topic: "doctor" };
+    }
+    return { command: "doctor", json: singleJsonOption("Doctor", options) };
   }
   if (command === "devices") return parseDevices(options);
   if (command === "login") {

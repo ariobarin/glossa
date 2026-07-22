@@ -63,6 +63,7 @@ Only test writes and commands inside the disposable repository.
 ## Troubleshooting
 
 - Run `glossa status` to validate Google login, relay access, enrolled devices, and active workers.
+- Run `glossa doctor` to check Node.js, Git, relay reachability, and sign-in state before reporting a problem.
 - No Create option: confirm your plan supports full MCP apps and your workspace role has Developer Mode access.
 - No online devices: confirm the `glossa` terminal is still running.
 - App setup cannot discover tools: confirm `https://mcp.glossa.sh/healthz` returns `{"ok":true,"service":"glossa-relay"}`.
