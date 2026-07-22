@@ -62,15 +62,18 @@ function style(enabled: boolean, code: string, value: string): string {
   return enabled ? `\u001b[${code}m${value}\u001b[0m` : value;
 }
 
-function renderBrand(color: boolean, showName: boolean): string[] {
+function renderBrand(width: number, color: boolean): string[] {
   const purple = (value: string): string => style(color, "38;2;120;77;250;1", value);
   const coral = (value: string): string => style(color, "38;2;255;102;95;1", value);
+  const padding = " ".repeat(Math.max(0, Math.floor((width - 14) / 2)));
   return [
-    purple("  ▄█████████"),
-    purple(" ███▀"),
-    `${purple(" ██")}      ${coral("▄███")}${showName ? `   ${style(color, "1", "GLOSSA")}` : ""}`,
-    coral(" ▀██▄       ██"),
-    coral("   ▀██████████"),
+    `${padding}${purple(" ▄███████████")}`,
+    `${padding}${purple("████████████▀")}`,
+    `${padding}${purple("███▀▀▀▀▀▀▀▀")}`,
+    `${padding}${purple("███")}    ${coral("▄▄▄▄▄")}`,
+    `${padding}${purple("███")}    ${coral("▀▀████▄")}`,
+    `${padding}${coral(" ▀████████████")}`,
+    `${padding}${coral("   ▀██████████")}`,
   ];
 }
 
@@ -120,7 +123,7 @@ export function renderHud(
   const copy = connectionCopy(state);
   const usable = Math.max(24, width - 4);
   const lines = [
-    ...renderBrand(color, width >= 32),
+    ...renderBrand(width, color),
     "",
     `${style(color, state.connection === "connected" ? "32;1" : "36;1", copy.glyph)} ${style(color, "1", copy.label)}`,
     `  ${truncate(copy.detail, usable)}`,

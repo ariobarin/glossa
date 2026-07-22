@@ -16,9 +16,10 @@ test("hud reduces session events into a compact current state", () => {
 
 test("hud defaults to one calm status surface", () => {
   const view = renderHud({ ...initialHudState("/a/very/long/workspace/path"), connection: "connected" }, 42, false);
-  assert.match(view, /  ▄█████████/);
-  assert.match(view, / ██      ▄███   GLOSSA/);
-  assert.match(view, /   ▀██████████/);
+  assert.match(view, /^ {15}▄███████████/);
+  assert.match(view, /^ {14}███    ▄▄▄▄▄/m);
+  assert.match(view, /^ {15}▀████████████/m);
+  assert.doesNotMatch(view, /GLOSSA/);
   assert.match(view, /● Connected/);
   assert.match(view, /ChatGPT can use this workspace\./);
   assert.match(view, /Authority/);
@@ -31,8 +32,8 @@ test("hud defaults to one calm status surface", () => {
 
 test("hud keeps the symbol readable in a narrow terminal", () => {
   const view = renderHud(initialHudState("/work/glossa"), 24, false);
-  assert.match(view, / ██      ▄███\n/);
-  assert.doesNotMatch(view, /GLOSSA/);
+  assert.match(view, /^ {6}▄███████████/);
+  assert.match(view, /^ {5}███    ▀▀████▄/m);
   assert.match(view, /q disconnect/);
 });
 
