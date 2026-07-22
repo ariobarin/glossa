@@ -67,6 +67,7 @@ async function selectGuidedAction(
 
   emitKeypressEvents(input);
   const wasRaw = input.isRaw;
+  const wasPaused = input.isPaused();
   let selected = 0;
   let renderedLines = 0;
   input.setRawMode(true);
@@ -104,6 +105,7 @@ async function selectGuidedAction(
     });
   } finally {
     input.setRawMode(wasRaw);
+    if (wasPaused) input.pause();
     output.write("\u001b[?25h");
   }
 }
