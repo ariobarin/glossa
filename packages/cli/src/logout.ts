@@ -1,5 +1,9 @@
 import { loadAuthConfig } from "./auth-config.js";
-import { deleteCredentials, loadCredentials } from "./config-store.js";
+import {
+  deleteCredentials,
+  peekCredentials,
+  type LoadedCredentials,
+} from "./config-store.js";
 import { openBrowser } from "./open-browser.js";
 
 export interface LogoutOptions {
@@ -8,7 +12,7 @@ export interface LogoutOptions {
 
 export interface LogoutDependencies {
   deleteCredentials?: typeof deleteCredentials;
-  loadStoredIssuer?: () => Promise<string | undefined>;
+  peekCredentials?: typeof peekCredentials;
   openBrowser?: typeof openBrowser;
   issuer?: string;
   log?: (message: string) => void;
@@ -26,23 +30,33 @@ export async function logoutFromGlossa(
   dependencies: LogoutDependencies = {},
 ): Promise<void> {
   const remove = dependencies.deleteCredentials ?? deleteCredentials;
+  const peek = dependencies.peekCredentials ?? peekCredentials;
   const browse = dependencies.openBrowser ?? openBrowser;
   const log = dependencies.log ?? console.log;
-  let issuer = dependencies.issuer;
 
-  if (options.browser && issuer === undefined) {
-    const loadStoredIssuer = dependencies.loadStoredIssuer ?? (async () => (
-      await loadCredentials()
-    )?.credentials.issuer);
-    try {
-      issuer = await loadStoredIssuer();
-    } catch {
-      // Invalid credentials should not prevent their removal.
-    }
+  let stored: LoadedCredentials | null = null;
+  let present = true;
+  try {
+    // Use the non-migrating peek so a file-backed session is not moved into the
+    // keyring (and left behind if deletion then fails) as a side effect of the
+    // presence check.
+    stored = await peek();
+    present = stored !== null;
+  } catch {
+    // Corrupt credentials stay flagged as present so remove() can clean them up.
   }
 
+  const issuer = dependencies.issuer ?? stored?.credentials.issuer;
+  // Always attempt deletion. SecureStore.load() can swallow a keyring read
+  // failure and report null even when an entry still exists, so gating the
+  // delete on presence would leave a credential behind. remove() is a no-op
+  // when nothing is stored.
   await remove();
-  log("Signed out of Glossa locally.");
+  log(
+    present
+      ? "Signed out of Glossa locally."
+      : "Already signed out of Glossa locally.",
+  );
   if (!options.browser) return;
 
   const url = browserLogoutUrl(issuer ?? loadAuthConfig().issuer);
