@@ -24,9 +24,11 @@ test("every script mentions glossa and its core commands", () => {
 test("powershell registers a native argument completer", () => {
   const script = completionScript("powershell");
   assert.match(script, /Register-ArgumentCompleter -Native -CommandName glossa/);
-  // The command fallback is gated to the first argument so path positions fall
-  // through to filesystem completion (glossa start ./<TAB>).
-  assert.match(script, /\$elements\.Count -eq 2/);
+  // The command fallback is gated to the first argument position, derived from
+  // the cursor vs. the last token, so an empty glossa <TAB> still offers
+  // commands while path positions fall through to filesystem completion.
+  assert.match(script, /\$cursorPosition -gt \$last\.Extent\.EndOffset/);
+  assert.match(script, /if \(\$position -eq 1\)/);
 });
 
 test("bash installs a complete -F handler with a filename fallback", () => {

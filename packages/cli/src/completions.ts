@@ -17,7 +17,15 @@ Register-ArgumentCompleter -Native -CommandName glossa -ScriptBlock {
     param($wordToComplete, $commandAst, $cursorPosition)
     $commands = @(${list})
     $elements = $commandAst.CommandElements
-    if ($elements.Count -eq 2) {
+    $last = $elements[$elements.Count - 1]
+    # Position of the argument being completed (1 = first argument after glossa).
+    # A trailing space starts a new argument; otherwise we complete the last token.
+    if ($cursorPosition -gt $last.Extent.EndOffset) {
+        $position = $elements.Count
+    } else {
+        $position = $elements.Count - 1
+    }
+    if ($position -eq 1) {
         # First argument: offer subcommands. Path-like input matches no command,
         # so PowerShell falls back to filesystem completion for glossa ./<TAB>.
         $commands | Where-Object { $_ -like "$wordToComplete*" } |
