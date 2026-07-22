@@ -57,6 +57,28 @@ test("fails on missing git and unreachable relay", async () => {
   assert.ok(relay?.detail.includes("not reachable"));
 });
 
+test("fails when a separate worker endpoint is unreachable", async () => {
+  const checkedOrigins: string[] = [];
+  const checks = await runDoctorChecks({
+    ...healthy,
+    endpoints: {
+      relayOrigin: "https://relay.glossa.test",
+      workerOrigin: "https://worker.glossa.test",
+    },
+    fetchHealthz: async (origin) => {
+      checkedOrigins.push(origin);
+      return origin !== "https://worker.glossa.test";
+    },
+  });
+  assert.deepEqual(checkedOrigins, [
+    "https://relay.glossa.test",
+    "https://worker.glossa.test",
+  ]);
+  const worker = checks.find((c) => c.name === "Worker");
+  assert.equal(worker?.status, "fail");
+  assert.match(worker?.nextStep ?? "", /GLOSSA_WORKER_ORIGIN/);
+});
+
 test("warns instead of failing when not signed in yet", async () => {
   const checks = await runDoctorChecks({
     ...healthy,
