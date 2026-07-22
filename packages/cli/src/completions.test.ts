@@ -42,8 +42,11 @@ test("zsh registers sourced completion and offers files for the path", () => {
   const script = completionScript("zsh");
   assert.match(script, /^# Zsh completion for Glossa\. Source this after compinit/m);
   assert.doesNotMatch(script, /^#compdef/m);
-  // Zsh includes the command itself at words[1], so the subcommand is words[2].
+  // Zsh includes the command itself at words[1], so the subcommand is words[2]
+  // and its first value is argument position 2.
   assert.match(script, /case \$words\[2\] in/);
+  assert.match(script, /_arguments '2:action:\(list rename revoke\)'/);
+  assert.match(script, /_arguments '2:shell:\(powershell bash zsh fish\)'/);
   assert.match(script, /compdef _glossa glossa/);
   assert.match(script, /_files/);
 });
