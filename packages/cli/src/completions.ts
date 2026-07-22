@@ -92,8 +92,8 @@ complete -o default -F _glossa glossa
 function zshScript(): string {
   return `# Zsh completion for Glossa. Source this after compinit from your profile.
 _glossa() {
-  local -a commands
-  commands=(
+  local -a glossa_commands
+  glossa_commands=(
     'start:expose a workspace'
     'status:show account, relay, and active workers'
     'devices:manage enrolled computers'
@@ -104,7 +104,7 @@ _glossa() {
   _arguments -C '1: :->commands' '*::arg:->args'
   case "\$state" in
     commands)
-      _describe 'glossa command' commands
+      _describe 'glossa command' glossa_commands
       # Also offer files so the workspace path argument completes (glossa ./<TAB>).
       _files
       ;;
