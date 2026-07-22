@@ -43,7 +43,7 @@ export function renderPaletteIntro(workspace: string, color = !process.env.NO_CO
   ].join("\n");
 }
 
-function eventLine(event: ManagedSessionEvent): string | undefined {
+export function paletteEventLine(event: ManagedSessionEvent): string | undefined {
   if (event.type === "status") {
     if (event.status.state === "connected") return event.status.reconnected ? "Reconnected." : "Connected. ChatGPT can use this workspace.";
     if (event.status.state === "retrying") return `Connection lost: ${event.status.error.message} Retrying…`;
@@ -51,6 +51,25 @@ function eventLine(event: ManagedSessionEvent): string | undefined {
     return "Connecting…";
   }
   if (event.type === "notice") return event.message;
+  if (event.type === "activity") {
+    const id = event.requestId.slice(0, 8);
+    if (event.jobType === "run_command") {
+      const label = event.phase === "requested"
+        ? "Command requested"
+        : event.ok ? "Command started" : "Command rejected";
+      return `${label} (${id}).`;
+    }
+    if (event.jobType === "write_file") {
+      const label = event.phase === "requested"
+        ? "File write started"
+        : event.ok ? "File write completed" : "File write rejected";
+      return `${label} (${id}).`;
+    }
+    const label = event.phase === "requested"
+      ? "Command cancellation requested"
+      : event.ok ? "Command cancellation completed" : "Command cancellation rejected";
+    return `${label} (${id}).`;
+  }
   return undefined;
 }
 
@@ -100,9 +119,10 @@ export async function runCommandPalette(
     }
     const controller = new AbortController();
     sessionController = controller;
+    write("Files may be modified and commands run with the full environment and permissions of this account. Type stop to disconnect.");
     write(`Starting ${actions.workspace}…`);
     sessionPromise = actions.start(controller.signal, (event) => {
-      const line = eventLine(event);
+      const line = paletteEventLine(event);
       if (line) write(line);
     }).catch((error: unknown) => {
       write(error instanceof Error ? error.message : String(error));
