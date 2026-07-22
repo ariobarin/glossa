@@ -32,16 +32,18 @@ Register-ArgumentCompleter -Native -CommandName glossa -ScriptBlock {
             ForEach-Object { [System.Management.Automation.CompletionResult]::new($_, $_, 'ParameterValue', $_) }
         return
     }
-    # Later arguments: complete subcommand values, otherwise return nothing so
-    # PowerShell completes filesystem paths (for example: glossa start ./<TAB>).
-    switch ($elements[1].Value) {
-        'devices' {
-            @('list', 'rename', 'revoke') | Where-Object { $_ -like "$wordToComplete*" } |
-                ForEach-Object { [System.Management.Automation.CompletionResult]::new($_, $_, 'ParameterValue', $_) }
-        }
-        'completions' {
-            @('powershell', 'bash', 'zsh', 'fish') | Where-Object { $_ -like "$wordToComplete*" } |
-                ForEach-Object { [System.Management.Automation.CompletionResult]::new($_, $_, 'ParameterValue', $_) }
+    # Only the first value after these subcommands is an enum. Later positions
+    # return nothing so PowerShell does not suggest invalid extra arguments.
+    if ($position -eq 2) {
+        switch ($elements[1].Value) {
+            'devices' {
+                @('list', 'rename', 'revoke') | Where-Object { $_ -like "$wordToComplete*" } |
+                    ForEach-Object { [System.Management.Automation.CompletionResult]::new($_, $_, 'ParameterValue', $_) }
+            }
+            'completions' {
+                @('powershell', 'bash', 'zsh', 'fish') | Where-Object { $_ -like "$wordToComplete*" } |
+                    ForEach-Object { [System.Management.Automation.CompletionResult]::new($_, $_, 'ParameterValue', $_) }
+            }
         }
     }
 }
@@ -61,14 +63,23 @@ _glossa() {
     case "\$cmd" in
       start)   COMPREPLY=( \$(compgen -W "--allow-broad-root" -- "\$cur") ) ;;
       status)  COMPREPLY=( \$(compgen -W "--json" -- "\$cur") ) ;;
-      devices) COMPREPLY=( \$(compgen -W "--json" -- "\$cur") ) ;;
+      devices)
+        if [ "\$COMP_CWORD" -eq 3 ] && [ "\${COMP_WORDS[2]}" = "list" ]; then
+          COMPREPLY=( \$(compgen -W "--json" -- "\$cur") )
+        fi ;;
       logout)  COMPREPLY=( \$(compgen -W "--browser" -- "\$cur") ) ;;
     esac
     return
   fi
   case "\$cmd" in
-    devices)     COMPREPLY=( \$(compgen -W "list rename revoke" -- "\$cur") ) ;;
-    completions) COMPREPLY=( \$(compgen -W "powershell bash zsh fish" -- "\$cur") ) ;;
+    devices)
+      if [ "\$COMP_CWORD" -eq 2 ]; then
+        COMPREPLY=( \$(compgen -W "list rename revoke" -- "\$cur") )
+      fi ;;
+    completions)
+      if [ "\$COMP_CWORD" -eq 2 ]; then
+        COMPREPLY=( \$(compgen -W "powershell bash zsh fish" -- "\$cur") )
+      fi ;;
     start)       ;;  # workspace directory: fall through to filename completion
   esac
 }
@@ -118,10 +129,11 @@ function fishScript(): string {
     // No global -f: the first argument may be a workspace directory, so fish
     // should still offer files there.
     ...commands.map((c) => `complete -c glossa -n '__fish_use_subcommand' -a '${c}'`),
-    "complete -c glossa -f -n '__fish_seen_subcommand_from devices' -a 'list rename revoke'",
-    "complete -c glossa -f -n '__fish_seen_subcommand_from completions' -a 'powershell bash zsh fish'",
+    "complete -c glossa -f -n '__fish_seen_subcommand_from devices; and test (count (commandline -opc)) -eq 2' -a 'list rename revoke'",
+    "complete -c glossa -f -n '__fish_seen_subcommand_from completions; and test (count (commandline -opc)) -eq 2' -a 'powershell bash zsh fish'",
     "complete -c glossa -n '__fish_seen_subcommand_from start' -l allow-broad-root",
     "complete -c glossa -n '__fish_seen_subcommand_from status' -l json",
+    "complete -c glossa -n '__fish_seen_subcommand_from devices; and contains -- list (commandline -opc)' -l json",
     "complete -c glossa -n '__fish_seen_subcommand_from logout' -l browser",
     "",
   ];
