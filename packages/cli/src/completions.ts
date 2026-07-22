@@ -100,7 +100,7 @@ _glossa() {
       _files
       ;;
     args)
-      case \$words[1] in
+      case \$words[2] in
         devices) _arguments '1:action:(list rename revoke)' ;;
         completions) _arguments '1:shell:(powershell bash zsh fish)' ;;
         start)
