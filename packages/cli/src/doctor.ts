@@ -1,6 +1,6 @@
 import { execFile } from "node:child_process";
 import { promisify } from "node:util";
-import { loadCredentials } from "./config-store.js";
+import { peekCredentials } from "./config-store.js";
 import {
   loadRelayEndpoints,
   type RelayEndpoints,
@@ -189,7 +189,7 @@ async function defaultFetchHealthz(origin: string): Promise<boolean> {
 
 async function defaultProbeCredentials(): Promise<CredentialProbe> {
   try {
-    return (await loadCredentials()) !== null ? "present" : "absent";
+    return (await peekCredentials()) !== null ? "present" : "absent";
   } catch {
     // A malformed credential store would also break glossa start/status, so
     // surface it as a failure rather than masking it as "not signed in".
