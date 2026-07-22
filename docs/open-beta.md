@@ -30,7 +30,7 @@ glossa
 
 You can also run `glossa start .`. Start more workers in other terminals when you want to expose several workspaces from the same computer.
 
-Glossa opens Google sign-in automatically when needed. `glossa login` is available as an optional preflight. Choose the Google account you want to use for Glossa. After sign-in, the terminal prints the exposed root, device name, connection state, and security warning. Leave that terminal open while using Glossa. Press Ctrl+C to disconnect.
+Glossa opens Google sign-in automatically when needed. `glossa login` is available as an optional preflight. Choose the Google account you want to use for Glossa. After sign-in, the terminal prints the exposed root, device name, connection state, and security warning. On the first successful managed-relay connection on a computer, it also prints the ChatGPT quickstart link. A `connect-hint-shown` marker in the local Glossa config directory suppresses that hint on later runs. Leave that terminal open while using Glossa. Press Ctrl+C to disconnect.
 
 Starting Glossa authorizes connected clients to modify files inside the exposed root and run commands with the full environment and permissions of your Windows account. Do not expose your home directory, a drive root, or a repository containing credentials.
 
