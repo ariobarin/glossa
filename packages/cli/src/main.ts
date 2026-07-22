@@ -13,6 +13,7 @@ import {
   type RelayDevice,
 } from "./relay-client.js";
 import { logoutFromGlossa } from "./logout.js";
+import { runMvuUi } from "./ui-mvu.js";
 import { runManagedSession } from "./worker/managed-session.js";
 import { selectExposureRoot } from "./worker/root-selection.js";
 
@@ -26,6 +27,7 @@ const helpText: Record<HelpTopic | "main", string> = {
 Usage:
   glossa
   glossa [directory]
+  glossa ui [directory] [--allow-broad-root]
   glossa start [directory] [--allow-broad-root]
   glossa status [--json]
   glossa devices list [--json]
@@ -37,6 +39,10 @@ Usage:
   glossa --help
 
 Glossa signs in automatically and exposes each started workspace through the managed MCP relay.`,
+  ui: `Usage: glossa ui [directory] [--allow-broad-root]
+
+Opens an experimental full-screen model/update/view interface.
+Enter connects or disconnects; the state reducer remains independently testable.`,
   start: `Usage: glossa start [directory] [--allow-broad-root]
 
 Starts a foreground worker. Inside Git, the default directory is the worktree root.
@@ -58,9 +64,7 @@ Ensures the CLI has a valid Google session. Starting Glossa also signs in automa
 Removes local OAuth credentials. --browser also opens the browser-session logout used when switching Google accounts. Running workers remain connected until stopped or revoked.`,
 };
 
-async function withLoginSignal<T>(
-  action: (signal: AbortSignal) => Promise<T>,
-): Promise<T> {
+async function withLoginSignal<T>(action: (signal: AbortSignal) => Promise<T>): Promise<T> {
   const controller = new AbortController();
   const cancel = () => controller.abort();
   process.once("SIGINT", cancel);
@@ -146,12 +150,38 @@ async function deviceCredentials(): Promise<{
   };
 }
 
+async function showDevices(json: boolean): Promise<void> {
+  const { endpoints, credentials } = await deviceCredentials();
+  const devices = await listDevices(endpoints, credentials);
+  if (json) console.log(JSON.stringify({ devices }, null, 2));
+  else if (devices.length === 0) console.log("No devices enrolled.");
+  else for (const device of devices) console.log(`${device.id}  ${device.name}  ${deviceStatus(device)}`);
+}
+
+async function runInteractive(path: string | undefined, allowBroadRoot: boolean): Promise<void> {
+  const root = await selectExposureRoot(path, allowBroadRoot);
+  await runMvuUi({
+    workspace: root,
+    run: async (signal, onEvent) => {
+      await authenticatedCredentials();
+      await runManagedSession(root, loadRelayEndpoints(), allowBroadRoot, {
+        signal,
+        onEvent,
+        quiet: true,
+        handleProcessSignals: false,
+      });
+    },
+  });
+}
+
 async function main(): Promise<void> {
   const invocation = parseInvocation(process.argv.slice(2));
   if (invocation.command === "help") {
     console.log(helpText[invocation.topic ?? "main"]);
   } else if (invocation.command === "version") {
     console.log(VERSION);
+  } else if (invocation.command === "ui") {
+    await runInteractive(invocation.path, invocation.allowBroadRoot);
   } else if (invocation.command === "start") {
     await runExposure(invocation.path, invocation.allowBroadRoot);
   } else if (invocation.command === "status") {
@@ -162,11 +192,7 @@ async function main(): Promise<void> {
   } else if (invocation.command === "logout") {
     await logoutFromGlossa({ browser: invocation.browser });
   } else if (invocation.action === "list") {
-    const { endpoints, credentials } = await deviceCredentials();
-    const devices = await listDevices(endpoints, credentials);
-    if (invocation.json) console.log(JSON.stringify({ devices }, null, 2));
-    else if (devices.length === 0) console.log("No devices enrolled.");
-    else for (const device of devices) console.log(`${device.id}  ${device.name}  ${deviceStatus(device)}`);
+    await showDevices(invocation.json);
   } else if (invocation.action === "rename") {
     const { endpoints, credentials } = await deviceCredentials();
     const device = await renameDevice(endpoints, credentials, invocation.deviceId, invocation.name);

@@ -29,15 +29,50 @@ function activityLabel(type: WorkerJob["type"], finished: boolean, ok = true): s
   return finished ? (ok ? "Command cancellation completed" : "Command cancellation rejected") : "Command cancellation requested";
 }
 
-function visibleWorker(worker: LocalWorker): WorkerHandler {
+export type ManagedSessionEvent =
+  | { type: "session"; root: string; deviceName: string }
+  | { type: "status"; status: RemoteWorkerStatus }
+  | { type: "activity"; phase: "requested"; jobType: WorkerJob["type"]; requestId: string }
+  | { type: "activity"; phase: "finished"; jobType: WorkerJob["type"]; requestId: string; ok: boolean }
+  | { type: "notice"; message: string };
+
+export interface ManagedSessionOptions {
+  signal?: AbortSignal;
+  onEvent?: (event: ManagedSessionEvent) => void;
+  quiet?: boolean;
+  handleProcessSignals?: boolean;
+}
+
+function report(
+  options: ManagedSessionOptions,
+  event: ManagedSessionEvent,
+  message: string,
+): void {
+  options.onEvent?.(event);
+  if (!options.quiet) console.error(message);
+}
+
+function visibleWorker(worker: LocalWorker, options: ManagedSessionOptions): WorkerHandler {
   return {
     async handle(job: WorkerJob): Promise<WorkerResult> {
       if (visibleActivity.has(job.type)) {
-        console.error(`${activityLabel(job.type, false)} (${job.requestId}).`);
+        report(
+          options,
+          { type: "activity", phase: "requested", jobType: job.type, requestId: job.requestId },
+          `${activityLabel(job.type, false)} (${job.requestId}).`,
+        );
       }
       const result = await worker.handle(job);
       if (visibleActivity.has(job.type)) {
-        console.error(
+        report(
+          options,
+          {
+            type: "activity",
+            phase: "finished",
+            jobType: job.type,
+            requestId: job.requestId,
+            ok: result.ok,
+          },
           `${activityLabel(job.type, true, result.ok)} (${job.requestId}).`,
         );
       }
@@ -77,51 +112,73 @@ export async function deviceForSession(
     if (await ownsDevice(endpoints, credentials, stored.deviceId)) return stored;
     await removeDevice();
   }
-  const enrolled = await enroll(
-    endpoints,
-    credentials,
-    name(),
-  );
+  const enrolled = await enroll(endpoints, credentials, name());
   await saveDevice(enrolled);
   return enrolled;
+}
+
+function statusMessage(status: RemoteWorkerStatus, previous: RemoteWorkerStatus["state"] | undefined): string {
+  if (status.state === "connecting") return "Connecting to Glossa...";
+  if (status.state === "connected") {
+    return status.reconnected ? "Reconnected to Glossa." : "Connected to Glossa. ChatGPT can now use this workspace.";
+  }
+  if (status.state === "retrying") {
+    const prefix = previous === "connecting" ? "Could not connect" : "Connection lost";
+    return `${prefix}: ${status.error.message} Retrying automatically.`;
+  }
+  return "Disconnected from Glossa.";
 }
 
 export async function runManagedSession(
   root: string,
   endpoints: RelayEndpoints,
   allowBroadRoot = false,
+  options: ManagedSessionOptions = {},
 ): Promise<void> {
   const device = await deviceForSession(endpoints);
   const worker = await LocalWorker.create(root, allowBroadRoot);
   const controller = new AbortController();
   const stop = (): void => controller.abort();
-  process.once("SIGINT", stop);
-  process.once("SIGTERM", stop);
-  console.error(`Glossa worker root: ${worker.policy.root}`);
-  console.error(`Glossa device: ${device.deviceName}`);
-  console.error(
-    "Files may be modified and commands have the full environment and permissions of this account. Press Ctrl+C to disconnect.",
+  const handleProcessSignals = options.handleProcessSignals ?? true;
+
+  if (options.signal?.aborted) controller.abort();
+  else options.signal?.addEventListener("abort", stop, { once: true });
+  if (handleProcessSignals) {
+    process.once("SIGINT", stop);
+    process.once("SIGTERM", stop);
+  }
+
+  report(
+    options,
+    { type: "session", root: worker.policy.root, deviceName: device.deviceName },
+    `Glossa worker root: ${worker.policy.root}`,
   );
+  if (!options.quiet) {
+    console.error(`Glossa device: ${device.deviceName}`);
+    console.error(
+      "Files may be modified and commands have the full environment and permissions of this account. Press Ctrl+C to disconnect.",
+    );
+  }
+
   let connectionState: RemoteWorkerStatus["state"] | undefined;
   try {
     await new RemoteWorker({
       origin: endpoints.workerOrigin,
       deviceToken: device.token,
-      worker: visibleWorker(worker),
+      worker: visibleWorker(worker, options),
       signal: controller.signal,
       onStatus(status) {
-        if (status.state === "connecting") {
-          console.error("Connecting to Glossa...");
-        } else if (status.state === "connected") {
-          console.error(status.reconnected ? "Reconnected to Glossa." : "Connected to Glossa. ChatGPT can now use this workspace.");
-          if (status.legacyRelay) {
-            console.error("The relay needs an update before this computer can expose several workspaces at once.");
-          }
-        } else if (status.state === "retrying" && connectionState !== "retrying") {
-          const prefix = connectionState === "connecting" ? "Could not connect" : "Connection lost";
-          console.error(`${prefix}: ${status.error.message} Retrying automatically.`);
-        } else if (status.state === "disconnected") {
-          console.error("Disconnected from Glossa.");
+        if (status.state !== "retrying" || connectionState !== "retrying") {
+          report(options, { type: "status", status }, statusMessage(status, connectionState));
+        } else {
+          options.onEvent?.({ type: "status", status });
+        }
+        if (status.state === "connected" && status.legacyRelay) {
+          report(
+            options,
+            { type: "notice", message: "The relay needs an update before this computer can expose several workspaces at once." },
+            "The relay needs an update before this computer can expose several workspaces at once.",
+          );
         }
         connectionState = status.state;
       },
@@ -133,8 +190,11 @@ export async function runManagedSession(
     }
     throw error;
   } finally {
-    process.removeListener("SIGINT", stop);
-    process.removeListener("SIGTERM", stop);
+    options.signal?.removeEventListener("abort", stop);
+    if (handleProcessSignals) {
+      process.removeListener("SIGINT", stop);
+      process.removeListener("SIGTERM", stop);
+    }
     await worker.shutdown();
   }
 }
