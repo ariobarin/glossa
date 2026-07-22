@@ -78,6 +78,18 @@ export async function runDoctorChecks(
     ...(relayOk ? {} : { nextStep: "Check your internet connection. If you self-host, confirm GLOSSA_RELAY_ORIGIN." }),
   });
 
+  if (endpoints.workerOrigin !== endpoints.relayOrigin) {
+    const workerOk = await fetchHealthz(endpoints.workerOrigin);
+    checks.push({
+      name: "Worker",
+      status: workerOk ? "pass" : "fail",
+      detail: workerOk
+        ? `${endpoints.workerOrigin} is reachable.`
+        : `${endpoints.workerOrigin} is not reachable.`,
+      ...(workerOk ? {} : { nextStep: "Confirm GLOSSA_WORKER_ORIGIN and the worker endpoint reverse proxy." }),
+    });
+  }
+
   const probeCredentials = dependencies.probeCredentials ?? defaultProbeCredentials;
   const credentialState = await probeCredentials();
   checks.push(signInCheck(credentialState));
