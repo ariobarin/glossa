@@ -22,6 +22,21 @@ test("asks for a directory with an actionable hint outside a git worktree", asyn
   }
 });
 
+test("does not recommend an unguarded broad current directory", async () => {
+  const filesystemRoot = path.parse(process.cwd()).root;
+  await assert.rejects(
+    selectExposureRoot(undefined, false, filesystemRoot),
+    (error: unknown) => {
+      if (!(error instanceof WorkerError) || error.code !== "root_required") return false;
+      return (
+        error.message.includes("glossa start <path>") &&
+        error.message.includes("glossa start . --allow-broad-root") &&
+        !error.message.includes('Run "glossa start ." to expose the current folder')
+      );
+    },
+  );
+});
+
 test("uses the git worktree root when no path is given", async () => {
   const root = await selectExposureRoot(undefined, false, process.cwd());
   assert.ok(path.isAbsolute(root));
