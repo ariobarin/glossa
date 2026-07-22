@@ -16,20 +16,26 @@ function powershellScript(): string {
 Register-ArgumentCompleter -Native -CommandName glossa -ScriptBlock {
     param($wordToComplete, $commandAst, $cursorPosition)
     $commands = @(${list})
-    switch ($commandAst.CommandElements[1].Value) {
+    $elements = $commandAst.CommandElements
+    if ($elements.Count -eq 2) {
+        # First argument: offer subcommands. Path-like input matches no command,
+        # so PowerShell falls back to filesystem completion for glossa ./<TAB>.
+        $commands | Where-Object { $_ -like "$wordToComplete*" } |
+            ForEach-Object { [System.Management.Automation.CompletionResult]::new($_, $_, 'ParameterValue', $_) }
+        return
+    }
+    # Later arguments: complete subcommand values, otherwise return nothing so
+    # PowerShell completes filesystem paths (for example: glossa start ./<TAB>).
+    switch ($elements[1].Value) {
         'devices' {
             @('list', 'rename', 'revoke') | Where-Object { $_ -like "$wordToComplete*" } |
                 ForEach-Object { [System.Management.Automation.CompletionResult]::new($_, $_, 'ParameterValue', $_) }
-            return
         }
         'completions' {
             @('powershell', 'bash', 'zsh', 'fish') | Where-Object { $_ -like "$wordToComplete*" } |
                 ForEach-Object { [System.Management.Automation.CompletionResult]::new($_, $_, 'ParameterValue', $_) }
-            return
         }
     }
-    $commands | Where-Object { $_ -like "$wordToComplete*" } |
-        ForEach-Object { [System.Management.Automation.CompletionResult]::new($_, $_, 'ParameterValue', $_) }
 }
 `;
 }
