@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { mkdtemp, rm } from "node:fs/promises";
+import { mkdtemp, rm, stat } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import {
@@ -49,7 +49,8 @@ test("stays quiet once the hint has been seen", async () => {
 });
 
 test("the connect hint store round-trips through a real directory", async () => {
-  const dir = await mkdtemp(path.join(os.tmpdir(), "glossa-hint-"));
+  const root = await mkdtemp(path.join(os.tmpdir(), "glossa-hint-"));
+  const dir = path.join(root, "config");
   try {
     const store = connectHintStore(dir);
     assert.equal(await store.exists(), false);
@@ -58,7 +59,10 @@ test("the connect hint store round-trips through a real directory", async () => 
     assert.equal(await store.exists(), true);
     assert.equal(await announceConnectHint(store, (m) => messages.push(m)), false);
     assert.equal(messages.length, 1);
+    if (process.platform !== "win32") {
+      assert.equal((await stat(dir)).mode & 0o777, 0o700);
+    }
   } finally {
-    await rm(dir, { recursive: true, force: true });
+    await rm(root, { recursive: true, force: true });
   }
 });
