@@ -68,6 +68,22 @@ function truncate(value: string, width: number): string {
   return `${value.slice(0, width - 1)}…`;
 }
 
+function wrapText(value: string, width: number): string[] {
+  const words = value.split(/\s+/);
+  const lines: string[] = [];
+  let line = "";
+  for (const word of words) {
+    if (!line) line = word;
+    else if (`${line} ${word}`.length <= width) line += ` ${word}`;
+    else {
+      lines.push(line);
+      line = word;
+    }
+  }
+  if (line) lines.push(line);
+  return lines;
+}
+
 function connectionCopy(state: HudState): { glyph: string; label: string; detail: string } {
   if (state.connection === "connected") {
     return { glyph: "●", label: "Connected", detail: "ChatGPT can use this workspace." };
@@ -98,7 +114,12 @@ export function renderHud(
     `  ${truncate(copy.detail, usable)}`,
     "",
     `${style(color, "2", "Workspace")}  ${truncate(state.workspace, Math.max(8, usable - 11))}`,
-    `${style(color, "2", "Authority")}  ${truncate("files and commands as this account", Math.max(8, usable - 11))}`,
+    "",
+    style(color, "1", "Authority"),
+    ...wrapText(
+      "Files may be modified and commands have the full environment and permissions of this account.",
+      usable,
+    ).map((line) => `  ${line}`),
   ];
   if (state.deviceName) lines.push(`${style(color, "2", "Device")}     ${truncate(state.deviceName, Math.max(8, usable - 11))}`);
 
@@ -157,6 +178,7 @@ export async function runSessionHud(
       message: error instanceof Error ? error.message : String(error),
     };
     render();
+    throw error;
   });
 
   input.setRawMode(true);
