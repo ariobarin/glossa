@@ -34,6 +34,8 @@ glossa
 
 `glossa start .` is the explicit form. You can run additional workers in other terminals to expose more workspaces from the same computer. Use `glossa status` to verify login, relay access, enrolled devices, and active workers.
 
+On the first successful managed-relay connection on a computer, Glossa prints the ChatGPT quickstart link once. It records a `connect-hint-shown` marker in the local Glossa config directory so later starts stay quiet.
+
 Starting `glossa` authorizes connected clients to modify files inside that root and run commands with the full environment and permissions of the Windows account that launched it. Press Ctrl+C to disconnect.
 
 ## ChatGPT
