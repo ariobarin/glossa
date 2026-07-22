@@ -99,8 +99,8 @@ _glossa() {
       ;;
     args)
       case \$words[2] in
-        devices) _arguments '1:action:(list rename revoke)' ;;
-        completions) _arguments '1:shell:(powershell bash zsh fish)' ;;
+        devices) _arguments '2:action:(list rename revoke)' ;;
+        completions) _arguments '2:shell:(powershell bash zsh fish)' ;;
         start)
           _arguments '--allow-broad-root[allow home or drive roots]'
           _files
