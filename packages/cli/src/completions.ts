@@ -79,9 +79,7 @@ complete -o default -F _glossa glossa
 }
 
 function zshScript(): string {
-  return `#compdef glossa
-# Zsh completion for Glossa. Source it from your profile, or drop it into a
-# directory on \$fpath as _glossa (the #compdef tag registers autoloaded files).
+  return `# Zsh completion for Glossa. Source this after compinit from your profile.
 _glossa() {
   local -a commands
   commands=(
@@ -110,9 +108,7 @@ _glossa() {
       esac ;;
   esac
 }
-# When this file is sourced rather than autoloaded, the #compdef tag above is
-# just a comment, so register the completer explicitly here.
-compdef _glossa glossa 2> /dev/null
+compdef _glossa glossa
 `;
 }
 
