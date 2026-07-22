@@ -13,6 +13,7 @@
   "main": "dist/main.js",
   "files": [
     "dist/main.js",
+    "dist/app.js",
     "README.md",
     "LICENSE"
   ],
