@@ -115,6 +115,36 @@ export class SecureStore<T> {
     return { value, backend: "file" };
   }
 
+  async peek(): Promise<{ value: T; backend: StorageBackend } | null> {
+    // Read-only presence/value check that never migrates a file credential
+    // into the keyring (unlike load, which writes and removes the file).
+    const entry = await this.#entry();
+    if (entry) {
+      let serialized: string | null | undefined;
+      try {
+        serialized = await entry.getPassword();
+      } catch {
+        // Fall through to the file below.
+      }
+      if (serialized != null) {
+        try {
+          return { value: this.#options.parse(serialized), backend: "keyring" };
+        } catch {
+          // Unreadable keyring entry: fall through to the file.
+        }
+      }
+    }
+    try {
+      return {
+        value: this.#options.parse(await readFile(this.#options.file, "utf8")),
+        backend: "file",
+      };
+    } catch (error) {
+      if ((error as NodeJS.ErrnoException).code === "ENOENT") return null;
+      throw error;
+    }
+  }
+
   async delete(): Promise<void> {
     const entry = await this.#entry();
     let keyringDeleteFailed = false;

@@ -28,7 +28,7 @@ test("local logout leaves the browser session alone", async () => {
   await logoutFromGlossa(
     { browser: false },
     {
-      loadCredentials: async () => stored,
+      peekCredentials: async () => stored,
       deleteCredentials: async () => {
         removed = true;
       },
@@ -53,9 +53,9 @@ test("local logout reports already signed out but still clears stale state", asy
   await logoutFromGlossa(
     { browser: false },
     {
-      // load() reports null, which also covers a keyring read failure that
+      // peek() reports null, which also covers a keyring read failure that
       // SecureStore swallows while an entry still exists.
-      loadCredentials: async () => null,
+      peekCredentials: async () => null,
       deleteCredentials: async () => {
         removed = true;
       },
@@ -79,7 +79,7 @@ test("browser logout opens the Auth0 session endpoint", async () => {
   await logoutFromGlossa(
     { browser: true },
     {
-      loadCredentials: async () => stored,
+      peekCredentials: async () => stored,
       deleteCredentials: async () => undefined,
       openBrowser: async (url) => {
         openedUrl = url;
@@ -100,7 +100,7 @@ test("browser logout uses the stored session issuer", async () => {
   await logoutFromGlossa(
     { browser: true },
     {
-      loadCredentials: async () => ({
+      peekCredentials: async () => ({
         credentials: { ...credentials, issuer: "https://stored-identity.glossa.test/" },
         backend: "file",
       }),
@@ -122,7 +122,7 @@ test("browser logout still opens when already signed out locally", async () => {
   await logoutFromGlossa(
     { browser: true },
     {
-      loadCredentials: async () => null,
+      peekCredentials: async () => null,
       deleteCredentials: async () => undefined,
       openBrowser: async (url) => {
         openedUrl = url;
