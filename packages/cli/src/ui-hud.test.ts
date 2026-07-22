@@ -10,12 +10,15 @@ test("hud reduces session events into a compact current state", () => {
   assert.equal(state.connection, "connected");
   assert.equal(state.deviceName, "Dev PC");
   assert.equal(state.activities.at(-1)?.label, "Command requested");
+  state = applyHudEvent(state, { type: "activity", phase: "finished", jobType: "run_command", requestId: "1234567890", ok: true });
+  assert.equal(state.activities.at(-1)?.label, "Command started");
 });
 
 test("hud defaults to one calm status surface", () => {
   const view = renderHud({ ...initialHudState("/a/very/long/workspace/path"), connection: "connected" }, 42, false);
   assert.match(view, /● Connected/);
   assert.match(view, /ChatGPT can use this workspace\./);
+  assert.match(view, /Authority  files and commands as this/);
   assert.match(view, /d details  \? help  q disconnect/);
   assert.doesNotMatch(view, /Recent activity/);
 });

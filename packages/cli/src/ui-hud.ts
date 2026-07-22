@@ -37,6 +37,7 @@ export function initialHudState(workspace: string): HudState {
 function activityLabel(event: Extract<ManagedSessionEvent, { type: "activity" }>): string {
   const noun = event.jobType === "write_file" ? "File write" : event.jobType === "run_command" ? "Command" : "Cancellation";
   if (event.phase === "requested") return `${noun} requested`;
+  if (event.jobType === "run_command") return `Command ${event.ok ? "started" : "rejected"}`;
   return `${noun} ${event.ok ? "completed" : "rejected"}`;
 }
 
@@ -97,6 +98,7 @@ export function renderHud(
     `  ${truncate(copy.detail, usable)}`,
     "",
     `${style(color, "2", "Workspace")}  ${truncate(state.workspace, Math.max(8, usable - 11))}`,
+    `${style(color, "2", "Authority")}  ${truncate("files and commands as this account", Math.max(8, usable - 11))}`,
   ];
   if (state.deviceName) lines.push(`${style(color, "2", "Device")}     ${truncate(state.deviceName, Math.max(8, usable - 11))}`);
 
@@ -132,6 +134,7 @@ export async function runSessionHud(
 
   emitKeypressEvents(input);
   const wasRaw = input.isRaw;
+  const wasPaused = input.isPaused();
   const controller = new AbortController();
   let state = initialHudState(actions.workspace);
   let stopUi: (() => void) | undefined;
@@ -171,12 +174,12 @@ export async function runSessionHud(
   try {
     await new Promise<void>((resolve) => {
       stopUi = resolve;
-      const onKeypress = (_value: string, key: Key): void => {
+      const onKeypress = (value: string, key: Key): void => {
         if ((key.ctrl && key.name === "c") || key.name === "q") return stop();
         if (key.name === "d") {
           state = { ...state, showDetails: !state.showDetails, showHelp: false };
           render();
-        } else if (key.name === "?") {
+        } else if (value === "?" || key.sequence === "?") {
           state = { ...state, showHelp: !state.showHelp };
           render();
         }
@@ -195,6 +198,7 @@ export async function runSessionHud(
     process.removeListener("SIGINT", stop);
     process.removeListener("SIGTERM", stop);
     input.setRawMode(wasRaw);
+    if (wasPaused) input.pause();
     output.write("\u001b[?25h\u001b[?1049l");
   }
 }
