@@ -117,6 +117,22 @@ function truncate(value: string, width: number): string {
   return width <= 1 ? "…" : `${value.slice(0, width - 1)}…`;
 }
 
+function wrapText(value: string, width: number): string[] {
+  const words = value.split(/\s+/);
+  const lines: string[] = [];
+  let line = "";
+  for (const word of words) {
+    if (!line) line = word;
+    else if (`${line} ${word}`.length <= width) line += ` ${word}`;
+    else {
+      lines.push(line);
+      line = word;
+    }
+  }
+  if (line) lines.push(line);
+  return lines;
+}
+
 function phaseCopy(phase: MvuPhase): { glyph: string; label: string; detail: string } {
   if (phase === "idle") return { glyph: "○", label: "Ready", detail: "Press Enter to expose this workspace." };
   if (phase === "starting" || phase === "connecting") return { glyph: "◌", label: "Connecting", detail: "Establishing the managed relay session…" };
@@ -143,7 +159,11 @@ export function renderMvu(
     `${style(color, activeCode, copy.glyph)} ${style(color, "1", copy.label)}`,
     `  ${truncate(model.message ?? copy.detail, usable)}`,
     "",
-    `${style(color, "2", "Authority")}  ${truncate("files and commands as this account", Math.max(8, usable - 11))}`,
+    style(color, "1", "Authority"),
+    ...wrapText(
+      "Files may be modified and commands have the full environment and permissions of this account.",
+      usable,
+    ).map((line) => `  ${line}`),
   ];
   if (model.deviceName) lines.push("", `${style(color, "2", "Device")}  ${truncate(model.deviceName, Math.max(8, usable - 8))}`);
 
@@ -184,6 +204,7 @@ export async function runMvuUi(
   let controller: AbortController | undefined;
   let session: Promise<void> | undefined;
   let quitting = false;
+  let terminalError: unknown;
   let finish: (() => void) | undefined;
 
   const render = (): void => {
@@ -198,9 +219,13 @@ export async function runMvuUi(
     if (session) return;
     const nextController = new AbortController();
     controller = nextController;
+    terminalError = undefined;
     session = actions.run(nextController.signal, (event) => dispatch({ type: "session", event }))
       .then(() => dispatch({ type: "session-done" }))
-      .catch((error: unknown) => dispatch({ type: "session-error", error: error instanceof Error ? error.message : String(error) }))
+      .catch((error: unknown) => {
+        terminalError = error;
+        dispatch({ type: "session-error", error: error instanceof Error ? error.message : String(error) });
+      })
       .finally(() => {
         if (controller === nextController) controller = undefined;
         session = undefined;
@@ -243,6 +268,7 @@ export async function runMvuUi(
       finish = resolve;
     });
     if (session) await session;
+    if (terminalError) throw terminalError;
   } finally {
     input.removeListener("keypress", onKeypress);
     process.removeListener("SIGINT", stop);
