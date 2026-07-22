@@ -79,6 +79,32 @@ test("fails when a separate worker endpoint is unreachable", async () => {
   assert.match(worker?.nextStep ?? "", /GLOSSA_WORKER_ORIGIN/);
 });
 
+test("reports malformed endpoint configuration as a structured failure", async () => {
+  const checks = await runDoctorChecks({
+    nodeVersion: "24.13.0",
+    checkGit: async () => true,
+    loadEndpoints: () => {
+      throw new Error("GLOSSA_RELAY_ORIGIN must contain only an origin.");
+    },
+    probeCredentials: async () => "present" as const,
+  });
+  const relay = checks.find((c) => c.name === "Relay");
+  assert.equal(relay?.status, "fail");
+  assert.match(relay?.detail ?? "", /GLOSSA_RELAY_ORIGIN/);
+  assert.match(relay?.nextStep ?? "", /without paths/);
+
+  const json = JSON.parse(formatDoctorResult(checks, true));
+  assert.equal(json.checks.find((check: { name: string }) => check.name === "Relay").status, "fail");
+  assert.equal(await runDoctor(true, {
+    nodeVersion: "24.13.0",
+    checkGit: async () => true,
+    loadEndpoints: () => {
+      throw new Error("bad origin");
+    },
+    probeCredentials: async () => "present" as const,
+  }, () => undefined), false);
+});
+
 test("warns instead of failing when not signed in yet", async () => {
   const checks = await runDoctorChecks({
     ...healthy,
