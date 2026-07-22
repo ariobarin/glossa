@@ -14,6 +14,8 @@ OAuth and device credentials use the operating-system credential store. If it is
 
 The first managed session enrolls the computer under its hostname. Running `glossa` inside a Git worktree exposes only that worktree root. `glossa start .` is the explicit form. Each process registers an independent workspace, so the same computer may expose several workspaces at once. The process prints the canonical root, connection state, shell authority warning, and write or command activity. Press Ctrl+C to disconnect.
 
+The experimental `glossa ui .` command opens a search-first action launcher. Type part of an action such as `status` or `devices`, use the arrow keys and Enter, and press Escape twice to return to the shell. Exposing from the launcher shows the same shell-authority warning and activity output as `glossa start`.
+
 Glossa signs in automatically whenever an authenticated command needs an account. `glossa login` is an optional preflight. `glossa status` validates the session and relay, then reports enrolled devices and active workers. Use `glossa devices list`, `glossa devices rename <id> <name>`, and `glossa devices revoke <id>` to manage enrolled computers.
 
 The managed endpoint defaults to `https://mcp.glossa.sh`. Development deployments may override `GLOSSA_RELAY_ORIGIN` and `GLOSSA_WORKER_ORIGIN`. Plain HTTP is accepted only for loopback relay origins and loopback or private IPv4 worker origins.

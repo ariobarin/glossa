@@ -30,6 +30,8 @@ glossa
 
 You can also run `glossa start .`. Start more workers in other terminals when you want to expose several workspaces from the same computer.
 
+To try the experimental search-first launcher instead, run `glossa ui .`. Type to filter actions, use the arrow keys and Enter to run one, and press Escape twice to exit. Choosing **Expose this workspace** retains the normal security warning, activity output, and Ctrl+C disconnect behavior.
+
 Glossa opens Google sign-in automatically when needed. `glossa login` is available as an optional preflight. Choose the Google account you want to use for Glossa. After sign-in, the terminal prints the exposed root, device name, connection state, and security warning. Leave that terminal open while using Glossa. Press Ctrl+C to disconnect.
 
 Starting Glossa authorizes connected clients to modify files inside the exposed root and run commands with the full environment and permissions of your Windows account. Do not expose your home directory, a drive root, or a repository containing credentials.

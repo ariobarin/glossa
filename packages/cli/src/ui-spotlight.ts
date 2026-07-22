@@ -126,6 +126,7 @@ async function chooseSpotlightAction(
   }
   emitKeypressEvents(input);
   const wasRaw = input.isRaw;
+  const wasPaused = input.isPaused();
   let query = "";
   let selected = 0;
   let renderedLines = 0;
@@ -183,6 +184,7 @@ async function chooseSpotlightAction(
     });
   } finally {
     input.setRawMode(wasRaw);
+    if (wasPaused) input.pause();
     output.write("\u001b[?25h");
   }
 }
