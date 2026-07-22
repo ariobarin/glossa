@@ -1,6 +1,7 @@
 import type { WorkerJob, WorkerResult } from "@glossa/protocol";
 import { validCredentials } from "../auth-session.js";
 import { loadCredentials } from "../config-store.js";
+import { announceConnectHint, connectHintStore } from "../first-run.js";
 import {
   deleteDeviceCredential,
   loadDeviceCredential,
@@ -116,6 +117,9 @@ export async function runManagedSession(
           console.error(status.reconnected ? "Reconnected to Glossa." : "Connected to Glossa. ChatGPT can now use this workspace.");
           if (status.legacyRelay) {
             console.error("The relay needs an update before this computer can expose several workspaces at once.");
+          }
+          if (!status.reconnected) {
+            void announceConnectHint(connectHintStore(), console.error).catch(() => {});
           }
         } else if (status.state === "retrying" && connectionState !== "retrying") {
           const prefix = connectionState === "connecting" ? "Could not connect" : "Connection lost";
