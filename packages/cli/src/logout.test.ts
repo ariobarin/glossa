@@ -45,7 +45,7 @@ test("local logout leaves the browser session alone", async () => {
   assert.deepEqual(messages, ["Signed out of Glossa locally."]);
 });
 
-test("local logout reports already signed out when no credentials exist", async () => {
+test("local logout reports already signed out but still clears stale state", async () => {
   let removed = false;
   let opened = false;
   const messages: string[] = [];
@@ -53,6 +53,8 @@ test("local logout reports already signed out when no credentials exist", async 
   await logoutFromGlossa(
     { browser: false },
     {
+      // load() reports null, which also covers a keyring read failure that
+      // SecureStore swallows while an entry still exists.
       loadCredentials: async () => null,
       deleteCredentials: async () => {
         removed = true;
@@ -65,7 +67,7 @@ test("local logout reports already signed out when no credentials exist", async 
     },
   );
 
-  assert.equal(removed, false);
+  assert.equal(removed, true);
   assert.equal(opened, false);
   assert.deepEqual(messages, ["Already signed out of Glossa locally."]);
 });

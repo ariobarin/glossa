@@ -35,20 +35,22 @@ export async function logoutFromGlossa(
   const log = dependencies.log ?? console.log;
 
   let stored: LoadedCredentials | null = null;
-  let signedIn = true;
+  let present = true;
   try {
     stored = await load();
-    signedIn = stored !== null;
+    present = stored !== null;
   } catch {
     // Corrupt credentials stay flagged as present so remove() can clean them up.
   }
 
   const issuer = dependencies.issuer ?? stored?.credentials.issuer;
-  if (signedIn) {
-    await remove();
-  }
+  // Always attempt deletion. SecureStore.load() can swallow a keyring read
+  // failure and report null even when an entry still exists, so gating the
+  // delete on presence would leave a credential behind. remove() is a no-op
+  // when nothing is stored.
+  await remove();
   log(
-    signedIn
+    present
       ? "Signed out of Glossa locally."
       : "Already signed out of Glossa locally.",
   );
