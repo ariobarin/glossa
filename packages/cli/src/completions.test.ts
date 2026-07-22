@@ -41,7 +41,8 @@ test("bash installs a complete -F handler with a filename fallback", () => {
 test("zsh declares a compdef handler and offers files for the path", () => {
   const script = completionScript("zsh");
   assert.match(script, /^#compdef glossa/);
-  assert.match(script, /_glossa "\$@"/);
+  // Explicit registration so sourcing the script (not just autoloading) works.
+  assert.match(script, /compdef _glossa glossa/);
   assert.match(script, /_files/);
 });
 
