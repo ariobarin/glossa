@@ -1,7 +1,7 @@
 import type { WorkerJob, WorkerResult } from "@glossa/protocol";
 import { validCredentials } from "../auth-session.js";
 import { loadCredentials } from "../config-store.js";
-import { announceConnectHint, connectHintStore } from "../first-run.js";
+import { announceConnectHint, connectHintStore, shouldShowConnectHint } from "../first-run.js";
 import {
   deleteDeviceCredential,
   loadDeviceCredential,
@@ -118,7 +118,7 @@ export async function runManagedSession(
           if (status.legacyRelay) {
             console.error("The relay needs an update before this computer can expose several workspaces at once.");
           }
-          if (!status.reconnected) {
+          if (!status.reconnected && shouldShowConnectHint(endpoints.relayOrigin)) {
             void announceConnectHint(connectHintStore(), console.error).catch(() => {});
           }
         } else if (status.state === "retrying" && connectionState !== "retrying") {

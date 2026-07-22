@@ -1,9 +1,14 @@
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
+import { DEFAULT_RELAY_ORIGIN } from "./relay-client.js";
 import { configDirectory } from "./secure-store.js";
 
 const CONNECT_HINT_FILE = "connect-hint-shown";
 export const CONNECT_HINT_URL = "https://glossa.sh/docs/quickstart";
+
+export function shouldShowConnectHint(relayOrigin: string): boolean {
+  return relayOrigin === DEFAULT_RELAY_ORIGIN;
+}
 
 export interface ConnectHintStore {
   exists(): Promise<boolean>;

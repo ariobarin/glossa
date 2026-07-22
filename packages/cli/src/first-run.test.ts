@@ -7,8 +7,15 @@ import {
   announceConnectHint,
   connectHintStore,
   CONNECT_HINT_URL,
+  shouldShowConnectHint,
   type ConnectHintStore,
 } from "./first-run.js";
+
+test("only shows the connect hint for the managed relay", () => {
+  assert.equal(shouldShowConnectHint("https://mcp.glossa.sh"), true);
+  assert.equal(shouldShowConnectHint("https://mcp.example.com"), false);
+  assert.equal(shouldShowConnectHint("http://localhost:39100"), false);
+});
 
 test("announces the connect hint and marks the store when not seen", async () => {
   const messages: string[] = [];
