@@ -62,6 +62,18 @@ function style(enabled: boolean, code: string, value: string): string {
   return enabled ? `\u001b[${code}m${value}\u001b[0m` : value;
 }
 
+function renderBrand(color: boolean, showName: boolean): string[] {
+  const purple = (value: string): string => style(color, "38;2;120;77;250;1", value);
+  const coral = (value: string): string => style(color, "38;2;255;102;95;1", value);
+  return [
+    purple("  ▄█████████"),
+    purple(" ███▀"),
+    `${purple(" ██")}      ${coral("▄███")}${showName ? `   ${style(color, "1", "GLOSSA")}` : ""}`,
+    coral(" ▀██▄       ██"),
+    coral("   ▀██████████"),
+  ];
+}
+
 function truncate(value: string, width: number): string {
   if (value.length <= width) return value;
   if (width <= 1) return "…";
@@ -108,7 +120,7 @@ export function renderHud(
   const copy = connectionCopy(state);
   const usable = Math.max(24, width - 4);
   const lines = [
-    style(color, "1", "Glossa"),
+    ...renderBrand(color, width >= 32),
     "",
     `${style(color, state.connection === "connected" ? "32;1" : "36;1", copy.glyph)} ${style(color, "1", copy.label)}`,
     `  ${truncate(copy.detail, usable)}`,
