@@ -12,7 +12,7 @@ Glossa opens Google sign-in automatically when needed using OAuth Device Authori
 
 OAuth and device credentials use the operating-system credential store. If it is unavailable, Glossa warns before using a restricted credential file.
 
-The first managed session enrolls the computer under its hostname. Running `glossa` inside a Git worktree exposes only that worktree root. `glossa start .` is the explicit form. Each process registers an independent workspace, so the same computer may expose several workspaces at once. The process prints the canonical root, connection state, shell authority warning, and write or command activity. Press Ctrl+C to disconnect.
+The first managed session enrolls the computer under its hostname by default. Pass `--device-name <name>` on that first start to choose a recognizable name instead. Running `glossa` inside a Git worktree exposes only that worktree root. `glossa start .` is the explicit form. Each process registers an independent workspace, so the same computer may expose several workspaces at once. The process prints the canonical root, connection state, shell authority warning, and write or command activity. Press Ctrl+C to disconnect.
 
 Glossa signs in automatically whenever an authenticated command needs an account. `glossa login` is an optional preflight. `glossa status` validates the session and relay, then reports enrolled devices and active workers. Use `glossa devices list`, `glossa devices rename <id> <name>`, and `glossa devices revoke <id>` to manage enrolled computers.
 
