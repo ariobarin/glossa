@@ -185,7 +185,13 @@ export async function runCommandPalette(
         rl.close();
       }
     });
-    rl.once("close", resolve);
+    rl.once("close", () => {
+      closed = true;
+      const pending = sessionPromise;
+      sessionController?.abort();
+      if (pending) void pending.finally(resolve);
+      else resolve();
+    });
     rl.prompt();
   });
 }
