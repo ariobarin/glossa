@@ -29,6 +29,7 @@ test("powershell registers a native argument completer", () => {
   // commands while path positions fall through to filesystem completion.
   assert.match(script, /\$cursorPosition -gt \$last\.Extent\.EndOffset/);
   assert.match(script, /if \(\$position -eq 1\)/);
+  assert.match(script, /if \(\$position -eq 2\)/);
 });
 
 test("bash installs a complete -F handler with a filename fallback", () => {
@@ -36,6 +37,15 @@ test("bash installs a complete -F handler with a filename fallback", () => {
   assert.match(script, /^_glossa\(\) \{/m);
   assert.match(script, /complete -o default -F _glossa glossa/);
   assert.match(script, /\$\{COMP_WORDS\[COMP_CWORD\]\}/);
+});
+
+test("bash gates device actions and list options to valid positions", () => {
+  const script = completionScript("bash");
+  assert.match(script, /if \[ "\$COMP_CWORD" -eq 2 \]; then\n\s+COMPREPLY=.*list rename revoke/s);
+  assert.match(
+    script,
+    /if \[ "\$COMP_CWORD" -eq 3 \] && \[ "\$\{COMP_WORDS\[2\]\}" = "list" \]; then/,
+  );
 });
 
 test("zsh registers sourced completion and offers files for the path", () => {
@@ -57,6 +67,7 @@ test("fish keeps the workspace path completable", () => {
   assert.doesNotMatch(script, /\ncomplete -c glossa -f\n/);
   assert.match(script, /__fish_use_subcommand/);
   assert.match(script, /__fish_seen_subcommand_from completions/);
+  assert.match(script, /count \(commandline -opc\)\) -eq 2/);
 });
 
 test("scripts only advertise commands the parser actually accepts", () => {
