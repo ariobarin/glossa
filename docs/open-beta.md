@@ -76,4 +76,4 @@ Press Ctrl+C in the worker terminal. The device remains enrolled for later sessi
 
 Run `glossa logout` to remove only the CLI's local OAuth credentials. Run `glossa logout --browser` when switching Google accounts; it also opens Glossa's browser-session logout endpoint.
 
-Use `glossa devices list`, `glossa devices rename <id> <name>`, or `glossa devices revoke <id>` to recover stale enrollments and remove computers you no longer trust.
+Use `glossa devices list`, `glossa devices rename <id> <name>`, or `glossa devices revoke <id>` to recover stale enrollments and remove computers you no longer trust. Each listed device shows its platform and when the relay last saw it, which helps identify computers that are offline or duplicated.
