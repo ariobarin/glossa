@@ -1,9 +1,16 @@
 import { existsSync } from "node:fs";
 import path from "node:path";
+import { SUPPORTED_SHELLS, type SupportedShell } from "./completions.js";
 
 export class UsageError extends Error {}
 
-export type HelpTopic = "start" | "status" | "devices" | "login" | "logout";
+export type HelpTopic =
+  | "start"
+  | "status"
+  | "devices"
+  | "completions"
+  | "login"
+  | "logout";
 
 export type CliInvocation =
   | { command: "start"; path?: string; allowBroadRoot: boolean }
@@ -11,12 +18,20 @@ export type CliInvocation =
   | { command: "devices"; action: "list"; json: boolean }
   | { command: "devices"; action: "rename"; deviceId: string; name: string }
   | { command: "devices"; action: "revoke"; deviceId: string }
+  | { command: "completions"; shell: SupportedShell }
   | { command: "login" }
   | { command: "logout"; browser: boolean }
   | { command: "help"; topic?: HelpTopic }
   | { command: "version" };
 
-const helpTopics = new Set<HelpTopic>(["start", "status", "devices", "login", "logout"]);
+const helpTopics = new Set<HelpTopic>([
+  "start",
+  "status",
+  "devices",
+  "completions",
+  "login",
+  "logout",
+]);
 
 function parseStart(args: string[]): CliInvocation {
   if (args.includes("--help") || args.includes("-h")) {
@@ -107,6 +122,21 @@ export function parseInvocation(args: string[]): CliInvocation {
     return { command: "status", json: singleJsonOption("Status", options) };
   }
   if (command === "devices") return parseDevices(options);
+  if (command === "completions") {
+    if (options.includes("--help") || options.includes("-h")) {
+      return { command: "help", topic: "completions" };
+    }
+    if (options.length !== 1) {
+      throw new UsageError("Use: glossa completions <shell>.");
+    }
+    const shell = options[0]!;
+    if (!(SUPPORTED_SHELLS as readonly string[]).includes(shell)) {
+      throw new UsageError(
+        `Unsupported shell: ${shell}. Use one of: ${SUPPORTED_SHELLS.join(", ")}.`,
+      );
+    }
+    return { command: "completions", shell: shell as SupportedShell };
+  }
   if (command === "login") {
     if (options.includes("--help") || options.includes("-h")) {
       return { command: "help", topic: "login" };

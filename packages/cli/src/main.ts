@@ -13,6 +13,7 @@ import {
   type RelayDevice,
 } from "./relay-client.js";
 import { logoutFromGlossa } from "./logout.js";
+import { completionScript } from "./completions.js";
 import { runManagedSession } from "./worker/managed-session.js";
 import { selectExposureRoot } from "./worker/root-selection.js";
 
@@ -31,6 +32,7 @@ Usage:
   glossa devices list [--json]
   glossa devices rename <id> <name>
   glossa devices revoke <id>
+  glossa completions <shell>
   glossa login
   glossa logout [--browser]
   glossa --version
@@ -50,6 +52,9 @@ Validates Google login, contacts the relay, and reports enrolled devices and act
   glossa devices revoke <id>
 
 Lists, renames, or revokes computers enrolled with the current Google account.`,
+  completions: `Usage: glossa completions <shell>
+
+Prints a shell completion script for powershell, bash, zsh, or fish. Source it from your shell profile, for example: glossa completions powershell | Out-String | Invoke-Expression.`,
   login: `Usage: glossa login
 
 Ensures the CLI has a valid Google session. Starting Glossa also signs in automatically.`,
@@ -161,6 +166,8 @@ async function main(): Promise<void> {
     if (!loginPerformed) console.log("Signed in to Glossa.");
   } else if (invocation.command === "logout") {
     await logoutFromGlossa({ browser: invocation.browser });
+  } else if (invocation.command === "completions") {
+    console.log(completionScript(invocation.shell));
   } else if (invocation.action === "list") {
     const { endpoints, credentials } = await deviceCredentials();
     const devices = await listDevices(endpoints, credentials);

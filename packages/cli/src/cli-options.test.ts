@@ -56,3 +56,16 @@ test("validates device management arguments", () => {
   });
   assert.throws(() => parseInvocation(["devices", "rename", "device-id"]), UsageError);
 });
+
+test("parses completions for a supported shell and rejects others", () => {
+  assert.deepEqual(parseInvocation(["completions", "bash"]), {
+    command: "completions",
+    shell: "bash",
+  });
+  assert.deepEqual(parseInvocation(["completions", "fish"]), {
+    command: "completions",
+    shell: "fish",
+  });
+  assert.throws(() => parseInvocation(["completions"]), UsageError);
+  assert.throws(() => parseInvocation(["completions", "tcsh"]), UsageError);
+});
