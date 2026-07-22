@@ -113,3 +113,31 @@ test("reports failed native credential deletion", async (t) => {
   assert.equal((await store.load())?.value, "oauth-secret");
   await assert.rejects(readFile(file), { code: "ENOENT" });
 });
+
+test("peek reads a file credential without migrating it to the keyring", async (t) => {
+  const root = await mkdtemp(path.join(os.tmpdir(), "glossa-secure-store-"));
+  t.after(async () => await rm(root, { recursive: true, force: true }));
+  const file = path.join(root, "credentials.json");
+  await writeFile(file, JSON.stringify({ token: "file-secret" }), "utf8");
+  let setPasswordCalls = 0;
+  const store = new SecureStore<{ token: string }>({
+    account: "oauth",
+    file,
+    warning: "file fallback",
+    parse: (serialized) => JSON.parse(serialized) as { token: string },
+    warn: () => {},
+    entryProvider: async () => ({
+      getPassword: async () => null,
+      setPassword: async () => {
+        setPasswordCalls += 1;
+      },
+      deleteCredential: async () => true,
+    }),
+  });
+
+  const peeked = await store.peek();
+
+  assert.deepEqual(peeked, { value: { token: "file-secret" }, backend: "file" });
+  assert.equal(setPasswordCalls, 0);
+  assert.equal(await readFile(file, "utf8"), JSON.stringify({ token: "file-secret" }));
+});

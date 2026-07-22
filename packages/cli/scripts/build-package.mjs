@@ -11,15 +11,29 @@ if (typeof packageJson.version !== "string") {
 
 await rm("dist", { recursive: true, force: true });
 
+const define = { __GLOSSA_VERSION__: JSON.stringify(packageJson.version) };
+
+// Application bundle, targeted at the supported Node.js release.
 await build({
   entryPoints: ["src/main.ts"],
-  outfile: "dist/main.js",
+  outfile: "dist/app.js",
   bundle: true,
   platform: "node",
   target: "node22.9",
   format: "esm",
   external: ["@napi-rs/keyring"],
-  define: {
-    __GLOSSA_VERSION__: JSON.stringify(packageJson.version),
-  },
+  define,
+});
+
+// Tiny bootstrap entry (the published bin). Built against a conservative target
+// so it parses on old Node.js and prints the version requirement before it
+// loads the node22.9-targeted app bundle.
+await build({
+  entryPoints: ["src/bootstrap.ts"],
+  outfile: "dist/main.js",
+  bundle: true,
+  platform: "node",
+  target: "node18",
+  format: "esm",
+  define,
 });
