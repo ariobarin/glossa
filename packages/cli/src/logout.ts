@@ -1,5 +1,9 @@
 import { loadAuthConfig } from "./auth-config.js";
-import { deleteCredentials, loadCredentials } from "./config-store.js";
+import {
+  deleteCredentials,
+  loadCredentials,
+  type LoadedCredentials,
+} from "./config-store.js";
 import { openBrowser } from "./open-browser.js";
 
 export interface LogoutOptions {
@@ -8,7 +12,7 @@ export interface LogoutOptions {
 
 export interface LogoutDependencies {
   deleteCredentials?: typeof deleteCredentials;
-  loadStoredIssuer?: () => Promise<string | undefined>;
+  loadCredentials?: typeof loadCredentials;
   openBrowser?: typeof openBrowser;
   issuer?: string;
   log?: (message: string) => void;
@@ -26,23 +30,28 @@ export async function logoutFromGlossa(
   dependencies: LogoutDependencies = {},
 ): Promise<void> {
   const remove = dependencies.deleteCredentials ?? deleteCredentials;
+  const load = dependencies.loadCredentials ?? loadCredentials;
   const browse = dependencies.openBrowser ?? openBrowser;
   const log = dependencies.log ?? console.log;
-  let issuer = dependencies.issuer;
 
-  if (options.browser && issuer === undefined) {
-    const loadStoredIssuer = dependencies.loadStoredIssuer ?? (async () => (
-      await loadCredentials()
-    )?.credentials.issuer);
-    try {
-      issuer = await loadStoredIssuer();
-    } catch {
-      // Invalid credentials should not prevent their removal.
-    }
+  let stored: LoadedCredentials | null = null;
+  let signedIn = true;
+  try {
+    stored = await load();
+    signedIn = stored !== null;
+  } catch {
+    // Corrupt credentials stay flagged as present so remove() can clean them up.
   }
 
-  await remove();
-  log("Signed out of Glossa locally.");
+  const issuer = dependencies.issuer ?? stored?.credentials.issuer;
+  if (signedIn) {
+    await remove();
+  }
+  log(
+    signedIn
+      ? "Signed out of Glossa locally."
+      : "Already signed out of Glossa locally.",
+  );
   if (!options.browser) return;
 
   const url = browserLogoutUrl(issuer ?? loadAuthConfig().issuer);
