@@ -44,7 +44,9 @@ test("hud defaults to one calm status surface", () => {
   assert.match(view, /● Connected/);
   assert.match(view, /ChatGPT can use this workspace\./);
   assert.match(view, /WORKSPACE/);
+  assert.match(view, /Files and commands use your account\s+permissions\./);
   assert.match(view, /LATEST ACTIVITY/);
+  assert.doesNotMatch(view, /AUTHORITY|Full account permissions/);
   assert.match(view, /D Activity +S Status/);
   assert.doesNotMatch(view, /RECENT ACTIVITY/);
 });
@@ -194,6 +196,44 @@ test("q and Ctrl+C stop the session and release terminal input", async () => {
     assert.equal(input.isRaw, false, `${label} left raw mode enabled`);
     assert.equal(input.isPaused(), true, `${label} left terminal input flowing`);
   }
+});
+
+test("an intentional quit suppresses an abort-driven startup failure", async () => {
+  const input = Object.assign(new PassThrough(), {
+    isTTY: true,
+    isRaw: false,
+    setRawMode(value: boolean) {
+      this.isRaw = value;
+      return this;
+    },
+  });
+  const output = Object.assign(new PassThrough(), { isTTY: true, columns: 80 });
+  setImmediate(() => input.write("q"));
+
+  const action = await runSessionHud(
+    {
+      workspace: "/work/glossa",
+      async run(signal) {
+        await new Promise<void>((_resolve, reject) => {
+          signal.addEventListener("abort", () => reject(signal.reason), {
+            once: true,
+          });
+        });
+      },
+      async loadStatus() {
+        throw new Error("unused");
+      },
+      async revokeDevice() {
+        throw new Error("unused");
+      },
+    },
+    input as unknown as ReadStream,
+    output as unknown as WriteStream,
+  );
+
+  assert.equal(action, "quit");
+  assert.equal(input.isRaw, false);
+  assert.equal(input.isPaused(), true);
 });
 
 test("logout and update are confirmed inside the TUI", async () => {
@@ -401,4 +441,58 @@ test("status view updates when account details finish", async () => {
   );
 
   assert.match(rendered, /dev@example\.com/);
+});
+
+test("quitting aborts an in-flight device revoke", async () => {
+  const input = Object.assign(new PassThrough(), {
+    isTTY: true,
+    isRaw: false,
+    setRawMode(value: boolean) {
+      this.isRaw = value;
+      return this;
+    },
+  });
+  const output = Object.assign(new PassThrough(), { isTTY: true, columns: 80 });
+  let revokeSignal: AbortSignal | undefined;
+
+  setTimeout(() => input.write("s"), 0);
+  setTimeout(() => input.write("r"), 10);
+  setTimeout(() => input.write("1"), 20);
+  setTimeout(() => input.write("y"), 30);
+  setTimeout(() => input.write("q"), 40);
+
+  await runSessionHud(
+    {
+      workspace: "/work/glossa",
+      async run(signal, onEvent) {
+        onEvent({
+          type: "status",
+          status: { state: "connected", reconnected: false, legacyRelay: false },
+        });
+        await new Promise<void>((resolve) => {
+          signal.addEventListener("abort", () => resolve(), { once: true });
+        });
+      },
+      async loadStatus() {
+        return {
+          account: "dev@example.com",
+          relay: "https://mcp.glossa.test",
+          activeWorkers: 1,
+          devices: [hudDevice],
+        };
+      },
+      async revokeDevice(_deviceId, signal) {
+        revokeSignal = signal;
+        await new Promise<void>((_resolve, reject) => {
+          signal.addEventListener("abort", () => reject(signal.reason), {
+            once: true,
+          });
+        });
+      },
+    },
+    input as unknown as ReadStream,
+    output as unknown as WriteStream,
+  );
+
+  assert.equal(revokeSignal?.aborted, true);
 });

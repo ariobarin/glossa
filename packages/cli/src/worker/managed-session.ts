@@ -218,6 +218,7 @@ async function connectRemoteWorker(
   worker: LocalWorker,
   options: ManagedSessionOptions,
   signal: AbortSignal,
+  onConnected: () => void,
 ): Promise<void> {
   let connectionState: RemoteWorkerStatus["state"] | undefined;
   await new RemoteWorker({
@@ -226,6 +227,7 @@ async function connectRemoteWorker(
     worker: visibleWorker(worker, options),
     signal,
     onStatus(status) {
+      if (status.state === "connected") onConnected();
       if (status.state !== "retrying" || connectionState !== "retrying") {
         report(options, { type: "status", status }, statusMessage(status, connectionState));
       } else {
@@ -250,6 +252,18 @@ async function connectRemoteWorker(
       connectionState = status.state;
     },
   }).run();
+}
+
+export function shouldRecoverRejectedDevice(
+  error: unknown,
+  recoveredRejectedDevice: boolean,
+  connected: boolean,
+): boolean {
+  return (
+    error instanceof DeviceRejectedError &&
+    !recoveredRejectedDevice &&
+    !connected
+  );
 }
 
 export async function runManagedSession(
@@ -293,6 +307,7 @@ export async function runManagedSession(
 
     let recoveredRejectedDevice = false;
     while (!controller.signal.aborted) {
+      let connected = false;
       try {
         await connectRemoteWorker(
           endpoints,
@@ -300,13 +315,17 @@ export async function runManagedSession(
           worker,
           options,
           controller.signal,
+          () => {
+            connected = true;
+          },
         );
         break;
       } catch (error) {
-        if (
-          !(error instanceof DeviceRejectedError) ||
-          recoveredRejectedDevice
-        ) {
+        if (!shouldRecoverRejectedDevice(
+          error,
+          recoveredRejectedDevice,
+          connected,
+        )) {
           throw error;
         }
         recoveredRejectedDevice = true;

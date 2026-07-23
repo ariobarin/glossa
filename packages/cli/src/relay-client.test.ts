@@ -1,7 +1,12 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import type { StoredCredentials } from "./config-store.js";
-import { listDevices, renameDevice, revokeDevice } from "./relay-client.js";
+import {
+  enrollDevice,
+  listDevices,
+  renameDevice,
+  revokeDevice,
+} from "./relay-client.js";
 
 const endpoints = {
   relayOrigin: "https://mcp.glossa.test",
@@ -77,4 +82,19 @@ test("accepts an older relay without inventing worker counts", async () => {
     }],
   }));
   assert.equal(devices[0]?.activeWorkers, null);
+});
+
+test("device name conflicts point to direct CLI recovery", async () => {
+  await assert.rejects(
+    enrollDevice(
+      endpoints,
+      credentials,
+      "Test PC",
+      async () => Response.json(
+        { error: "device_name_conflict" },
+        { status: 409 },
+      ),
+    ),
+    /glossa devices.*revoke the stale device/,
+  );
 });

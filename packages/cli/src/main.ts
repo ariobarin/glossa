@@ -147,9 +147,10 @@ async function runWorkspace(
 ): Promise<void> {
   const root = await selectExposureRoot(path);
   const endpoints = loadRelayEndpoints();
-  let credentials: StoredCredentials | undefined;
+  let credentials = (await authenticatedSession()).credentials;
   let statusService: WorkspaceStatusService | undefined;
   let statusListener: ((status: HudStatus) => void) | undefined;
+  let postExitNotice: string | undefined;
   let unsubscribeStatusService = (): void => undefined;
 
   const createStatusService = (
@@ -166,10 +167,12 @@ async function runWorkspace(
 
   const refreshStatus = async (signal: AbortSignal): Promise<HudStatus> => {
     const service = statusService ?? createStatusService(
-      credentials ??= await authenticatedCredentials(signal),
+      credentials,
     );
     return hudStatus(await service.refresh(signal));
   };
+
+  createStatusService(credentials);
 
   let exitAction: HudExitAction;
   try {
@@ -186,13 +189,12 @@ async function runWorkspace(
         };
       },
       run: async (signal, onEvent) => {
-        credentials = (await authenticatedSession(signal)).credentials;
-        createStatusService(credentials);
         await runManagedSession(root, endpoints, {
           credentials,
           signal,
           onEvent(event) {
             onEvent(event);
+            if (event.type === "notice") postExitNotice = event.message;
             if (
               event.type === "status" &&
               event.status.state === "connected" &&
@@ -206,16 +208,21 @@ async function runWorkspace(
         });
       },
       loadStatus: refreshStatus,
-      revokeDevice: async (deviceId) => {
-        credentials ??= await authenticatedCredentials();
-        credentials = await validCredentials(credentials);
-        await revokeDevice(endpoints, credentials, deviceId);
+      revokeDevice: async (deviceId, signal) => {
+        credentials = await validCredentials(credentials, { signal });
+        await revokeDevice(
+          endpoints,
+          credentials,
+          deviceId,
+          async (input, init) => await fetch(input, { ...init, signal }),
+        );
       },
     });
   } finally {
     unsubscribeStatusService();
   }
 
+  if (postExitNotice) console.log(postExitNotice);
   if (exitAction === "logout") await logoutFromGlossa();
   else if (exitAction === "update") updateGlossa();
 }

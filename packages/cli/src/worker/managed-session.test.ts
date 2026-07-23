@@ -6,7 +6,9 @@ import type { RelayEndpoints } from "../relay-client.js";
 import {
   deviceForSession,
   reenrollRejectedDevice,
+  shouldRecoverRejectedDevice,
 } from "./managed-session.js";
+import { DeviceRejectedError } from "./remote-worker.js";
 
 test("aborts device enrollment when the UI session stops", async () => {
   const controller = new AbortController();
@@ -229,4 +231,15 @@ test("re-enrolls once worker registration rejects the stored device", async () =
     ...enrollmentResult,
     accountSubject: "google-oauth2|account-1",
   });
+});
+
+test("only recovers a rejected device before its worker connects", () => {
+  const rejection = new DeviceRejectedError();
+  assert.equal(shouldRecoverRejectedDevice(rejection, false, false), true);
+  assert.equal(shouldRecoverRejectedDevice(rejection, true, false), false);
+  assert.equal(shouldRecoverRejectedDevice(rejection, false, true), false);
+  assert.equal(
+    shouldRecoverRejectedDevice(new Error("offline"), false, false),
+    false,
+  );
 });

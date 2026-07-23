@@ -52,7 +52,7 @@ export interface HudUiActions {
   peekStatus?(): HudStatus | undefined;
   subscribeStatus?(listener: (status: HudStatus) => void): () => void;
   loadStatus(signal: AbortSignal): Promise<HudStatus>;
-  revokeDevice(deviceId: string): Promise<void>;
+  revokeDevice(deviceId: string, signal: AbortSignal): Promise<void>;
 }
 
 export function initialHudState(workspace: string): HudState {
@@ -205,6 +205,15 @@ function renderSession(state: HudState, usable: number, color: boolean): string[
       style(color, PALETTE.muted, `Device  ${truncate(state.deviceName, Math.max(8, usable - 8))}`),
     );
   }
+  lines.push(
+    "",
+    ...wrapText(
+      "Files and commands use your account permissions.",
+      Math.max(8, usable - 2),
+    ).map((line, index) =>
+      `${index === 0 ? style(color, `${PALETTE.coral};1`, "!") : " "} ${style(color, PALETTE.muted, line)}`
+    ),
+  );
   const latest = state.activities.at(-1);
   lines.push(
     "",
@@ -493,6 +502,7 @@ export async function runSessionHud(
     if (!controller.signal.aborted) state = { ...state, connection: "disconnected" };
     render();
   }).catch((error: unknown) => {
+    if (controller.signal.aborted) return;
     state = {
       ...state,
       connection: "error",
@@ -548,7 +558,7 @@ export async function runSessionHud(
           if (!device) return;
           state = { ...state, busy: true, prompt: undefined, notice: undefined };
           render();
-          void actions.revokeDevice(device.id).then(async () => {
+          void actions.revokeDevice(device.id, controller.signal).then(async () => {
             if (controller.signal.aborted) return;
             state = { ...state, busy: false, notice: `Revoked ${device.name}.` };
             render();

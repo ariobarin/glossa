@@ -98,7 +98,9 @@ function relayError(status: number, data: RelayErrorResponse): Error {
     );
   }
   if (status === 409 && data.error === "device_name_conflict") {
-    return new Error("A Glossa device already uses this computer name. Revoke the stale device from another connected Glossa session, then try again.");
+    return new Error(
+      "A Glossa device already uses this computer name. Run `glossa devices`, revoke the stale device, then try again.",
+    );
   }
   if (status === 404 && data.error === "device_not_found") {
     return new Error("The Glossa device was not found.");
