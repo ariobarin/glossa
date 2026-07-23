@@ -1,17 +1,26 @@
 # @ariobarin/glossa
 
 This package contains the `glossa` executable. Node.js 22.9 or newer is required.
-Install the open beta and choose a recognizable name during this computer's
-first enrollment:
+Install the open beta with either the hosted installer:
 
 ```powershell
 irm https://glossa.sh/install | iex
-Set-Location C:\path\to\a\repository
-glossa --device-name "Ari's workstation" .
 ```
 
-The hosted command runs the tracked installer at `site/install.ps1`. The direct
-npm equivalent is `npm install --global @ariobarin/glossa@beta`. Use
+Or install directly from npm:
+
+```powershell
+npm install --global @ariobarin/glossa@beta
+```
+
+Then choose a recognizable name during this computer's first enrollment:
+
+```powershell
+Set-Location C:\path\to\a\repository
+glossa --device-name "my-workstation" .
+```
+
+The hosted command runs the tracked installer at `site/install.ps1`. Use
 `glossa update` or its `glossa upgrade` alias to update the global beta later.
 
 Glossa opens Google sign-in automatically when needed using OAuth Device Authorization Flow. Public client and resource identifiers are built in, so testers do not configure OAuth values. Use the same Google account when authorizing Glossa in ChatGPT.

@@ -19,22 +19,29 @@ Codex and ChatGPT Work share usage. Glossa connects the regular Chat surface to 
 
 Glossa is a Windows-first open beta. The managed relay is live at `https://mcp.glossa.sh/mcp`. A valid Glossa login activates access automatically.
 
-Install the open-beta CLI from PowerShell:
+Install the open-beta CLI from PowerShell. Choose either method.
+
+Hosted installer:
 
 ```powershell
 irm https://glossa.sh/install | iex
 ```
 
+Direct npm install:
+
+```powershell
+npm install --global @ariobarin/glossa@beta
+```
+
 The installer is a small [tracked PowerShell script](site/install.ps1). To inspect
 it first, download it with `irm https://glossa.sh/install -OutFile install.ps1`,
-review it, then run `.\install.ps1`. The transparent npm fallback is
-`npm install --global @ariobarin/glossa@beta`.
+review it, then run `.\install.ps1`.
 
 Then expose one workspace. On the first start, choose a recognizable device name; Glossa opens Google sign-in automatically when needed:
 
 ```powershell
 Set-Location C:\path\to\a\project
-glossa --device-name "Ari's workstation" .
+glossa --device-name "my-workstation" .
 ```
 
 `--device-name` is used only during initial enrollment. Later starts reuse the enrolled name; use `glossa devices rename <id> <name>` to change it. `glossa start .` is the explicit form. You can run additional workers in other terminals to expose more workspaces from the same computer. Use `glossa status` to verify login, relay access, enrolled devices, and active workers. Each device row lists its platform and when the relay last saw it, so stale enrollments are easy to spot. Run `glossa completions <shell>` to print a completion script for PowerShell, Bash, Zsh, or Fish. Run `glossa doctor` for a read-only readiness check of Node.js, Git, relay and worker reachability, sign-in state, and the local device credential.

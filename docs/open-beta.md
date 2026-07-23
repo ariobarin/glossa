@@ -13,10 +13,18 @@ Glossa is not listed in the public plugin directory yet, so add it as a custom a
 
 ## Install and connect
 
-Install the beta CLI:
+Install the beta CLI with either method.
+
+Hosted installer:
 
 ```powershell
 irm https://glossa.sh/install | iex
+```
+
+Direct npm install:
+
+```powershell
+npm install --global @ariobarin/glossa@beta
 ```
 
 The installer checks Windows, Node.js, and npm, installs
@@ -28,9 +36,8 @@ Get-Content .\install.ps1
 .\install.ps1
 ```
 
-You can also install directly with
-`npm install --global @ariobarin/glossa@beta`. Run `glossa update` later to
-upgrade from the beta channel. `glossa upgrade` is an alias.
+Run `glossa update` later to upgrade from the beta channel. `glossa upgrade` is
+an alias.
 
 ## Start a worker
 
@@ -38,7 +45,7 @@ Change to a disposable repository and start Glossa. On this computer's first enr
 
 ```powershell
 Set-Location C:\path\to\a\test-repo
-glossa --device-name "Ari's workstation" .
+glossa --device-name "my-workstation" .
 ```
 
 `--device-name` is used only during initial enrollment. Later starts reuse the enrolled name; use `glossa devices rename <id> <name>` to change it. `glossa start .` is the explicit form. Start more workers in other terminals when you want to expose several workspaces from the same computer.
