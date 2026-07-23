@@ -167,12 +167,11 @@ export async function runSessionHud(
   output: WriteStream = process.stdout,
 ): Promise<void> {
   if (!input.isTTY || !output.isTTY) {
-    throw new Error("glossa ui requires an interactive terminal. Use glossa start instead.");
+    throw new Error("The Glossa session display requires an interactive terminal.");
   }
 
   emitKeypressEvents(input);
   const wasRaw = input.isRaw;
-  const wasPaused = input.isPaused();
   const controller = new AbortController();
   let state = initialHudState(actions.workspace);
   let stopUi: (() => void) | undefined;
@@ -235,7 +234,7 @@ export async function runSessionHud(
     process.removeListener("SIGINT", stop);
     process.removeListener("SIGTERM", stop);
     input.setRawMode(wasRaw);
-    if (wasPaused) input.pause();
+    input.pause();
     output.write("\u001b[?25h\u001b[?1049l");
   }
 }

@@ -2,7 +2,6 @@ export const SUPPORTED_SHELLS = ["powershell", "bash", "zsh", "fish"] as const;
 export type SupportedShell = (typeof SUPPORTED_SHELLS)[number];
 
 const commands = [
-  "ui",
   "start",
   "status",
   "doctor",
@@ -38,10 +37,6 @@ Register-ArgumentCompleter -Native -CommandName glossa -ScriptBlock {
     $command = $elements[1].Value
     if ($wordToComplete -like '-*') {
         switch ($command) {
-            'ui' {
-                @('--allow-broad-root', '--device-name') | Where-Object { $_ -like "$wordToComplete*" } |
-                    ForEach-Object { [System.Management.Automation.CompletionResult]::new($_, $_, 'ParameterName', $_) }
-            }
             'start' {
                 @('--allow-broad-root', '--device-name') | Where-Object { $_ -like "$wordToComplete*" } |
                     ForEach-Object { [System.Management.Automation.CompletionResult]::new($_, $_, 'ParameterName', $_) }
@@ -94,7 +89,7 @@ _glossa() {
   local cmd="\${COMP_WORDS[1]}"
   if [[ "$cur" == -* ]]; then
     case "$cmd" in
-      ui|start) COMPREPLY=( $(compgen -W "--allow-broad-root --device-name" -- "$cur") ) ;;
+      start) COMPREPLY=( $(compgen -W "--allow-broad-root --device-name" -- "$cur") ) ;;
       status|doctor) COMPREPLY=( $(compgen -W "--json" -- "$cur") ) ;;
       devices)
         if [ "$COMP_CWORD" -eq 3 ] && [ "\${COMP_WORDS[2]}" = "list" ]; then
@@ -113,7 +108,7 @@ _glossa() {
       if [ "$COMP_CWORD" -eq 2 ]; then
         COMPREPLY=( $(compgen -W "powershell bash zsh fish" -- "$cur") )
       fi ;;
-    ui|start) ;; # workspace directory: fall through to filename completion
+    start) ;; # workspace directory: fall through to filename completion
   esac
 }
 # -o default lets readline fall back to filename completion for workspace paths
@@ -129,8 +124,7 @@ _glossa() {
   typeset -A opt_args
   local -a glossa_commands
   glossa_commands=(
-    'ui:open the interactive session HUD'
-    'start:expose a workspace'
+    'start:open the session display and expose a workspace'
     'status:show account, relay, and active workers'
     'doctor:check local and relay readiness'
     'devices:manage enrolled computers'
@@ -156,7 +150,7 @@ _glossa() {
           fi
           ;;
         completions) _arguments '2:shell:(powershell bash zsh fish)' ;;
-        ui|start)
+        start)
           _arguments \
             '--allow-broad-root[allow home or drive roots]' \
             '--device-name[name this computer on first enrollment]:device name:' \
@@ -182,8 +176,8 @@ function fishScript(): string {
     ),
     "complete -c glossa -f -n '__fish_seen_subcommand_from devices; and test (count (commandline -opc)) -eq 2' -a 'list rename revoke'",
     "complete -c glossa -f -n '__fish_seen_subcommand_from completions; and test (count (commandline -opc)) -eq 2' -a 'powershell bash zsh fish'",
-    "complete -c glossa -n '__fish_seen_subcommand_from ui start' -l allow-broad-root",
-    "complete -c glossa -n '__fish_seen_subcommand_from ui start' -l device-name -r",
+    "complete -c glossa -n '__fish_seen_subcommand_from start' -l allow-broad-root",
+    "complete -c glossa -n '__fish_seen_subcommand_from start' -l device-name -r",
     "complete -c glossa -n '__fish_seen_subcommand_from status doctor' -l json",
     "complete -c glossa -n '__fish_seen_subcommand_from devices; and contains -- list (commandline -opc)' -l json",
     "complete -c glossa -n '__fish_seen_subcommand_from logout' -l browser",

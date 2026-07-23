@@ -23,4 +23,4 @@ To request account or device deletion, open a minimal issue titled `Account dele
 
 ## Immediate disconnect
 
-Press Ctrl+C in the worker terminal to end useful workspace access. Use `glossa logout` to remove locally stored OAuth credentials. Use `glossa logout --browser` before switching Google accounts, and disconnect the Glossa app or plugin in ChatGPT to revoke client authorization.
+Press `q` or Ctrl+C in the worker terminal to end useful workspace access. Use `glossa logout` to remove locally stored OAuth credentials. Use `glossa logout --browser` before switching Google accounts, and disconnect the Glossa app or plugin in ChatGPT to revoke client authorization.

@@ -6,7 +6,6 @@ import { SUPPORTED_SHELLS, type SupportedShell } from "./completions.js";
 export class UsageError extends Error {}
 
 export type HelpTopic =
-  | "ui"
   | "start"
   | "status"
   | "doctor"
@@ -17,7 +16,6 @@ export type HelpTopic =
   | "logout";
 
 export type CliInvocation =
-  | { command: "ui"; path?: string; allowBroadRoot: boolean; deviceName?: string }
   | { command: "start"; path?: string; allowBroadRoot: boolean; deviceName?: string }
   | { command: "status"; json: boolean }
   | { command: "doctor"; json: boolean }
@@ -32,7 +30,6 @@ export type CliInvocation =
   | { command: "version" };
 
 const helpTopics = new Set<HelpTopic>([
-  "ui",
   "start",
   "status",
   "doctor",
@@ -53,9 +50,9 @@ function parseDeviceName(value: string): string {
   return parsed.data;
 }
 
-function parseWorkspaceCommand(command: "ui" | "start", args: string[]): CliInvocation {
+function parseWorkspaceCommand(args: string[]): CliInvocation {
   if (args.includes("--help") || args.includes("-h")) {
-    return { command: "help", topic: command };
+    return { command: "help", topic: "start" };
   }
   let selectedPath: string | undefined;
   let allowBroadRoot = false;
@@ -77,15 +74,15 @@ function parseWorkspaceCommand(command: "ui" | "start", args: string[]): CliInvo
     } else if (!optionsEnded && argument.startsWith("--device-name=")) {
       deviceName = parseDeviceName(argument.slice("--device-name=".length));
     } else if (!optionsEnded && argument.startsWith("-")) {
-      throw new UsageError(`Unknown ${command} option: ${argument}`);
+      throw new UsageError(`Unknown start option: ${argument}`);
     } else if (selectedPath) {
-      throw new UsageError(`${command === "ui" ? "UI" : "Start"} accepts at most one directory.`);
+      throw new UsageError("Start accepts at most one directory.");
     } else {
       selectedPath = argument;
     }
   }
   return {
-    command,
+    command: "start",
     ...(selectedPath ? { path: selectedPath } : {}),
     allowBroadRoot,
     ...(deviceName ? { deviceName } : {}),
@@ -127,7 +124,6 @@ function likelyDirectory(value: string): boolean {
 }
 
 const KNOWN_COMMANDS = [
-  "ui",
   "start",
   "status",
   "doctor",
@@ -183,7 +179,7 @@ export function suggestCommand(input: string): string | undefined {
 
 export function parseInvocation(args: string[]): CliInvocation {
   const [command, ...options] = args;
-  if (!command) return parseWorkspaceCommand("start", []);
+  if (!command) return parseWorkspaceCommand([]);
   if (command === "--help" || command === "-h") {
     if (options.length > 0) throw new UsageError("Help accepts one command name.");
     return { command: "help" };
@@ -201,8 +197,7 @@ export function parseInvocation(args: string[]): CliInvocation {
     if (options.length > 0) throw new UsageError("Version accepts no arguments.");
     return { command: "version" };
   }
-  if (command === "ui") return parseWorkspaceCommand("ui", options);
-  if (command === "start") return parseWorkspaceCommand("start", options);
+  if (command === "start") return parseWorkspaceCommand(options);
   if (command === "status") {
     if (options.includes("--help") || options.includes("-h")) {
       return { command: "help", topic: "status" };
@@ -257,9 +252,9 @@ export function parseInvocation(args: string[]): CliInvocation {
     }
     throw new UsageError("Logout accepts only --browser.");
   }
-  if (command === "--") return parseWorkspaceCommand("start", options);
-  if (command.startsWith("-")) return parseWorkspaceCommand("start", args);
-  if (likelyDirectory(command)) return parseWorkspaceCommand("start", args);
+  if (command === "--") return parseWorkspaceCommand(options);
+  if (command.startsWith("-")) return parseWorkspaceCommand(args);
+  if (likelyDirectory(command)) return parseWorkspaceCommand(args);
   const suggestion = suggestCommand(command);
   throw new UsageError(
     suggestion

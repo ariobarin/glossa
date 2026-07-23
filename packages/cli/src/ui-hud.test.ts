@@ -93,3 +93,34 @@ test("hud restores the terminal and propagates session failures", async () => {
   assert.equal(input.isPaused(), true);
   assert.match(rendered, /\u001b\[\?1049l/);
 });
+
+test("q and Ctrl+C stop the session and release terminal input", async () => {
+  for (const [label, sequence] of [["q", "q"], ["Ctrl+C", "\u0003"]] as const) {
+    const input = Object.assign(new PassThrough(), {
+      isTTY: true,
+      isRaw: false,
+      setRawMode(value: boolean) {
+        this.isRaw = value;
+        return this;
+      },
+    });
+    const output = Object.assign(new PassThrough(), { isTTY: true, columns: 80 });
+    setImmediate(() => input.write(sequence));
+
+    await runSessionHud(
+      {
+        workspace: "/work/glossa",
+        async run(signal) {
+          await new Promise<void>((resolve) => {
+            signal.addEventListener("abort", () => resolve(), { once: true });
+          });
+        },
+      },
+      input as unknown as ReadStream,
+      output as unknown as WriteStream,
+    );
+
+    assert.equal(input.isRaw, false, `${label} left raw mode enabled`);
+    assert.equal(input.isPaused(), true, `${label} left terminal input flowing`);
+  }
+});

@@ -9,7 +9,7 @@ Glossa does not clone your repository into the hosted relay. The local worker re
 - You choose one Git worktree or explicit directory when you start Glossa.
 - Connected clients can read and modify files inside that root.
 - Connected clients can run commands with the worker account's authority.
-- Press Ctrl+C in the worker terminal to start disconnecting. The worker is disconnected when the process exits.
+- Press `q` or Ctrl+C in the worker terminal to start disconnecting. The worker is disconnected when the process exits.
 
 ## What the relay stores
 

@@ -47,7 +47,6 @@ test("suggests the intended command for close typos", () => {
   assert.match(message("lgoin"), /Did you mean "login"\?/);
   assert.match(message("startt"), /Did you mean "start"\?/);
   assert.match(message("dev"), /Did you mean "devices"\?/);
-  assert.match(message("uio"), /Did you mean "ui"\?/);
   assert.match(message("updat"), /Did you mean "update"\?/);
 });
 
@@ -69,20 +68,8 @@ test("validates device management arguments", () => {
   assert.throws(() => parseInvocation(["devices", "rename", "device-id"]), UsageError);
 });
 
-test("adds an opt-in interactive UI without changing bare startup", () => {
-  assert.deepEqual(parseInvocation(["ui"]), {
-    command: "ui",
-    allowBroadRoot: false,
-  });
-  assert.deepEqual(parseInvocation(["ui", ".", "--allow-broad-root"]), {
-    command: "ui",
-    path: ".",
-    allowBroadRoot: true,
-  });
-  assert.deepEqual(parseInvocation(["ui", "--help"]), {
-    command: "help",
-    topic: "ui",
-  });
+test("does not expose the session display as a separate command", () => {
+  assert.throws(() => parseInvocation(["ui"]), UsageError);
 });
 
 
@@ -92,8 +79,8 @@ test("parses a device name for workspace sessions and trims whitespace", () => {
     allowBroadRoot: false,
     deviceName: "Laptop",
   });
-  assert.deepEqual(parseInvocation(["ui", "--device-name=Build PC"]), {
-    command: "ui",
+  assert.deepEqual(parseInvocation(["start", "--device-name=Build PC"]), {
+    command: "start",
     allowBroadRoot: false,
     deviceName: "Build PC",
   });
@@ -108,7 +95,7 @@ test("parses a device name for workspace sessions and trims whitespace", () => {
 test("rejects a missing or invalid device name", () => {
   assert.throws(() => parseInvocation(["start", "--device-name"]), UsageError);
   assert.throws(
-    () => parseInvocation(["ui", "--device-name", "--allow-broad-root"]),
+    () => parseInvocation(["start", "--device-name", "--allow-broad-root"]),
     UsageError,
   );
   assert.throws(() => parseInvocation(["start", "--device-name", ""]), UsageError);

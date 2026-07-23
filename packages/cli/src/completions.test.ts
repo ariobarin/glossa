@@ -15,7 +15,6 @@ test("every script mentions glossa and its core commands", () => {
     const script = completionScript(shell);
     assert.ok(script.length > 0, `${shell} script was empty`);
     assert.ok(script.includes("glossa"), `${shell} script did not name glossa`);
-    assert.ok(script.includes("ui"), `${shell} script did not list ui`);
     assert.ok(script.includes("start"), `${shell} script did not list start`);
     assert.ok(script.includes("status"), `${shell} script did not list status`);
     assert.ok(script.includes("doctor"), `${shell} script did not list doctor`);
@@ -103,7 +102,6 @@ test("every script offers the four completion shells", () => {
 test("every script offers current workspace options", () => {
   for (const shell of SUPPORTED_SHELLS) {
     const script = completionScript(shell);
-    assert.ok(script.includes("ui"));
     assert.ok(script.includes("allow-broad-root"));
     assert.ok(script.includes("device-name"));
   }

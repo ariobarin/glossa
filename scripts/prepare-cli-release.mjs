@@ -11,7 +11,7 @@ if (!npmCli) {
 }
 
 if (!version || !/^0\.1\.\d+(?:-[0-9A-Za-z.-]+)?$/.test(version)) {
-  console.error("Usage: npm run cli:prepare -- 0.1.0-beta.5");
+  console.error("Usage: npm run cli:prepare -- 0.1.0-beta.10");
   process.exit(1);
 }
 

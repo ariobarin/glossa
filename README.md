@@ -48,7 +48,7 @@ glossa --device-name "my-workstation" .
 
 On the first successful managed-relay connection on a computer, Glossa prints the ChatGPT quickstart link once. It records a `connect-hint-shown` marker in the local Glossa config directory so later starts stay quiet.
 
-Starting `glossa` authorizes connected clients to modify files inside that root and run commands with the full environment and permissions of the Windows account that launched it. Press Ctrl+C to disconnect.
+Starting `glossa` opens the live session display and authorizes connected clients to modify files inside that root and run commands with the full environment and permissions of the Windows account that launched it. Press `q` or Ctrl+C to disconnect.
 
 ## ChatGPT
 

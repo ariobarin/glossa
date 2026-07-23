@@ -31,7 +31,6 @@ const helpText: Record<HelpTopic | "main", string> = {
 Usage:
   glossa
   glossa [directory]
-  glossa ui [directory] [--allow-broad-root] [--device-name <name>]
   glossa start [directory] [--allow-broad-root] [--device-name <name>]
   glossa status [--json]
   glossa doctor [--json]
@@ -46,14 +45,10 @@ Usage:
   glossa --help
 
 Glossa signs in automatically and exposes each started workspace through the managed MCP relay.`,
-  ui: `Usage: glossa ui [directory] [--allow-broad-root] [--device-name <name>]
-
-Opens an experimental compact session HUD for the current workspace.
-It starts immediately, shows connection and activity, and exits with q or Ctrl+C. --device-name names this computer on first enrollment.`,
   start: `Usage: glossa start [directory] [--allow-broad-root] [--device-name <name>]
 
-Starts a foreground worker. Inside Git, the default directory is the worktree root.
-Outside Git, provide a directory. --device-name names this computer the first time it enrolls; once enrolled the name is reused. Press Ctrl+C to disconnect.`,
+Starts a foreground worker with a live session display. Inside Git, the default directory is the worktree root.
+Outside Git, provide a directory. --device-name names this computer the first time it enrolls; once enrolled the name is reused. Press q or Ctrl+C to disconnect.`,
   status: `Usage: glossa status [--json]
 
 Validates Google login, contacts the relay, and reports enrolled devices and active workers.`,
@@ -111,12 +106,28 @@ async function authenticatedCredentials(signal?: AbortSignal): Promise<{
   };
 }
 
-async function runExposure(
+async function runWorkspace(
   path: string | undefined,
   allowBroadRoot: boolean,
   deviceName?: string,
 ): Promise<void> {
   const root = await selectExposureRoot(path, allowBroadRoot);
+  if (process.stdin.isTTY && process.stdout.isTTY) {
+    await runSessionHud({
+      workspace: root,
+      run: async (signal, onEvent) => {
+        await authenticatedCredentials(signal);
+        await runManagedSession(root, loadRelayEndpoints(), allowBroadRoot, {
+          signal,
+          onEvent,
+          quiet: true,
+          handleProcessSignals: false,
+          ...(deviceName ? { deviceName } : {}),
+        });
+      },
+    });
+    return;
+  }
   await authenticatedCredentials();
   await runManagedSession(root, loadRelayEndpoints(), allowBroadRoot, {
     ...(deviceName ? { deviceName } : {}),
@@ -180,37 +191,14 @@ async function showDevices(json: boolean): Promise<void> {
   else for (const device of devices) console.log(formatDeviceRow(device));
 }
 
-async function runInteractive(
-  path: string | undefined,
-  allowBroadRoot: boolean,
-  deviceName?: string,
-): Promise<void> {
-  const root = await selectExposureRoot(path, allowBroadRoot);
-  await runSessionHud({
-    workspace: root,
-    run: async (signal, onEvent) => {
-      await authenticatedCredentials(signal);
-      await runManagedSession(root, loadRelayEndpoints(), allowBroadRoot, {
-        signal,
-        onEvent,
-        quiet: true,
-        handleProcessSignals: false,
-        ...(deviceName ? { deviceName } : {}),
-      });
-    },
-  });
-}
-
 async function main(): Promise<void> {
   const invocation = parseInvocation(process.argv.slice(2));
   if (invocation.command === "help") {
     console.log(helpText[invocation.topic ?? "main"]);
   } else if (invocation.command === "version") {
     console.log(VERSION);
-  } else if (invocation.command === "ui") {
-    await runInteractive(invocation.path, invocation.allowBroadRoot, invocation.deviceName);
   } else if (invocation.command === "start") {
-    await runExposure(invocation.path, invocation.allowBroadRoot, invocation.deviceName);
+    await runWorkspace(invocation.path, invocation.allowBroadRoot, invocation.deviceName);
   } else if (invocation.command === "status") {
     await showStatus(invocation.json);
   } else if (invocation.command === "doctor") {
