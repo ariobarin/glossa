@@ -44,3 +44,36 @@ test("adds an opt-in interactive UI without changing bare startup", () => {
     topic: "ui",
   });
 });
+
+
+test("parses a device name for workspace sessions and trims whitespace", () => {
+  assert.deepEqual(parseInvocation(["start", "--device-name", "  Laptop  "]), {
+    command: "start",
+    allowBroadRoot: false,
+    deviceName: "Laptop",
+  });
+  assert.deepEqual(parseInvocation(["ui", "--device-name=Build PC"]), {
+    command: "ui",
+    allowBroadRoot: false,
+    deviceName: "Build PC",
+  });
+  assert.deepEqual(parseInvocation(["--device-name", "Desk", "."]), {
+    command: "start",
+    path: ".",
+    allowBroadRoot: false,
+    deviceName: "Desk",
+  });
+});
+
+test("rejects a missing or invalid device name", () => {
+  assert.throws(() => parseInvocation(["start", "--device-name"]), UsageError);
+  assert.throws(
+    () => parseInvocation(["ui", "--device-name", "--allow-broad-root"]),
+    UsageError,
+  );
+  assert.throws(() => parseInvocation(["start", "--device-name", ""]), UsageError);
+  assert.throws(
+    () => parseInvocation(["start", "--device-name", "x".repeat(81)]),
+    UsageError,
+  );
+});

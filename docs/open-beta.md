@@ -28,7 +28,7 @@ Set-Location C:\path\to\a\test-repo
 glossa
 ```
 
-You can also run `glossa start .`. Start more workers in other terminals when you want to expose several workspaces from the same computer.
+You can also run `glossa start .`. Start more workers in other terminals when you want to expose several workspaces from the same computer. Pass `--device-name <name>` to name this computer the first time it enrolls, so it is easy to tell apart in `glossa devices list`.
 
 To try the experimental compact session HUD instead, run `glossa ui .`. It immediately starts the worker, shows connection and tool activity, and keeps the worker-account authority warning visible. Press `d` for details, `?` for help, or `q` to disconnect.
 

@@ -28,8 +28,8 @@ const helpText: Record<HelpTopic | "main", string> = {
 Usage:
   glossa
   glossa [directory]
-  glossa ui [directory] [--allow-broad-root]
-  glossa start [directory] [--allow-broad-root]
+  glossa ui [directory] [--allow-broad-root] [--device-name <name>]
+  glossa start [directory] [--allow-broad-root] [--device-name <name>]
   glossa status [--json]
   glossa devices list [--json]
   glossa devices rename <id> <name>
@@ -40,14 +40,14 @@ Usage:
   glossa --help
 
 Glossa signs in automatically and exposes each started workspace through the managed MCP relay.`,
-  ui: `Usage: glossa ui [directory] [--allow-broad-root]
+  ui: `Usage: glossa ui [directory] [--allow-broad-root] [--device-name <name>]
 
 Opens an experimental compact session HUD for the current workspace.
-It starts immediately, shows connection and activity, and exits with q or Ctrl+C.`,
-  start: `Usage: glossa start [directory] [--allow-broad-root]
+It starts immediately, shows connection and activity, and exits with q or Ctrl+C. --device-name names this computer on first enrollment.`,
+  start: `Usage: glossa start [directory] [--allow-broad-root] [--device-name <name>]
 
 Starts a foreground worker. Inside Git, the default directory is the worktree root.
-Outside Git, provide a directory. Press Ctrl+C to disconnect.`,
+Outside Git, provide a directory. --device-name names this computer the first time it enrolls; once enrolled the name is reused. Press Ctrl+C to disconnect.`,
   status: `Usage: glossa status [--json]
 
 Validates Google login, contacts the relay, and reports enrolled devices and active workers.`,
@@ -93,10 +93,16 @@ async function authenticatedCredentials(signal?: AbortSignal): Promise<{
   };
 }
 
-async function runExposure(path: string | undefined, allowBroadRoot: boolean): Promise<void> {
+async function runExposure(
+  path: string | undefined,
+  allowBroadRoot: boolean,
+  deviceName?: string,
+): Promise<void> {
   const root = await selectExposureRoot(path, allowBroadRoot);
   await authenticatedCredentials();
-  await runManagedSession(root, loadRelayEndpoints(), allowBroadRoot);
+  await runManagedSession(root, loadRelayEndpoints(), allowBroadRoot, {
+    ...(deviceName ? { deviceName } : {}),
+  });
 }
 
 function deviceStatus(device: RelayDevice): string {
@@ -163,7 +169,11 @@ async function showDevices(json: boolean): Promise<void> {
   else for (const device of devices) console.log(`${device.id}  ${device.name}  ${deviceStatus(device)}`);
 }
 
-async function runInteractive(path: string | undefined, allowBroadRoot: boolean): Promise<void> {
+async function runInteractive(
+  path: string | undefined,
+  allowBroadRoot: boolean,
+  deviceName?: string,
+): Promise<void> {
   const root = await selectExposureRoot(path, allowBroadRoot);
   await runSessionHud({
     workspace: root,
@@ -174,6 +184,7 @@ async function runInteractive(path: string | undefined, allowBroadRoot: boolean)
         onEvent,
         quiet: true,
         handleProcessSignals: false,
+        ...(deviceName ? { deviceName } : {}),
       });
     },
   });
@@ -186,9 +197,9 @@ async function main(): Promise<void> {
   } else if (invocation.command === "version") {
     console.log(VERSION);
   } else if (invocation.command === "ui") {
-    await runInteractive(invocation.path, invocation.allowBroadRoot);
+    await runInteractive(invocation.path, invocation.allowBroadRoot, invocation.deviceName);
   } else if (invocation.command === "start") {
-    await runExposure(invocation.path, invocation.allowBroadRoot);
+    await runExposure(invocation.path, invocation.allowBroadRoot, invocation.deviceName);
   } else if (invocation.command === "status") {
     await showStatus(invocation.json);
   } else if (invocation.command === "login") {

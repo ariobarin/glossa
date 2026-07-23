@@ -69,6 +69,7 @@ export interface ManagedSessionOptions {
   onEvent?: (event: ManagedSessionEvent) => void;
   quiet?: boolean;
   handleProcessSignals?: boolean;
+  deviceName?: string;
 }
 
 function report(
@@ -118,6 +119,7 @@ export interface ManagedDeviceDependencies {
   accountOwnsDevice?: typeof accountOwnsDevice;
   enrollDevice?: typeof enrollDevice;
   defaultDeviceName?: typeof defaultDeviceName;
+  deviceName?: string;
   fetch?: FetchLike;
 }
 
@@ -158,7 +160,12 @@ export async function deviceForSession(
     }
     await removeDevice();
   }
-  const enrolled = await enroll(endpoints, credentials, name(), fetchRequest);
+  const enrolled = await enroll(
+    endpoints,
+    credentials,
+    dependencies.deviceName ?? name(),
+    fetchRequest,
+  );
   await saveDevice(enrolled);
   return enrolled;
 }
@@ -194,7 +201,11 @@ export async function runManagedSession(
   }
 
   try {
-    const device = await deviceForSession(endpoints, {}, controller.signal);
+    const device = await deviceForSession(
+      endpoints,
+      options.deviceName ? { deviceName: options.deviceName } : {},
+      controller.signal,
+    );
     controller.signal.throwIfAborted();
     worker = await LocalWorker.create(root, allowBroadRoot);
     controller.signal.throwIfAborted();

@@ -1,13 +1,14 @@
 import { existsSync } from "node:fs";
 import path from "node:path";
+import { deviceNameSchema } from "@glossa/protocol";
 
 export class UsageError extends Error {}
 
 export type HelpTopic = "ui" | "start" | "status" | "devices" | "login" | "logout";
 
 export type CliInvocation =
-  | { command: "ui"; path?: string; allowBroadRoot: boolean }
-  | { command: "start"; path?: string; allowBroadRoot: boolean }
+  | { command: "ui"; path?: string; allowBroadRoot: boolean; deviceName?: string }
+  | { command: "start"; path?: string; allowBroadRoot: boolean; deviceName?: string }
   | { command: "status"; json: boolean }
   | { command: "devices"; action: "list"; json: boolean }
   | { command: "devices"; action: "rename"; deviceId: string; name: string }
@@ -26,18 +27,39 @@ const helpTopics = new Set<HelpTopic>([
   "logout",
 ]);
 
+function parseDeviceName(value: string): string {
+  const parsed = deviceNameSchema.safeParse(value);
+  if (!parsed.success) {
+    throw new UsageError(
+      "Device names must be 1 to 80 characters with no control characters.",
+    );
+  }
+  return parsed.data;
+}
+
 function parseWorkspaceCommand(command: "ui" | "start", args: string[]): CliInvocation {
   if (args.includes("--help") || args.includes("-h")) {
     return { command: "help", topic: command };
   }
   let selectedPath: string | undefined;
   let allowBroadRoot = false;
+  let deviceName: string | undefined;
   let optionsEnded = false;
-  for (const argument of args) {
+  for (let index = 0; index < args.length; index += 1) {
+    const argument = args[index]!;
     if (!optionsEnded && argument === "--") {
       optionsEnded = true;
     } else if (!optionsEnded && argument === "--allow-broad-root") {
       allowBroadRoot = true;
+    } else if (!optionsEnded && argument === "--device-name") {
+      const value = args[index + 1];
+      if (value === undefined || value.startsWith("-")) {
+        throw new UsageError("--device-name requires a value.");
+      }
+      deviceName = parseDeviceName(value);
+      index += 1;
+    } else if (!optionsEnded && argument.startsWith("--device-name=")) {
+      deviceName = parseDeviceName(argument.slice("--device-name=".length));
     } else if (!optionsEnded && argument.startsWith("-")) {
       throw new UsageError(`Unknown ${command} option: ${argument}`);
     } else if (selectedPath) {
@@ -50,6 +72,7 @@ function parseWorkspaceCommand(command: "ui" | "start", args: string[]): CliInvo
     command,
     ...(selectedPath ? { path: selectedPath } : {}),
     allowBroadRoot,
+    ...(deviceName ? { deviceName } : {}),
   };
 }
 
