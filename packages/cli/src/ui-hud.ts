@@ -205,18 +205,6 @@ function renderSession(state: HudState, usable: number, color: boolean): string[
       style(color, PALETTE.muted, `Device  ${truncate(state.deviceName, Math.max(8, usable - 8))}`),
     );
   }
-  lines.push(
-    "",
-    sectionTitle("Authority", color, PALETTE.coral),
-    ...wrapText("Full account permissions", Math.max(8, usable - 2)).map((line, index) =>
-      `${index === 0 ? style(color, `${PALETTE.coral};1`, "!") : " "} ${style(color, PALETTE.ink, line)}`
-    ),
-    "",
-    ...wrapText(
-      "Connected clients may modify files and run commands with this account's environment and permissions.",
-      Math.max(12, usable - 2),
-    ).map((line) => `  ${style(color, PALETTE.muted, line)}`),
-  );
   const latest = state.activities.at(-1);
   lines.push(
     "",

@@ -44,9 +44,6 @@ test("hud defaults to one calm status surface", () => {
   assert.match(view, /● Connected/);
   assert.match(view, /ChatGPT can use this workspace\./);
   assert.match(view, /WORKSPACE/);
-  assert.match(view, /AUTHORITY/);
-  assert.match(view, /Full account permissions/);
-  assert.match(view, /Connected clients may modify files/);
   assert.match(view, /LATEST ACTIVITY/);
   assert.match(view, /D Activity +S Status/);
   assert.doesNotMatch(view, /RECENT ACTIVITY/);
@@ -68,7 +65,6 @@ test("hud keeps the hierarchy readable in a narrow terminal", () => {
   const view = renderHud(initial, 24, false);
   assert.match(view, /^  Glossa +SESSION$/m);
   assert.match(view, /Q Disconnect/);
-  assert.match(view, /Full account/);
   const states = [
     initial,
     { ...initial, view: "activity" as const },
@@ -117,7 +113,6 @@ test("hud uses the Glossa paper, purple, coral, ink, and muted palette", () => {
   assert.match(view, /\u001b\[38;2;255;102;95;1mSESSION/);
   assert.match(view, /\u001b\[22;38;2;244;241;251;48;2;17;16;22m/);
   assert.match(view, /\u001b\[38;2;173;152;255;1mWORKSPACE/);
-  assert.match(view, /\u001b\[38;2;255;102;95;1mAUTHORITY/);
   assert.match(view, /\u001b\[38;2;170;164;181m/);
 });
 
