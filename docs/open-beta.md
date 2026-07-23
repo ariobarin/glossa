@@ -38,7 +38,7 @@ Change to a disposable repository and start Glossa. On this computer's first enr
 
 ```powershell
 Set-Location C:\path\to\a\test-repo
-glossa --device-name "Ari's workstation" .
+glossa --device-name "my-workstation" .
 ```
 
 `--device-name` is used only during initial enrollment. Later starts reuse the enrolled name; use `glossa devices rename <id> <name>` to change it. `glossa start .` is the explicit form. Start more workers in other terminals when you want to expose several workspaces from the same computer.

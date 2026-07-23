@@ -7,7 +7,7 @@ first enrollment:
 ```powershell
 irm https://glossa.sh/install | iex
 Set-Location C:\path\to\a\repository
-glossa --device-name "Ari's workstation" .
+glossa --device-name "my-workstation" .
 ```
 
 The hosted command runs the tracked installer at `site/install.ps1`. The direct
