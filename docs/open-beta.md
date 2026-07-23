@@ -4,27 +4,36 @@ Glossa is currently an open beta for Windows, macOS, and Linux. Start with a fol
 
 ## Requirements
 
-- Node.js 22.9 or newer and npm
+- Node.js 22.9 or newer if you install with npm
 - Developer Mode enabled in ChatGPT
 
 Glossa is not listed in the public plugin directory yet, so add it as a custom app through Developer Mode during the open beta.
 
 ## Install and connect
 
-On Windows, install the beta CLI with the hosted PowerShell installer:
-
-```powershell
-irm https://glossa.sh/install | iex
-```
-
-On Windows, macOS, or Linux, install directly from npm:
+The recommended install on Windows, macOS, and Linux uses npm:
 
 ```shell
 npm install --global @ariobarin/glossa@beta
 ```
 
-The installer checks Windows, Node.js, and npm, installs
-`@ariobarin/glossa@beta`, and verifies the installed CLI. To inspect it first:
+If you do not want Node.js or npm, install the self-contained executable.
+
+Windows:
+
+```powershell
+irm https://glossa.sh/install | iex
+```
+
+macOS or Linux:
+
+```shell
+curl -fsSL https://glossa.sh/install.sh | sh
+```
+
+The direct installer detects the operating system and architecture, verifies the
+downloaded executable with SHA-256, and installs it for the current user. To
+inspect the Windows script first:
 
 ```powershell
 irm https://glossa.sh/install -OutFile install.ps1
@@ -32,8 +41,8 @@ Get-Content .\install.ps1
 .\install.ps1
 ```
 
-Run `glossa update` later to upgrade from the beta channel. `glossa upgrade` is
-an alias.
+Run `glossa update` later. It uses npm or the direct release channel to match the
+original installation. `glossa upgrade` is an alias.
 
 ## Start a worker
 
@@ -81,7 +90,7 @@ Only test writes and commands inside a folder you are comfortable modifying.
 ## Troubleshooting
 
 - Run `glossa status` to validate Google login, relay access, enrolled devices, and active workers.
-- Run `glossa doctor` to check Node.js, relay reachability, sign-in state, and the local device credential before reporting a problem.
+- Run `glossa doctor` to check the runtime, relay reachability, sign-in state, and the local device credential before reporting a problem.
 - No Create option: confirm Developer Mode is enabled and your workspace role has access.
 - No online devices: confirm the `glossa` terminal is still running.
 - App setup cannot discover tools: confirm `https://mcp.glossa.sh/healthz` returns `{"ok":true,"service":"glossa-relay"}`.

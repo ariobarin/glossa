@@ -54,6 +54,96 @@ jobs:
     steps:
       - run: echo "windows matrix passed"
 
+  standalone-matrix:
+    name: standalone-check (${{ matrix.asset }})
+    runs-on: ${{ matrix.runner }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - runner: windows-latest
+            target: bun-windows-x64-baseline
+            asset: glossa-windows-x64.exe
+            bun-package: "@oven/bun-windows-x64-baseline@1.3.14"
+            bun-command: ./node_modules/@oven/bun-windows-x64-baseline/bin/bun.exe
+          - runner: windows-11-arm
+            target: bun-windows-arm64
+            asset: glossa-windows-arm64.exe
+            bun-package: none
+            bun-command: bun
+          - runner: ubuntu-24.04
+            target: bun-linux-x64-baseline
+            asset: glossa-linux-x64
+            bun-package: none
+            bun-command: bun
+          - runner: ubuntu-24.04-arm
+            target: bun-linux-arm64
+            asset: glossa-linux-arm64
+            bun-package: none
+            bun-command: bun
+          - runner: macos-15-intel
+            target: bun-darwin-x64-baseline
+            asset: glossa-macos-x64
+            bun-package: none
+            bun-command: bun
+          - runner: macos-15
+            target: bun-darwin-arm64
+            asset: glossa-macos-arm64
+            bun-package: none
+            bun-command: bun
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: "24"
+          cache: npm
+      - uses: oven-sh/setup-bun@v2
+        if: matrix.bun-package == 'none'
+        with:
+          bun-version: "1.3.14"
+      - run: npm ci
+      - name: Install baseline Bun
+        if: matrix.bun-package != 'none'
+        run: npm install --no-save --package-lock=false --ignore-scripts "${{ matrix.bun-package }}"
+      - run: npm run build --workspace @glossa/protocol
+      - name: Build standalone executable
+        env:
+          GLOSSA_BUN_TARGET: ${{ matrix.target }}
+          GLOSSA_STANDALONE_ASSET: ${{ matrix.asset }}
+        run: ${{ matrix.bun-command }} packages/cli/scripts/build-standalone.ts
+      - name: Sign macOS executable
+        if: runner.os == 'macOS'
+        run: |
+          codesign --force --deep --sign - \
+            --entitlements packages/cli/scripts/macos-entitlements.plist \
+            "dist/standalone/${{ matrix.asset }}"
+          codesign --verify --deep --strict "dist/standalone/${{ matrix.asset }}"
+      - name: Smoke standalone executable
+        run: node packages/cli/scripts/smoke-standalone.mjs "dist/standalone/${{ matrix.asset }}"
+      - name: Smoke direct installer
+        run: node packages/cli/scripts/smoke-direct-installer.mjs "dist/standalone/${{ matrix.asset }}" "${{ matrix.asset }}"
+      - name: Build standalone update fixture
+        env:
+          GLOSSA_BUN_TARGET: ${{ matrix.target }}
+          GLOSSA_STANDALONE_ASSET: ${{ matrix.asset }}
+          GLOSSA_STANDALONE_OUTPUT_DIR: dist/update-fixture
+          GLOSSA_STANDALONE_VERSION: 0.1.0-beta.999
+        run: ${{ matrix.bun-command }} packages/cli/scripts/build-standalone.ts
+      - name: Sign macOS update fixture
+        if: runner.os == 'macOS'
+        run: |
+          codesign --force --deep --sign - \
+            --entitlements packages/cli/scripts/macos-entitlements.plist \
+            "dist/update-fixture/${{ matrix.asset }}"
+          codesign --verify --deep --strict "dist/update-fixture/${{ matrix.asset }}"
+      - name: Smoke standalone update
+        run: node packages/cli/scripts/smoke-standalone-update.mjs "dist/standalone/${{ matrix.asset }}" "dist/update-fixture/${{ matrix.asset }}" "${{ matrix.asset }}"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.asset }}
+          path: dist/standalone/${{ matrix.asset }}
+          if-no-files-found: error
+
   deploy-changes:
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
@@ -86,7 +176,7 @@ jobs:
 
   deploy:
     if: needs.deploy-changes.outputs.relay == 'true'
-    needs: [relay-check, windows-check, deploy-changes]
+    needs: [relay-check, windows-check, standalone-matrix, deploy-changes]
     runs-on: ubuntu-latest
     concurrency:
       group: heroku-production

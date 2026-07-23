@@ -613,6 +613,14 @@ p {
   background: #0d0c11;
 }
 
+.docs-tabs-wide {
+  width: min(100%, 390px);
+}
+
+.docs-tabs-wide button {
+  flex: 1;
+}
+
 .docs-tabs button {
   min-width: 104px;
   min-height: 36px;
