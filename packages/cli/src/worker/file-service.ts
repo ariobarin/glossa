@@ -1,5 +1,5 @@
 import { createHash, randomUUID } from "node:crypto";
-import { lstat, readFile, rename, rm, stat, writeFile } from "node:fs/promises";
+import { chmod, lstat, readFile, rename, rm, stat, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { StringDecoder } from "node:string_decoder";
 import { MAX_EDIT_DIFF_BYTES, MAX_TEXT_BYTES } from "@glossa/protocol";
@@ -213,6 +213,13 @@ export class FileService {
     }
 
     let target = await this.policy.resolveWritableFile(relativePath);
+    let existingMode: number | undefined;
+    try {
+      const existingStat = await stat(target);
+      if (existingStat.isFile()) existingMode = existingStat.mode & 0o7777;
+    } catch (error) {
+      if ((error as NodeJS.ErrnoException).code !== "ENOENT") throw error;
+    }
     if (expectedSha256) {
       let actual: string | null = null;
       try {
@@ -233,6 +240,9 @@ export class FileService {
       const tempStat = await lstat(temporary);
       if (!tempStat.isFile() || tempStat.isSymbolicLink()) {
         throw new WorkerError("unsafe_temporary_file", "The atomic write temporary file changed.");
+      }
+      if (existingMode !== undefined && process.platform !== "win32") {
+        await chmod(temporary, existingMode);
       }
       await rename(temporary, target);
     } finally {
