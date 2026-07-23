@@ -3,9 +3,10 @@ import path from "node:path";
 
 export class UsageError extends Error {}
 
-export type HelpTopic = "start" | "status" | "devices" | "login" | "logout";
+export type HelpTopic = "ui" | "start" | "status" | "devices" | "login" | "logout";
 
 export type CliInvocation =
+  | { command: "ui"; path?: string; allowBroadRoot: boolean }
   | { command: "start"; path?: string; allowBroadRoot: boolean }
   | { command: "status"; json: boolean }
   | { command: "devices"; action: "list"; json: boolean }
@@ -16,11 +17,18 @@ export type CliInvocation =
   | { command: "help"; topic?: HelpTopic }
   | { command: "version" };
 
-const helpTopics = new Set<HelpTopic>(["start", "status", "devices", "login", "logout"]);
+const helpTopics = new Set<HelpTopic>([
+  "ui",
+  "start",
+  "status",
+  "devices",
+  "login",
+  "logout",
+]);
 
-function parseStart(args: string[]): CliInvocation {
+function parseWorkspaceCommand(command: "ui" | "start", args: string[]): CliInvocation {
   if (args.includes("--help") || args.includes("-h")) {
-    return { command: "help", topic: "start" };
+    return { command: "help", topic: command };
   }
   let selectedPath: string | undefined;
   let allowBroadRoot = false;
@@ -31,15 +39,15 @@ function parseStart(args: string[]): CliInvocation {
     } else if (!optionsEnded && argument === "--allow-broad-root") {
       allowBroadRoot = true;
     } else if (!optionsEnded && argument.startsWith("-")) {
-      throw new UsageError(`Unknown start option: ${argument}`);
+      throw new UsageError(`Unknown ${command} option: ${argument}`);
     } else if (selectedPath) {
-      throw new UsageError("Start accepts at most one directory.");
+      throw new UsageError(`${command === "ui" ? "UI" : "Start"} accepts at most one directory.`);
     } else {
       selectedPath = argument;
     }
   }
   return {
-    command: "start",
+    command,
     ...(selectedPath ? { path: selectedPath } : {}),
     allowBroadRoot,
   };
@@ -81,7 +89,7 @@ function likelyDirectory(value: string): boolean {
 
 export function parseInvocation(args: string[]): CliInvocation {
   const [command, ...options] = args;
-  if (!command) return parseStart([]);
+  if (!command) return parseWorkspaceCommand("start", []);
   if (command === "--help" || command === "-h") {
     if (options.length > 0) throw new UsageError("Help accepts one command name.");
     return { command: "help" };
@@ -99,7 +107,8 @@ export function parseInvocation(args: string[]): CliInvocation {
     if (options.length > 0) throw new UsageError("Version accepts no arguments.");
     return { command: "version" };
   }
-  if (command === "start") return parseStart(options);
+  if (command === "ui") return parseWorkspaceCommand("ui", options);
+  if (command === "start") return parseWorkspaceCommand("start", options);
   if (command === "status") {
     if (options.includes("--help") || options.includes("-h")) {
       return { command: "help", topic: "status" };
@@ -124,8 +133,8 @@ export function parseInvocation(args: string[]): CliInvocation {
     }
     throw new UsageError("Logout accepts only --browser.");
   }
-  if (command === "--") return parseStart(options);
-  if (command.startsWith("-")) return parseStart(args);
-  if (likelyDirectory(command)) return parseStart(args);
+  if (command === "--") return parseWorkspaceCommand("start", options);
+  if (command.startsWith("-")) return parseWorkspaceCommand("start", args);
+  if (likelyDirectory(command)) return parseWorkspaceCommand("start", args);
   throw new UsageError(`Unknown command: ${command}`);
 }
