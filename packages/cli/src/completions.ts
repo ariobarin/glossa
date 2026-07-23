@@ -5,6 +5,7 @@ const commands = [
   "ui",
   "start",
   "status",
+  "doctor",
   "devices",
   "completions",
   "login",
@@ -44,6 +45,10 @@ Register-ArgumentCompleter -Native -CommandName glossa -ScriptBlock {
                     ForEach-Object { [System.Management.Automation.CompletionResult]::new($_, $_, 'ParameterName', $_) }
             }
             'status' {
+                @('--json') | Where-Object { $_ -like "$wordToComplete*" } |
+                    ForEach-Object { [System.Management.Automation.CompletionResult]::new($_, $_, 'ParameterName', $_) }
+            }
+            'doctor' {
                 @('--json') | Where-Object { $_ -like "$wordToComplete*" } |
                     ForEach-Object { [System.Management.Automation.CompletionResult]::new($_, $_, 'ParameterName', $_) }
             }
@@ -88,7 +93,7 @@ _glossa() {
   if [[ "$cur" == -* ]]; then
     case "$cmd" in
       ui|start) COMPREPLY=( $(compgen -W "--allow-broad-root --device-name" -- "$cur") ) ;;
-      status) COMPREPLY=( $(compgen -W "--json" -- "$cur") ) ;;
+      status|doctor) COMPREPLY=( $(compgen -W "--json" -- "$cur") ) ;;
       devices)
         if [ "$COMP_CWORD" -eq 3 ] && [ "\${COMP_WORDS[2]}" = "list" ]; then
           COMPREPLY=( $(compgen -W "--json" -- "$cur") )
@@ -125,6 +130,7 @@ _glossa() {
     'ui:open the interactive session HUD'
     'start:expose a workspace'
     'status:show account, relay, and active workers'
+    'doctor:check local and relay readiness'
     'devices:manage enrolled computers'
     'completions:emit a shell completion script'
     'login:ensure a Glossa session'
@@ -152,7 +158,7 @@ _glossa() {
             '--device-name[name this computer on first enrollment]:device name:' \
             '2:workspace:_directories'
           ;;
-        status) _arguments '--json[print machine-readable JSON]' ;;
+        status|doctor) _arguments '--json[print machine-readable JSON]' ;;
         logout) _arguments '--browser[also sign out of the browser session]' ;;
       esac
       ;;
@@ -174,7 +180,7 @@ function fishScript(): string {
     "complete -c glossa -f -n '__fish_seen_subcommand_from completions; and test (count (commandline -opc)) -eq 2' -a 'powershell bash zsh fish'",
     "complete -c glossa -n '__fish_seen_subcommand_from ui start' -l allow-broad-root",
     "complete -c glossa -n '__fish_seen_subcommand_from ui start' -l device-name -r",
-    "complete -c glossa -n '__fish_seen_subcommand_from status' -l json",
+    "complete -c glossa -n '__fish_seen_subcommand_from status doctor' -l json",
     "complete -c glossa -n '__fish_seen_subcommand_from devices; and contains -- list (commandline -opc)' -l json",
     "complete -c glossa -n '__fish_seen_subcommand_from logout' -l browser",
     "",
