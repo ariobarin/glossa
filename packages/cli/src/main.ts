@@ -11,8 +11,8 @@ import {
   loadRelayEndpoints,
   renameDevice,
   revokeDevice,
-  type RelayDevice,
 } from "./relay-client.js";
+import { formatDeviceRow } from "./device-format.js";
 import { logoutFromGlossa } from "./logout.js";
 import { noActiveWorkerHint } from "./status-guidance.js";
 import { runSessionHud } from "./ui-hud.js";
@@ -110,13 +110,6 @@ async function runExposure(
   });
 }
 
-function deviceStatus(device: RelayDevice): string {
-  if (device.revokedAt) return "revoked";
-  if (device.activeWorkers === null) return "worker count unavailable";
-  if (device.activeWorkers === 0) return "offline";
-  return `${device.activeWorkers} active ${device.activeWorkers === 1 ? "worker" : "workers"}`;
-}
-
 async function showStatus(json: boolean): Promise<void> {
   const { credentials: initial } = await authenticatedCredentials();
   const { credentials, profile } = await loadUserProfile(initial);
@@ -152,7 +145,7 @@ async function showStatus(json: boolean): Promise<void> {
   const hint = noActiveWorkerHint(activeWorkers, devices.length);
   if (hint) console.log(hint);
   for (const device of devices) {
-    console.log(`${device.id}  ${device.name}  ${deviceStatus(device)}`);
+    console.log(formatDeviceRow(device));
   }
 }
 
@@ -171,7 +164,7 @@ async function showDevices(json: boolean): Promise<void> {
   const devices = await listDevices(endpoints, credentials);
   if (json) console.log(JSON.stringify({ devices }, null, 2));
   else if (devices.length === 0) console.log("No devices enrolled.");
-  else for (const device of devices) console.log(`${device.id}  ${device.name}  ${deviceStatus(device)}`);
+  else for (const device of devices) console.log(formatDeviceRow(device));
 }
 
 async function runInteractive(
