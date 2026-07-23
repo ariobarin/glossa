@@ -1,6 +1,7 @@
 import type { WorkerJob, WorkerResult } from "@glossa/protocol";
 import { type FetchLike, validCredentials } from "../auth-session.js";
 import { loadCredentials } from "../config-store.js";
+import { announceConnectHint, connectHintStore, shouldShowConnectHint } from "../first-run.js";
 import {
   deleteDeviceCredential,
   loadDeviceCredential,
@@ -240,6 +241,15 @@ export async function runManagedSession(
             { type: "notice", message: "The relay needs an update before this computer can expose several workspaces at once." },
             "The relay needs an update before this computer can expose several workspaces at once.",
           );
+        }
+        if (
+          status.state === "connected" &&
+          !status.reconnected &&
+          shouldShowConnectHint(endpoints.relayOrigin)
+        ) {
+          void announceConnectHint(connectHintStore(), (message) => {
+            report(options, { type: "notice", message }, message);
+          }).catch(() => undefined);
         }
         connectionState = status.state;
       },
