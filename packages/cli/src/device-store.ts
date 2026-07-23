@@ -53,6 +53,10 @@ export async function loadDeviceCredential(): Promise<StoredDeviceCredential | n
   return (await store.load())?.value ?? null;
 }
 
+export async function peekDeviceCredential(): Promise<StoredDeviceCredential | null> {
+  return (await store.peek())?.value ?? null;
+}
+
 export async function saveDeviceCredential(
   credential: StoredDeviceCredential,
 ): Promise<void> {
