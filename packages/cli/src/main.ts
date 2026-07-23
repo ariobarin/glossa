@@ -98,7 +98,10 @@ async function authenticatedCredentials(signal?: AbortSignal): Promise<{
   const loaded = await loadCredentials();
   if (!loaded) throw new Error("Glossa could not load the completed login.");
   return {
-    credentials: await validCredentials(loaded.credentials),
+    credentials: await validCredentials(
+      loaded.credentials,
+      signal ? { signal } : {},
+    ),
     loginPerformed,
   };
 }
