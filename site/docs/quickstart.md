@@ -43,18 +43,15 @@ Confirm the command is available:
 glossa --version
 ```
 
-Afterward, `glossa update` installs the newest beta. `glossa upgrade` is an
-alias.
+After Glossa starts, press `u` to install the newest beta.
 
 ## Step 2: Start a workspace
 
-Open a terminal in the folder where you want ChatGPT to work. On this computer's first enrollment, choose a recognizable device name:
+Open a terminal in the folder where you want ChatGPT to work:
 
 ```shell
-glossa --device-name "my-workstation" .
+glossa
 ```
-
-`--device-name` is used only during initial enrollment. Later starts reuse the enrolled name; use `glossa devices rename <id> <name>` to change it. `glossa start .` is the explicit form. You can start more workers in other terminals to expose additional workspaces from the same computer.
 
 > Keep this terminal open. Closing it disconnects that local workspace from ChatGPT.
 
@@ -106,11 +103,7 @@ https://mcp.glossa.sh/mcp
 
 ## Step 4: Verify the connection
 
-In another terminal, check the account, relay, enrolled device, and active worker:
-
-```shell
-glossa status
-```
+Press `s` in Glossa to check the account, relay, enrolled device, and active worker. Press Esc to return to the workspace view.
 
 <!-- audience-switcher:start -->
 <!-- audience:personal -->

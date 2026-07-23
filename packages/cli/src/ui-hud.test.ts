@@ -32,7 +32,7 @@ test("hud defaults to one calm status surface", () => {
   assert.match(view, /Files may be modified and commands/);
   assert.match(view, /have the full environment and/);
   assert.match(view, /permissions of this account\./);
-  assert.match(view, /d details  \? help  q disconnect/);
+  assert.match(view, /d activity  s status/);
   assert.doesNotMatch(view, /Recent activity/);
 });
 
@@ -51,6 +51,22 @@ test("hud keeps the title centered in a narrow terminal", () => {
   const view = renderHud(initialHudState("/work/glossa"), 24, false);
   assert.match(view, /^ {9}Glossa$/m);
   assert.match(view, /q disconnect/);
+});
+
+test("hud contains account and device management", () => {
+  const view = renderHud({
+    ...initialHudState("/work/glossa"),
+    view: "status",
+    status: {
+      account: "dev@example.com",
+      relay: "https://mcp.glossa.test",
+      activeWorkers: 2,
+      devices: [{ id: "device-1", label: "Laptop | Windows | online" }],
+    },
+  }, 100, false);
+  assert.match(view, /dev@example\.com/);
+  assert.match(view, /Laptop \| Windows \| online/);
+  assert.match(view, /r revoke  l sign out  u update/);
 });
 
 test("hud colors the title from the Glossa palette", () => {
@@ -82,6 +98,12 @@ test("hud restores the terminal and propagates session failures", async () => {
         async run() {
           throw new Error("startup failed");
         },
+        async loadStatus() {
+          throw new Error("unused");
+        },
+        async revokeDevice() {
+          throw new Error("unused");
+        },
       },
       input as unknown as ReadStream,
       output as unknown as WriteStream,
@@ -107,7 +129,7 @@ test("q and Ctrl+C stop the session and release terminal input", async () => {
     const output = Object.assign(new PassThrough(), { isTTY: true, columns: 80 });
     setImmediate(() => input.write(sequence));
 
-    await runSessionHud(
+    const action = await runSessionHud(
       {
         workspace: "/work/glossa",
         async run(signal) {
@@ -115,12 +137,107 @@ test("q and Ctrl+C stop the session and release terminal input", async () => {
             signal.addEventListener("abort", () => resolve(), { once: true });
           });
         },
+        async loadStatus() {
+          throw new Error("unused");
+        },
+        async revokeDevice() {
+          throw new Error("unused");
+        },
       },
       input as unknown as ReadStream,
       output as unknown as WriteStream,
     );
 
+    assert.equal(action, "quit");
     assert.equal(input.isRaw, false, `${label} left raw mode enabled`);
     assert.equal(input.isPaused(), true, `${label} left terminal input flowing`);
   }
+});
+
+test("logout and update are confirmed inside the TUI", async () => {
+  for (const [key, expected] of [["l", "logout"], ["u", "update"]] as const) {
+    const input = Object.assign(new PassThrough(), {
+      isTTY: true,
+      isRaw: false,
+      setRawMode(value: boolean) {
+        this.isRaw = value;
+        return this;
+      },
+    });
+    const output = Object.assign(new PassThrough(), { isTTY: true, columns: 80 });
+    setImmediate(() => {
+      input.write(key);
+      input.write("y");
+    });
+
+    const action = await runSessionHud(
+      {
+        workspace: "/work/glossa",
+        async run(signal) {
+          await new Promise<void>((resolve) => {
+            signal.addEventListener("abort", () => resolve(), { once: true });
+          });
+        },
+        async loadStatus() {
+          throw new Error("unused");
+        },
+        async revokeDevice() {
+          throw new Error("unused");
+        },
+      },
+      input as unknown as ReadStream,
+      output as unknown as WriteStream,
+    );
+
+    assert.equal(action, expected);
+  }
+});
+
+test("status and device revocation stay inside the TUI", async () => {
+  const input = Object.assign(new PassThrough(), {
+    isTTY: true,
+    isRaw: false,
+    setRawMode(value: boolean) {
+      this.isRaw = value;
+      return this;
+    },
+  });
+  const output = Object.assign(new PassThrough(), { isTTY: true, columns: 100 });
+  let revoked: string | undefined;
+
+  setTimeout(() => input.write("s"), 0);
+  setTimeout(() => input.write("r"), 10);
+  setTimeout(() => input.write("1"), 20);
+  setTimeout(() => input.write("y"), 30);
+  setTimeout(() => input.write("q"), 50);
+
+  await runSessionHud(
+    {
+      workspace: "/work/glossa",
+      async run(signal, onEvent) {
+        onEvent({
+          type: "status",
+          status: { state: "connected", reconnected: false, legacyRelay: false },
+        });
+        await new Promise<void>((resolve) => {
+          signal.addEventListener("abort", () => resolve(), { once: true });
+        });
+      },
+      async loadStatus() {
+        return {
+          account: "dev@example.com",
+          relay: "https://mcp.glossa.test",
+          activeWorkers: 1,
+          devices: [{ id: "device-1", label: "Laptop | Windows | online" }],
+        };
+      },
+      async revokeDevice(deviceId) {
+        revoked = deviceId;
+      },
+    },
+    input as unknown as ReadStream,
+    output as unknown as WriteStream,
+  );
+
+  assert.equal(revoked, "device-1");
 });

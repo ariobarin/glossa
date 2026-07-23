@@ -33,7 +33,6 @@ export function validateRelativePath(value: string): string {
 
 export async function canonicalizeRoot(
   candidate: string,
-  allowBroadRoot = false,
 ): Promise<string> {
   const root = await realpath(path.resolve(candidate)).catch((error: NodeJS.ErrnoException) => {
     if (error.code === "ENOENT") {
@@ -46,16 +45,14 @@ export async function canonicalizeRoot(
     throw new WorkerError("root_not_directory", "The exposed root must be a directory.");
   }
 
-  if (!allowBroadRoot) {
-    const filesystemRoot = path.parse(root).root;
-    const home = await realpath(os.homedir()).catch(() => path.resolve(os.homedir()));
-    if (samePath(root, filesystemRoot) || samePath(root, home)) {
-      const kind = samePath(root, home) ? "your home directory" : "a filesystem root";
-      throw new WorkerError(
-        "broad_root_refused",
-        `The selected root is ${kind}, which Glossa protects by default. Add --allow-broad-root to expose it anyway.`,
-      );
-    }
+  const filesystemRoot = path.parse(root).root;
+  const home = await realpath(os.homedir()).catch(() => path.resolve(os.homedir()));
+  if (samePath(root, filesystemRoot) || samePath(root, home)) {
+    const kind = samePath(root, home) ? "your home directory" : "a filesystem root";
+    throw new WorkerError(
+      "broad_root_refused",
+      `The selected root is ${kind}, which Glossa will not expose. Choose a project directory instead.`,
+    );
   }
   return root;
 }
@@ -63,8 +60,8 @@ export async function canonicalizeRoot(
 export class PathPolicy {
   private constructor(readonly root: string) {}
 
-  static async create(candidate: string, allowBroadRoot = false): Promise<PathPolicy> {
-    return new PathPolicy(await canonicalizeRoot(candidate, allowBroadRoot));
+  static async create(candidate: string): Promise<PathPolicy> {
+    return new PathPolicy(await canonicalizeRoot(candidate));
   }
 
   async resolveExisting(relativePath: string): Promise<string> {

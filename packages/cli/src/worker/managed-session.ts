@@ -70,7 +70,6 @@ export interface ManagedSessionOptions {
   onEvent?: (event: ManagedSessionEvent) => void;
   quiet?: boolean;
   handleProcessSignals?: boolean;
-  deviceName?: string;
 }
 
 function report(
@@ -120,7 +119,6 @@ export interface ManagedDeviceDependencies {
   accountOwnsDevice?: typeof accountOwnsDevice;
   enrollDevice?: typeof enrollDevice;
   defaultDeviceName?: typeof defaultDeviceName;
-  deviceName?: string;
   fetch?: FetchLike;
 }
 
@@ -164,7 +162,7 @@ export async function deviceForSession(
   const enrolled = await enroll(
     endpoints,
     credentials,
-    dependencies.deviceName ?? name(),
+    name(),
     fetchRequest,
   );
   await saveDevice(enrolled);
@@ -186,7 +184,6 @@ function statusMessage(status: RemoteWorkerStatus, previous: RemoteWorkerStatus[
 export async function runManagedSession(
   root: string,
   endpoints: RelayEndpoints,
-  allowBroadRoot = false,
   options: ManagedSessionOptions = {},
 ): Promise<void> {
   const controller = new AbortController();
@@ -202,13 +199,9 @@ export async function runManagedSession(
   }
 
   try {
-    const device = await deviceForSession(
-      endpoints,
-      options.deviceName ? { deviceName: options.deviceName } : {},
-      controller.signal,
-    );
+    const device = await deviceForSession(endpoints, {}, controller.signal);
     controller.signal.throwIfAborted();
-    worker = await LocalWorker.create(root, allowBroadRoot);
+    worker = await LocalWorker.create(root);
     controller.signal.throwIfAborted();
 
     report(

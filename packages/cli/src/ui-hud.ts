@@ -8,19 +8,46 @@ export interface HudActivity {
   ok?: boolean;
 }
 
+export interface HudDevice {
+  id: string;
+  label: string;
+}
+
+export interface HudStatus {
+  account: string;
+  relay: string;
+  activeWorkers: number | null;
+  devices: HudDevice[];
+}
+
+type HudView = "session" | "activity" | "status" | "help";
+type HudPrompt =
+  | { type: "logout" }
+  | { type: "update" }
+  | { type: "revoke-select" }
+  | { type: "revoke-confirm"; deviceIndex: number };
+
+export type HudExitAction = "quit" | "logout" | "update";
+
 export interface HudState {
   workspace: string;
   deviceName?: string;
   connection: "starting" | "connecting" | "connected" | "retrying" | "disconnected" | "error";
   message: string | undefined;
   activities: HudActivity[];
-  showDetails: boolean;
-  showHelp: boolean;
+  view: HudView;
+  status: HudStatus | undefined;
+  statusLoading: boolean;
+  prompt: HudPrompt | undefined;
+  busy: boolean;
+  notice: string | undefined;
 }
 
 export interface HudUiActions {
   workspace: string;
   run(signal: AbortSignal, onEvent: (event: ManagedSessionEvent) => void): Promise<void>;
+  loadStatus(signal: AbortSignal): Promise<HudStatus>;
+  revokeDevice(deviceId: string): Promise<void>;
 }
 
 export function initialHudState(workspace: string): HudState {
@@ -29,8 +56,12 @@ export function initialHudState(workspace: string): HudState {
     connection: "starting",
     message: undefined,
     activities: [],
-    showDetails: false,
-    showHelp: false,
+    view: "session",
+    status: undefined,
+    statusLoading: false,
+    prompt: undefined,
+    busy: false,
+    notice: undefined,
   };
 }
 
@@ -117,16 +148,9 @@ function connectionCopy(state: HudState): { glyph: string; label: string; detail
   return { glyph: "○", label: "Disconnected", detail: "The workspace is no longer exposed." };
 }
 
-export function renderHud(
-  state: HudState,
-  width = 80,
-  color = !process.env.NO_COLOR,
-): string {
+function renderSession(state: HudState, usable: number, color: boolean): string[] {
   const copy = connectionCopy(state);
-  const usable = Math.max(24, width - 4);
   const lines = [
-    renderTitle(width, color),
-    "",
     `${style(color, state.connection === "connected" ? "32;1" : "36;1", copy.glyph)} ${style(color, "1", copy.label)}`,
     `  ${truncate(copy.detail, usable)}`,
     "",
@@ -138,26 +162,106 @@ export function renderHud(
       usable,
     ).map((line) => `  ${line}`),
   ];
-  if (state.deviceName) lines.push(`${style(color, "2", "Device")}     ${truncate(state.deviceName, Math.max(8, usable - 11))}`);
-
-  if (state.showHelp) {
-    lines.push("", style(color, "1", "Keys"));
-    lines.push("  d  toggle recent activity");
-    lines.push("  ?  hide this help");
-    lines.push("  q  disconnect and quit");
-  } else if (state.showDetails) {
-    lines.push("", style(color, "1", "Recent activity"));
-    if (state.activities.length === 0) lines.push(style(color, "2", "  No tool activity yet."));
-    for (const activity of state.activities.slice(-5)) {
-      const outcome = activity.ok === false ? style(color, "31", "×") : style(color, "2", "·");
-      lines.push(`${outcome} ${truncate(activity.label, Math.max(8, usable - 16))}  ${style(color, "2", activity.requestId.slice(0, 8))}`);
-    }
-  } else {
-    const latest = state.activities.at(-1);
-    lines.push("", latest ? `${style(color, "2", "Latest")}     ${truncate(latest.label, Math.max(8, usable - 11))}` : style(color, "2", "No tool activity yet."));
+  if (state.deviceName) {
+    lines.push(`${style(color, "2", "Device")}     ${truncate(state.deviceName, Math.max(8, usable - 11))}`);
   }
+  const latest = state.activities.at(-1);
+  lines.push(
+    "",
+    latest
+      ? `${style(color, "2", "Latest")}     ${truncate(latest.label, Math.max(8, usable - 11))}`
+      : style(color, "2", "No tool activity yet."),
+  );
+  return lines;
+}
 
-  lines.push("", style(color, "2", "d details  ? help  q disconnect"));
+function renderActivity(state: HudState, usable: number, color: boolean): string[] {
+  const lines = [style(color, "1", "Recent activity")];
+  if (state.activities.length === 0) {
+    lines.push("", style(color, "2", "No tool activity yet."));
+  }
+  for (const activity of state.activities.slice(-8)) {
+    const outcome = activity.ok === false ? style(color, "31", "×") : style(color, "2", "·");
+    lines.push(
+      `${outcome} ${truncate(activity.label, Math.max(8, usable - 16))}  ${style(color, "2", activity.requestId.slice(0, 8))}`,
+    );
+  }
+  return lines;
+}
+
+function renderStatus(state: HudState, usable: number, color: boolean): string[] {
+  const lines = [style(color, "1", "Status"), ""];
+  if (state.statusLoading) {
+    lines.push("Loading account and devices…");
+    return lines;
+  }
+  if (!state.status) {
+    lines.push(style(color, "2", "Status is not loaded."));
+    return lines;
+  }
+  lines.push(
+    `${style(color, "2", "Account")}    ${truncate(state.status.account, Math.max(8, usable - 11))}`,
+    `${style(color, "2", "Relay")}      ${truncate(state.status.relay, Math.max(8, usable - 11))}`,
+    `${style(color, "2", "Workers")}    ${state.status.activeWorkers ?? "unavailable"}`,
+    "",
+    style(color, "1", "Devices"),
+  );
+  if (state.status.devices.length === 0) {
+    lines.push(style(color, "2", "  No devices enrolled."));
+  }
+  state.status.devices.slice(0, 9).forEach((device, index) => {
+    lines.push(`  ${index + 1}. ${truncate(device.label, Math.max(8, usable - 5))}`);
+  });
+  return lines;
+}
+
+function renderHelp(color: boolean): string[] {
+  return [
+    style(color, "1", "Keys"),
+    "",
+    "  d  recent activity",
+    "  s  account and devices",
+    "  r  revoke a device",
+    "  l  sign out",
+    "  u  update Glossa",
+    "  ?  close help",
+    "  q  disconnect and quit",
+  ];
+}
+
+function promptText(state: HudState): string | undefined {
+  if (state.busy) return "Working…";
+  if (!state.prompt) return undefined;
+  if (state.prompt.type === "logout") return "Sign out and disconnect?  y yes  n cancel";
+  if (state.prompt.type === "update") return "Disconnect and update Glossa?  y yes  n cancel";
+  if (state.prompt.type === "revoke-select") return "Press a device number to revoke, or Esc to cancel.";
+  const device = state.status?.devices[state.prompt.deviceIndex];
+  return `Revoke ${device?.label ?? "this device"}?  y yes  n cancel`;
+}
+
+function footer(state: HudState): string {
+  if (state.view === "status") return "r revoke  l sign out  u update  Esc back  q disconnect";
+  if (state.view === "activity") return "d back  s status  ? help  q disconnect";
+  if (state.view === "help") return "? back  q disconnect";
+  return "d activity  s status  ? help  q disconnect";
+}
+
+export function renderHud(
+  state: HudState,
+  width = 80,
+  color = !process.env.NO_COLOR,
+): string {
+  const usable = Math.max(24, width - 4);
+  const lines = [renderTitle(width, color), ""];
+  if (state.view === "activity") lines.push(...renderActivity(state, usable, color));
+  else if (state.view === "status") lines.push(...renderStatus(state, usable, color));
+  else if (state.view === "help") lines.push(...renderHelp(color));
+  else lines.push(...renderSession(state, usable, color));
+
+  if (state.notice) lines.push("", style(color, "33", truncate(state.notice, usable)));
+  const prompt = promptText(state);
+  if (prompt) lines.push("", style(color, "1", truncate(prompt, usable)));
+  lines.push("", style(color, "2", footer(state)));
   return lines.join("\n");
 }
 
@@ -165,20 +269,50 @@ export async function runSessionHud(
   actions: HudUiActions,
   input: ReadStream = process.stdin,
   output: WriteStream = process.stdout,
-): Promise<void> {
+): Promise<HudExitAction> {
   if (!input.isTTY || !output.isTTY) {
-    throw new Error("The Glossa session display requires an interactive terminal.");
+    throw new Error("Glossa requires an interactive terminal.");
   }
 
   emitKeypressEvents(input);
   const wasRaw = input.isRaw;
   const controller = new AbortController();
   let state = initialHudState(actions.workspace);
+  let exitAction: HudExitAction = "quit";
   let stopUi: (() => void) | undefined;
 
   const render = (): void => {
     const view = renderHud(state, output.columns ?? 80);
     output.write(`\u001b[H\u001b[2J${view}`);
+  };
+
+  const loadStatus = async (): Promise<void> => {
+    if (state.connection !== "connected" && state.connection !== "retrying") {
+      state = { ...state, notice: "Status is available after Glossa connects." };
+      render();
+      return;
+    }
+    state = {
+      ...state,
+      view: "status",
+      statusLoading: true,
+      prompt: undefined,
+      notice: undefined,
+    };
+    render();
+    try {
+      const status = await actions.loadStatus(controller.signal);
+      if (controller.signal.aborted) return;
+      state = { ...state, status, statusLoading: false };
+    } catch (error) {
+      if (controller.signal.aborted) return;
+      state = {
+        ...state,
+        statusLoading: false,
+        notice: error instanceof Error ? error.message : String(error),
+      };
+    }
+    render();
   };
 
   const session = actions.run(controller.signal, (event) => {
@@ -202,23 +336,95 @@ export async function runSessionHud(
   output.write("\u001b[?1049h\u001b[?25l");
   render();
 
-  const stop = (): void => {
+  const stop = (action: HudExitAction = "quit"): void => {
+    exitAction = action;
     controller.abort();
     stopUi?.();
   };
-  process.once("SIGINT", stop);
-  process.once("SIGTERM", stop);
+  const stopFromSignal = (): void => stop();
+  process.once("SIGINT", stopFromSignal);
+  process.once("SIGTERM", stopFromSignal);
 
   try {
     await new Promise<void>((resolve) => {
       stopUi = resolve;
       const onKeypress = (value: string, key: Key): void => {
         if ((key.ctrl && key.name === "c") || key.name === "q") return stop();
-        if (key.name === "d") {
-          state = { ...state, showDetails: !state.showDetails, showHelp: false };
+        if (state.busy) return;
+
+        if (state.prompt) {
+          if (key.name === "escape" || key.name === "n") {
+            state = { ...state, prompt: undefined, notice: undefined };
+            render();
+            return;
+          }
+          if (state.prompt.type === "revoke-select") {
+            const deviceIndex = Number(value) - 1;
+            if (
+              Number.isInteger(deviceIndex) &&
+              deviceIndex >= 0 &&
+              deviceIndex < (state.status?.devices.length ?? 0)
+            ) {
+              state = { ...state, prompt: { type: "revoke-confirm", deviceIndex } };
+              render();
+            }
+            return;
+          }
+          if (key.name !== "y") return;
+          if (state.prompt.type === "logout") return stop("logout");
+          if (state.prompt.type === "update") return stop("update");
+          const device = state.status?.devices[state.prompt.deviceIndex];
+          if (!device) return;
+          state = { ...state, busy: true, prompt: undefined, notice: undefined };
+          render();
+          void actions.revokeDevice(device.id).then(async () => {
+            if (controller.signal.aborted) return;
+            state = { ...state, busy: false, notice: `Revoked ${device.label}.` };
+            render();
+            await loadStatus();
+          }).catch((error: unknown) => {
+            if (controller.signal.aborted) return;
+            state = {
+              ...state,
+              busy: false,
+              notice: error instanceof Error ? error.message : String(error),
+            };
+            render();
+          });
+          return;
+        }
+
+        if (key.name === "escape") {
+          state = { ...state, view: "session", notice: undefined };
+          render();
+        } else if (key.name === "d") {
+          state = {
+            ...state,
+            view: state.view === "activity" ? "session" : "activity",
+            notice: undefined,
+          };
+          render();
+        } else if (key.name === "s") {
+          void loadStatus();
+        } else if (key.name === "r" && state.view === "status") {
+          if ((state.status?.devices.length ?? 0) === 0) {
+            state = { ...state, notice: "There are no devices to revoke." };
+          } else {
+            state = { ...state, prompt: { type: "revoke-select" }, notice: undefined };
+          }
+          render();
+        } else if (key.name === "l") {
+          state = { ...state, prompt: { type: "logout" }, notice: undefined };
+          render();
+        } else if (key.name === "u") {
+          state = { ...state, prompt: { type: "update" }, notice: undefined };
           render();
         } else if (value === "?" || key.sequence === "?") {
-          state = { ...state, showHelp: !state.showHelp };
+          state = {
+            ...state,
+            view: state.view === "help" ? "session" : "help",
+            notice: undefined,
+          };
           render();
         }
       };
@@ -230,9 +436,10 @@ export async function runSessionHud(
       };
     });
     await session;
+    return exitAction;
   } finally {
-    process.removeListener("SIGINT", stop);
-    process.removeListener("SIGTERM", stop);
+    process.removeListener("SIGINT", stopFromSignal);
+    process.removeListener("SIGTERM", stopFromSignal);
     input.setRawMode(wasRaw);
     input.pause();
     output.write("\u001b[?25h\u001b[?1049l");

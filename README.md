@@ -37,14 +37,13 @@ The installer is a small [tracked PowerShell script](site/install.ps1). To inspe
 it first, download it with `irm https://glossa.sh/install -OutFile install.ps1`,
 review it, then run `.\install.ps1`.
 
-Then expose one workspace. On the first start, choose a recognizable device name; Glossa opens Google sign-in automatically when needed:
+Open PowerShell in the repository you want to expose, then run:
 
 ```powershell
-Set-Location C:\path\to\a\project
-glossa --device-name "my-workstation" .
+glossa
 ```
 
-`--device-name` is used only during initial enrollment. Later starts reuse the enrolled name; use `glossa devices rename <id> <name>` to change it. `glossa start .` is the explicit form. You can run additional workers in other terminals to expose more workspaces from the same computer. Use `glossa status` to verify login, relay access, enrolled devices, and active workers. Each device row lists its platform and when the relay last saw it, so stale enrollments are easy to spot. Run `glossa doctor` for a read-only readiness check of Node.js, Git, relay and worker reachability, sign-in state, and the local device credential.
+Glossa signs in automatically and uses the current Git worktree. Pass a directory only when you want to expose a different workspace.
 
 On the first successful managed-relay connection on a computer, Glossa prints the ChatGPT quickstart link once. It records a `connect-hint-shown` marker in the local Glossa config directory so later starts stay quiet.
 

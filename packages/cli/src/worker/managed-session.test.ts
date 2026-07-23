@@ -78,7 +78,7 @@ const enrollmentResult: StoredDeviceCredential = {
   token: "gld_laptop_token",
 };
 
-function enrollmentDependencies(deviceName?: string) {
+function enrollmentDependencies() {
   return {
     loadDeviceCredential: async () => null,
     loadCredentials: async () => enrollmentLoaded,
@@ -90,26 +90,25 @@ function enrollmentDependencies(deviceName?: string) {
     }),
     saveDeviceCredential: async () => undefined,
     defaultDeviceName: () => "HOSTNAME",
-    ...(deviceName ? { deviceName } : {}),
   };
 }
 
-test("enrolls with the requested device name on first enrollment", async () => {
+test("enrolls with the computer hostname", async () => {
   const result = await deviceForSession(
     enrollmentEndpoints,
-    enrollmentDependencies("Laptop"),
+    enrollmentDependencies(),
   );
-  assert.equal(result.deviceName, "Laptop");
+  assert.equal(result.deviceName, "HOSTNAME");
 });
 
-test("keeps the existing device and ignores a requested name once enrolled", async () => {
+test("keeps the existing device without reenrolling", async () => {
   const stored: StoredDeviceCredential = {
     ...enrollmentResult,
     deviceName: "Old Desk",
   };
   let enrollCalled = false;
   const result = await deviceForSession(enrollmentEndpoints, {
-    ...enrollmentDependencies("Laptop"),
+    ...enrollmentDependencies(),
     loadDeviceCredential: async () => stored,
     accountOwnsDevice: async () => true,
     enrollDevice: async () => {
@@ -119,12 +118,4 @@ test("keeps the existing device and ignores a requested name once enrolled", asy
   });
   assert.equal(enrollCalled, false);
   assert.equal(result.deviceName, "Old Desk");
-});
-
-test("falls back to the default device name when none is requested", async () => {
-  const result = await deviceForSession(
-    enrollmentEndpoints,
-    enrollmentDependencies(),
-  );
-  assert.equal(result.deviceName, "HOSTNAME");
 });

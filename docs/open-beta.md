@@ -36,21 +36,17 @@ Get-Content .\install.ps1
 .\install.ps1
 ```
 
-Run `glossa update` later to upgrade from the beta channel. `glossa upgrade` is
-an alias.
+After Glossa starts, press `u` to update from the beta channel.
 
 ## Start a worker
 
-Change to a disposable repository and start Glossa. On this computer's first enrollment, choose a recognizable device name:
+Open PowerShell in a disposable repository and run:
 
 ```powershell
-Set-Location C:\path\to\a\test-repo
-glossa --device-name "my-workstation" .
+glossa
 ```
 
-`--device-name` is used only during initial enrollment. Later starts reuse the enrolled name; use `glossa devices rename <id> <name>` to change it. `glossa start .` is the explicit form. Start more workers in other terminals when you want to expose several workspaces from the same computer.
-
-Glossa opens Google sign-in automatically when needed. `glossa login` is available as an optional preflight. Choose the Google account you want to use for Glossa. After sign-in, the compact session display shows the exposed root, device name, connection state, tool activity, and security warning. Press `d` for details, `?` for help, or `q` or Ctrl+C to disconnect. On the first successful managed-relay connection on a computer, Glossa also shows the ChatGPT quickstart link. A `connect-hint-shown` marker in the local Glossa config directory suppresses that hint on later runs.
+Glossa opens Google sign-in automatically when needed. Choose the Google account you want to use for Glossa. After sign-in, the session display shows the workspace, connection, activity, and security warning. Press `s` for account and device status, `d` for recent activity, or `q` or Ctrl+C to disconnect. Press `?` to see every key.
 
 Starting Glossa authorizes connected clients to modify files inside the exposed root and run commands with the full environment and permissions of your Windows account. Do not expose your home directory, a drive root, or a repository containing credentials.
 
@@ -82,19 +78,18 @@ Only test writes and commands inside the disposable repository.
 
 ## Troubleshooting
 
-- Run `glossa status` to validate Google login, relay access, enrolled devices, and active workers.
-- Run `glossa doctor` to check Node.js, Git, relay reachability, sign-in state, and the local device credential before reporting a problem.
+- Press `s` in Glossa to check the account, relay, enrolled devices, and active workers.
 - No Create option: confirm your plan supports full MCP apps and your workspace role has Developer Mode access.
 - No online devices: confirm the `glossa` terminal is still running.
 - App setup cannot discover tools: confirm `https://mcp.glossa.sh/healthz` returns `{"ok":true,"service":"glossa-relay"}`.
 - OAuth loops or expires: reopen the custom Glossa app and authorize it again.
-- Wrong Google account: stop the worker, run `glossa logout --browser`, open Glossa under **Settings > Plugins** in ChatGPT and disconnect it, then reconnect and sign in on both sides with the same Google account. Use **Settings > Apps** if that is the label your workspace shows.
+- Wrong Google account: press `l` in Glossa and confirm, open Glossa under **Settings > Plugins** in ChatGPT and disconnect it, then reconnect and sign in on both sides with the same Google account. Use **Settings > Apps** if that is the label your workspace shows.
 - Account access fails: open a GitHub issue without including tokens, credentials, or local paths.
 
 ## Disconnect
 
 Press `q` or Ctrl+C in the worker terminal. The device remains enrolled for later sessions, but it is offline and cannot access the local workspace while the worker is stopped.
 
-Run `glossa logout` to remove only the CLI's local OAuth credentials. Run `glossa logout --browser` when switching Google accounts; it also opens Glossa's browser-session logout endpoint.
+Press `l` and confirm to sign out locally and in the browser.
 
-Use `glossa devices list`, `glossa devices rename <id> <name>`, or `glossa devices revoke <id>` to recover stale enrollments and remove computers you no longer trust. Each listed device shows its platform and when the relay last saw it, which helps identify computers that are offline or duplicated.
+Press `s` to list enrolled computers, then `r` to revoke one.

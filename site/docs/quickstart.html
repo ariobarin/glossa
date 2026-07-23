@@ -131,19 +131,17 @@ Get-Content .\install.ps1
   <pre><code class="language-shell" id="docs-quickstart-code-4">glossa --version
 </code></pre>
 </div>
-<p>Afterward, <code>glossa update</code> installs the newest beta. <code>glossa upgrade</code> is an
-alias.</p>
+<p>After Glossa starts, press <code>u</code> to install the newest beta.</p>
 </section><section class="doc-section">
 <h2 id="step-2-start-a-workspace"><a class="heading-anchor" href="#step-2-start-a-workspace" aria-label="Link to Step 2: Start a workspace"></a>Step 2: Start a workspace</h2>
-<p>Open a terminal in the folder where you want ChatGPT to work. On this computer&#39;s first enrollment, choose a recognizable device name:</p>
+<p>Open a terminal in the folder where you want ChatGPT to work:</p>
 <div class="code-block">
   <button class="copy-button" type="button" data-copy-target="docs-quickstart-code-5" aria-label="Copy code">
     <span class="copy-tooltip" aria-hidden="true">Copy</span>
   </button>
-  <pre><code class="language-shell" id="docs-quickstart-code-5">glossa --device-name &quot;my-workstation&quot; .
+  <pre><code class="language-shell" id="docs-quickstart-code-5">glossa
 </code></pre>
 </div>
-<p><code>--device-name</code> is used only during initial enrollment. Later starts reuse the enrolled name; use <code>glossa devices rename &lt;id&gt; &lt;name&gt;</code> to change it. <code>glossa start .</code> is the explicit form. You can start more workers in other terminals to expose additional workspaces from the same computer.</p>
 <blockquote>
 <p>Keep this terminal open. Closing it disconnects that local workspace from ChatGPT.</p>
 </blockquote>
@@ -206,14 +204,7 @@ alias.</p>
 </div>
 </section><section class="doc-section">
 <h2 id="step-4-verify-the-connection"><a class="heading-anchor" href="#step-4-verify-the-connection" aria-label="Link to Step 4: Verify the connection"></a>Step 4: Verify the connection</h2>
-<p>In another terminal, check the account, relay, enrolled device, and active worker:</p>
-<div class="code-block">
-  <button class="copy-button" type="button" data-copy-target="docs-quickstart-code-8" aria-label="Copy code">
-    <span class="copy-tooltip" aria-hidden="true">Copy</span>
-  </button>
-  <pre><code class="language-shell" id="docs-quickstart-code-8">glossa status
-</code></pre>
-</div>
+<p>Press <code>s</code> in Glossa to check the account, relay, enrolled device, and active worker. Press Esc to return to the workspace view.</p>
 <div class="audience-switcher" data-audience-switcher>
   <p class="audience-prompt">Which ChatGPT setup are you using?</p>
   <div class="audience-tabs" role="tablist" aria-label="ChatGPT setup">
@@ -224,10 +215,10 @@ alias.</p>
 <h3 id="try-a-personal-read"><a class="heading-anchor" href="#try-a-personal-read" aria-label="Link to Try a personal read"></a>Try a personal read</h3>
 <p>In ChatGPT, select Glossa and send:</p>
 <div class="code-block">
-  <button class="copy-button" type="button" data-copy-target="docs-quickstart-code-9" aria-label="Copy code">
+  <button class="copy-button" type="button" data-copy-target="docs-quickstart-code-8" aria-label="Copy code">
     <span class="copy-tooltip" aria-hidden="true">Copy</span>
   </button>
-  <pre><code class="language-text" id="docs-quickstart-code-9">Use Glossa to list my connected devices, then read package.json from my active workspace.
+  <pre><code class="language-text" id="docs-quickstart-code-8">Use Glossa to list my connected devices, then read package.json from my active workspace.
 </code></pre>
 </div>
 <p>If ChatGPT blocks a write or command tool, that is the current Pro plan boundary rather than a worker connection failure.</p>
@@ -236,10 +227,10 @@ alias.</p>
 <h3 id="try-the-full-workspace-flow"><a class="heading-anchor" href="#try-the-full-workspace-flow" aria-label="Link to Try the full workspace flow"></a>Try the full workspace flow</h3>
 <p>Start with a read-only check:</p>
 <div class="code-block">
-  <button class="copy-button" type="button" data-copy-target="docs-quickstart-code-10" aria-label="Copy code">
+  <button class="copy-button" type="button" data-copy-target="docs-quickstart-code-9" aria-label="Copy code">
     <span class="copy-tooltip" aria-hidden="true">Copy</span>
   </button>
-  <pre><code class="language-text" id="docs-quickstart-code-10">Use Glossa to list my connected devices, then read package.json from my active workspace.
+  <pre><code class="language-text" id="docs-quickstart-code-9">Use Glossa to list my connected devices, then read package.json from my active workspace.
 </code></pre>
 </div>
 <p>When that works, test a small edit inside a disposable repository and review ChatGPT&#39;s confirmation before it runs.</p>

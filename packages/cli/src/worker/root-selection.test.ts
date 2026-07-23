@@ -9,12 +9,12 @@ import { WorkerError } from "./errors.js";
 test("asks for a directory with an actionable hint outside a git worktree", async () => {
   const dir = await mkdtemp(path.join(os.tmpdir(), "glossa-root-"));
   try {
-    await assert.rejects(selectExposureRoot(undefined, false, dir), (error: unknown) => {
+    await assert.rejects(selectExposureRoot(undefined, dir), (error: unknown) => {
       if (!(error instanceof WorkerError) || error.code !== "root_required") return false;
       return (
         error.message.includes(dir) &&
-        /glossa start \./.test(error.message) &&
-        /glossa start <path>/.test(error.message)
+        /glossa \./.test(error.message) &&
+        /glossa <path>/.test(error.message)
       );
     });
   } finally {
@@ -25,20 +25,20 @@ test("asks for a directory with an actionable hint outside a git worktree", asyn
 test("does not recommend an unguarded broad current directory", async () => {
   const filesystemRoot = path.parse(process.cwd()).root;
   await assert.rejects(
-    selectExposureRoot(undefined, false, filesystemRoot),
+    selectExposureRoot(undefined, filesystemRoot),
     (error: unknown) => {
       if (!(error instanceof WorkerError) || error.code !== "root_required") return false;
       return (
-        error.message.includes("glossa start <path>") &&
-        error.message.includes("glossa start . --allow-broad-root") &&
-        !error.message.includes('Run "glossa start ." to expose the current folder')
+        error.message.includes("glossa <path>") &&
+        error.message.includes("too broad to expose") &&
+        !error.message.includes('Run "glossa ." to expose the current folder')
       );
     },
   );
 });
 
 test("uses the git worktree root when no path is given", async () => {
-  const root = await selectExposureRoot(undefined, false, process.cwd());
+  const root = await selectExposureRoot(undefined, process.cwd());
   assert.ok(path.isAbsolute(root));
   assert.ok(root.length > 0);
 });
