@@ -11,7 +11,7 @@ export interface StoredDeviceCredential {
   token: string;
 }
 
-function parseDeviceCredential(value: string): StoredDeviceCredential {
+export function parseDeviceCredential(value: string): StoredDeviceCredential {
   let parsed: Partial<StoredDeviceCredential>;
   try {
     parsed = JSON.parse(value) as Partial<StoredDeviceCredential>;
