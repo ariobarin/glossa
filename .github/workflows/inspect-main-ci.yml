@@ -1,0 +1,47 @@
+name: Inspect main CI
+
+on:
+  pull_request:
+    paths:
+      - .github/workflows/inspect-main-ci.yml
+
+permissions:
+  actions: read
+  contents: read
+
+jobs:
+  inspect:
+    runs-on: ubuntu-latest
+    env:
+      TARGET_SHA: 4b3a3fdbc2ea30b90056ca907caf35cc6b3cc0b6
+    steps:
+      - name: Verify post-merge main CI
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          response="$(gh api \
+            -H 'Accept: application/vnd.github+json' \
+            "/repos/${GITHUB_REPOSITORY}/actions/runs?head_sha=${TARGET_SHA}&event=push&per_page=10")"
+
+          echo "$response" | jq -c '.workflow_runs[] | {
+            id,
+            name,
+            run_number,
+            event,
+            head_sha,
+            status,
+            conclusion,
+            html_url
+          }'
+
+          count="$(echo "$response" | jq '[.workflow_runs[] | select(.name == "CI")] | length')"
+          if [[ "$count" -eq 0 ]]; then
+            echo "No push-triggered CI run found for ${TARGET_SHA}." >&2
+            exit 1
+          fi
+
+          echo "$response" | jq -e '
+            [.workflow_runs[] | select(.name == "CI")] |
+            all(.status == "completed" and .conclusion == "success")
+          '
