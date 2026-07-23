@@ -6,44 +6,42 @@ Connect ChatGPT to a local workspace.
 
 Make sure you have:
 
-- Node.js 22.9 or newer
+- Node.js 22.9 or newer if you use the recommended npm install
 - [Developer Mode](https://help.openai.com/en/articles/12584461-developer-mode-and-full-mcp-connectors-in-chatgpt-beta) enabled in ChatGPT
 
 > Glossa can modify files and run commands on your computer. Review the [security model](/docs/security).
 
 ## Step 1: Install Glossa
 
-<div class="docs-switcher" data-docs-tabs data-tabs-storage="glossa-install-platform">
-  <p class="docs-switcher-label">Platform</p>
-  <div class="docs-tabs" role="tablist" aria-label="Operating system">
-    <button id="platform-windows-tab" type="button" role="tab" aria-selected="true" aria-controls="platform-windows" data-docs-tab="windows">Windows</button>
-    <button id="platform-macos-tab" type="button" role="tab" aria-selected="false" aria-controls="platform-macos" data-docs-tab="macos" tabindex="-1">macOS</button>
-    <button id="platform-linux-tab" type="button" role="tab" aria-selected="false" aria-controls="platform-linux" data-docs-tab="linux" tabindex="-1">Linux</button>
+<div class="docs-switcher" data-docs-tabs data-tabs-storage="glossa-install-method-v2">
+  <p class="docs-switcher-label">Install with</p>
+  <div class="docs-tabs docs-tabs-wide" role="tablist" aria-label="Install method">
+    <button id="install-npm-tab" type="button" role="tab" aria-selected="true" aria-controls="install-npm" data-docs-tab="npm">npm (Recommended)</button>
+    <button id="install-direct-tab" type="button" role="tab" aria-selected="false" aria-controls="install-direct" data-docs-tab="direct" tabindex="-1">Direct installer</button>
   </div>
-  <div id="platform-windows" class="docs-tab-panel" role="tabpanel" aria-labelledby="platform-windows-tab" data-docs-tab-panel="windows">
-    <div class="docs-switcher docs-switcher-nested" data-docs-tabs data-tabs-storage="glossa-windows-install-method">
-      <p class="docs-switcher-label">Install with</p>
-      <div class="docs-tabs" role="tablist" aria-label="Windows install method">
-        <button id="windows-powershell-tab" type="button" role="tab" aria-selected="true" aria-controls="windows-powershell" data-docs-tab="powershell">PowerShell</button>
-        <button id="windows-npm-tab" type="button" role="tab" aria-selected="false" aria-controls="windows-npm" data-docs-tab="npm" tabindex="-1">npm</button>
+  <div id="install-npm" class="docs-tab-panel" role="tabpanel" aria-labelledby="install-npm-tab" data-docs-tab-panel="npm">
+    <p>Install the beta on Windows, macOS, or Linux:</p>
+    <pre><code class="language-shell">npm install --global @ariobarin/glossa@beta</code></pre>
+  </div>
+  <div id="install-direct" class="docs-tab-panel" role="tabpanel" aria-labelledby="install-direct-tab" data-docs-tab-panel="direct" hidden>
+    <p>Install a self-contained executable without Node.js or npm.</p>
+    <div class="docs-switcher docs-switcher-nested" data-docs-tabs data-tabs-storage="glossa-direct-platform-v2">
+      <p class="docs-switcher-label">Platform</p>
+      <div class="docs-tabs" role="tablist" aria-label="Direct installer platform">
+        <button id="direct-windows-tab" type="button" role="tab" aria-selected="true" aria-controls="direct-windows" data-docs-tab="windows">Windows</button>
+        <button id="direct-macos-tab" type="button" role="tab" aria-selected="false" aria-controls="direct-macos" data-docs-tab="macos" tabindex="-1">macOS</button>
+        <button id="direct-linux-tab" type="button" role="tab" aria-selected="false" aria-controls="direct-linux" data-docs-tab="linux" tabindex="-1">Linux</button>
       </div>
-      <div id="windows-powershell" class="docs-tab-panel" role="tabpanel" aria-labelledby="windows-powershell-tab" data-docs-tab-panel="powershell">
-        <p>Run the hosted installer in PowerShell:</p>
+      <div id="direct-windows" class="docs-tab-panel" role="tabpanel" aria-labelledby="direct-windows-tab" data-docs-tab-panel="windows">
         <pre><code class="language-powershell">irm https://glossa.sh/install | iex</code></pre>
       </div>
-      <div id="windows-npm" class="docs-tab-panel" role="tabpanel" aria-labelledby="windows-npm-tab" data-docs-tab-panel="npm" hidden>
-        <p>Install the beta directly from npm:</p>
-        <pre><code class="language-powershell">npm install --global @ariobarin/glossa@beta</code></pre>
+      <div id="direct-macos" class="docs-tab-panel" role="tabpanel" aria-labelledby="direct-macos-tab" data-docs-tab-panel="macos" hidden>
+        <pre><code class="language-shell">curl -fsSL https://glossa.sh/install.sh | sh</code></pre>
+      </div>
+      <div id="direct-linux" class="docs-tab-panel" role="tabpanel" aria-labelledby="direct-linux-tab" data-docs-tab-panel="linux" hidden>
+        <pre><code class="language-shell">curl -fsSL https://glossa.sh/install.sh | sh</code></pre>
       </div>
     </div>
-  </div>
-  <div id="platform-macos" class="docs-tab-panel" role="tabpanel" aria-labelledby="platform-macos-tab" data-docs-tab-panel="macos" hidden>
-    <p>Install the beta from npm in Terminal:</p>
-    <pre><code class="language-shell">npm install --global @ariobarin/glossa@beta</code></pre>
-  </div>
-  <div id="platform-linux" class="docs-tab-panel" role="tabpanel" aria-labelledby="platform-linux-tab" data-docs-tab-panel="linux" hidden>
-    <p>Install the beta from npm in your terminal:</p>
-    <pre><code class="language-shell">npm install --global @ariobarin/glossa@beta</code></pre>
   </div>
 </div>
 

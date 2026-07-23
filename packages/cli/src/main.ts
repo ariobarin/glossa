@@ -224,7 +224,9 @@ async function runWorkspace(
 
   if (postExitNotice) console.log(postExitNotice);
   if (exitAction === "logout") await logoutFromGlossa();
-  else if (exitAction === "update") updateGlossa();
+  else if (exitAction === "update") {
+    await updateGlossa({ currentVersion: VERSION });
+  }
 }
 
 async function main(): Promise<void> {
@@ -243,7 +245,7 @@ async function main(): Promise<void> {
   } else if (invocation.command === "logout") {
     await logoutFromGlossa();
   } else if (invocation.command === "update") {
-    updateGlossa();
+    await updateGlossa({ currentVersion: VERSION });
   } else if (invocation.action === "list") {
     await showDevices(invocation.json);
   } else {
