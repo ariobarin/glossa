@@ -1,8 +1,12 @@
 import { z } from "zod";
 
 export const MAX_TEXT_BYTES = 1024 * 1024;
+export const MAX_EDIT_DIFF_BYTES = 128 * 1024;
+export const MAX_EDIT_OPERATIONS = 100;
 export const DEFAULT_COMMAND_TIMEOUT_MS = 15 * 60 * 1000;
 export const MAX_COMMAND_TIMEOUT_MS = 60 * 60 * 1000;
+export const DEFAULT_COMMAND_FAST_WAIT_MS = 750;
+export const MAX_COMMAND_FAST_WAIT_MS = 5_000;
 export const MAX_COMMAND_STATUS_WAIT_MS = 15_000;
 export const DEFAULT_WORKER_POLL_MS = 15_000;
 export const MAX_WORKER_POLL_MS = 18_000;
@@ -52,6 +56,60 @@ export const writeFileJobSchema = writeFileRequestSchema.extend({
   requestId: z.string().uuid(),
 });
 
+const editOperationSchema = z
+  .object({
+    oldText: boundedTextSchema
+      .min(1)
+      .describe(
+        "Exact non-empty text to replace. The edit is rejected when the text is absent or occurs more than once.",
+      ),
+    newText: boundedTextSchema.describe(
+      "Replacement UTF-8 text. Use an empty string to delete the matched text.",
+    ),
+  })
+  .strict();
+
+export const editFileRequestSchema = z
+  .object({
+    path: relativePathSchema,
+    edits: z
+      .array(editOperationSchema)
+      .min(1)
+      .max(MAX_EDIT_OPERATIONS)
+      .describe(
+        "Exact replacements evaluated against the same original file. Overlapping replacements are rejected.",
+      ),
+    expectedSha256: z
+      .string()
+      .regex(/^[a-f0-9]{64}$/)
+      .optional()
+      .describe(
+        "SHA-256 returned by read_file. When provided, the edit fails if the file changed.",
+      ),
+  })
+  .strict()
+  .superRefine((value, context) => {
+    const bytes = value.edits.reduce(
+      (sum, edit) =>
+        sum +
+        Buffer.byteLength(edit.oldText, "utf8") +
+        Buffer.byteLength(edit.newText, "utf8"),
+      0,
+    );
+    if (bytes > MAX_TEXT_BYTES * 2) {
+      context.addIssue({
+        code: "custom",
+        message: "The combined edit text exceeds the request size limit.",
+        input: value.edits,
+      });
+    }
+  });
+
+export const editFileJobSchema = editFileRequestSchema.safeExtend({
+  type: z.literal("edit_file"),
+  requestId: z.string().uuid(),
+});
+
 function requireOneCommand(
   value: {
     argv?: string[] | undefined;
@@ -94,6 +152,15 @@ export const runCommandRequestSchema = z
       .default(DEFAULT_COMMAND_TIMEOUT_MS)
       .describe(
         "Maximum command runtime in milliseconds. Defaults to 900000 and cannot exceed 3600000.",
+      ),
+    waitMs: z
+      .number()
+      .int()
+      .min(0)
+      .max(MAX_COMMAND_FAST_WAIT_MS)
+      .optional()
+      .describe(
+        "How long run_command waits for fast completion before returning a running command handle. Defaults to 750 and cannot exceed 5000.",
       ),
   })
   .strict()
@@ -138,6 +205,7 @@ export const cancelCommandJobSchema = cancelCommandRequestSchema.extend({
 export const workerJobSchema = z.discriminatedUnion("type", [
   readFileJobSchema,
   writeFileJobSchema,
+  editFileJobSchema,
   runCommandJobSchema,
   getCommandJobSchema,
   cancelCommandJobSchema,

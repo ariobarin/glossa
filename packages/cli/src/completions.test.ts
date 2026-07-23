@@ -15,6 +15,7 @@ test("every script mentions glossa and its core commands", () => {
     const script = completionScript(shell);
     assert.ok(script.length > 0, `${shell} script was empty`);
     assert.ok(script.includes("glossa"), `${shell} script did not name glossa`);
+    assert.ok(script.includes("ui"), `${shell} script did not list ui`);
     assert.ok(script.includes("start"), `${shell} script did not list start`);
     assert.ok(script.includes("status"), `${shell} script did not list status`);
     assert.ok(script.includes("completions"), `${shell} script did not list completions`);
@@ -53,12 +54,14 @@ test("zsh registers sourced completion and offers files for the path", () => {
   assert.match(script, /^# Zsh completion for Glossa\. Source this after compinit/m);
   assert.doesNotMatch(script, /^#compdef/m);
   assert.doesNotMatch(script, /local -a commands/);
+  assert.match(script, /local context state state_descr line/);
+  assert.match(script, /typeset -A opt_args/);
   assert.match(script, /local -a glossa_commands/);
   assert.match(script, /_describe 'glossa command' glossa_commands/);
   // Zsh includes the command itself at words[1], so the subcommand is words[2]
   // and its first value is argument position 2.
   assert.match(script, /case \$words\[2\] in/);
-  assert.match(script, /_arguments '2:action:\(list rename revoke\)'/);
+  assert.match(script, /_values 'device action' list rename revoke/);
   assert.match(script, /_arguments '2:shell:\(powershell bash zsh fish\)'/);
   assert.match(script, /compdef _glossa glossa/);
   assert.match(script, /_files/);
@@ -89,5 +92,15 @@ test("every script offers the four completion shells", () => {
         `${shell} script did not offer the ${offered} shell`,
       );
     }
+  }
+});
+
+
+test("every script offers current workspace options", () => {
+  for (const shell of SUPPORTED_SHELLS) {
+    const script = completionScript(shell);
+    assert.ok(script.includes("ui"));
+    assert.ok(script.includes("allow-broad-root"));
+    assert.ok(script.includes("device-name"));
   }
 });
