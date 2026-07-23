@@ -35,7 +35,14 @@ export function initialHudState(workspace: string): HudState {
 }
 
 function activityLabel(event: Extract<ManagedSessionEvent, { type: "activity" }>): string {
-  const noun = event.jobType === "write_file" ? "File write" : event.jobType === "run_command" ? "Command" : "Cancellation";
+  const noun =
+    event.jobType === "write_file"
+      ? "File write"
+      : event.jobType === "edit_file"
+        ? "File edit"
+        : event.jobType === "run_command"
+          ? "Command"
+          : "Cancellation";
   if (event.phase === "requested") return `${noun} requested`;
   if (event.jobType === "run_command") return `Command ${event.ok ? "started" : "rejected"}`;
   return `${noun} ${event.ok ? "completed" : "rejected"}`;

@@ -12,6 +12,13 @@ test("hud reduces session events into a compact current state", () => {
   assert.equal(state.activities.at(-1)?.label, "Command requested");
   state = applyHudEvent(state, { type: "activity", phase: "finished", jobType: "run_command", requestId: "1234567890", ok: true });
   assert.equal(state.activities.at(-1)?.label, "Command started");
+  state = applyHudEvent(state, {
+    type: "activity",
+    phase: "requested",
+    jobType: "edit_file",
+    requestId: "edit123456",
+  });
+  assert.equal(state.activities.at(-1)?.label, "File edit requested");
 });
 
 test("hud defaults to one calm status surface", () => {
