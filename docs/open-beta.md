@@ -16,8 +16,21 @@ Glossa is not listed in the public plugin directory yet, so add it as a custom a
 Install the beta CLI:
 
 ```powershell
-npm install --global @ariobarin/glossa@beta
+irm https://glossa.sh/install | iex
 ```
+
+The installer checks Windows, Node.js, and npm, installs
+`@ariobarin/glossa@beta`, and verifies the installed CLI. To inspect it first:
+
+```powershell
+irm https://glossa.sh/install -OutFile install.ps1
+Get-Content .\install.ps1
+.\install.ps1
+```
+
+You can also install directly with
+`npm install --global @ariobarin/glossa@beta`. Run `glossa update` later to
+upgrade from the beta channel. `glossa upgrade` is an alias.
 
 ## Start a worker
 

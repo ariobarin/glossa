@@ -8,6 +8,8 @@ const commands = [
   "doctor",
   "devices",
   "completions",
+  "update",
+  "upgrade",
   "login",
   "logout",
 ];
@@ -133,6 +135,8 @@ _glossa() {
     'doctor:check local and relay readiness'
     'devices:manage enrolled computers'
     'completions:emit a shell completion script'
+    'update:update from the npm beta channel'
+    'upgrade:alias for update'
     'login:ensure a Glossa session'
     'logout:remove local credentials'
   )

@@ -19,11 +19,16 @@ Codex and ChatGPT Work share usage. Glossa connects the regular Chat surface to 
 
 Glossa is a Windows-first open beta. The managed relay is live at `https://mcp.glossa.sh/mcp`. A valid Glossa login activates access automatically.
 
-Install the open-beta CLI with Node 24:
+Install the open-beta CLI from PowerShell:
 
 ```powershell
-npm install --global @ariobarin/glossa@beta
+irm https://glossa.sh/install | iex
 ```
+
+The installer is a small [tracked PowerShell script](site/install.ps1). To inspect
+it first, download it with `irm https://glossa.sh/install -OutFile install.ps1`,
+review it, then run `.\install.ps1`. The transparent npm fallback is
+`npm install --global @ariobarin/glossa@beta`.
 
 Then expose one workspace. On the first start, choose a recognizable device name; Glossa opens Google sign-in automatically when needed:
 

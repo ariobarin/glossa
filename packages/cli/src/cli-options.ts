@@ -12,6 +12,7 @@ export type HelpTopic =
   | "doctor"
   | "devices"
   | "completions"
+  | "update"
   | "login"
   | "logout";
 
@@ -24,6 +25,7 @@ export type CliInvocation =
   | { command: "devices"; action: "rename"; deviceId: string; name: string }
   | { command: "devices"; action: "revoke"; deviceId: string }
   | { command: "completions"; shell: SupportedShell }
+  | { command: "update" }
   | { command: "login" }
   | { command: "logout"; browser: boolean }
   | { command: "help"; topic?: HelpTopic }
@@ -36,6 +38,7 @@ const helpTopics = new Set<HelpTopic>([
   "doctor",
   "devices",
   "completions",
+  "update",
   "login",
   "logout",
 ]);
@@ -130,6 +133,8 @@ const KNOWN_COMMANDS = [
   "doctor",
   "devices",
   "completions",
+  "update",
+  "upgrade",
   "login",
   "logout",
 ] as const;
@@ -225,6 +230,15 @@ export function parseInvocation(args: string[]): CliInvocation {
       );
     }
     return { command: "completions", shell: shell as SupportedShell };
+  }
+  if (command === "update" || command === "upgrade") {
+    if (options.includes("--help") || options.includes("-h")) {
+      return { command: "help", topic: "update" };
+    }
+    if (options.length > 0) {
+      throw new UsageError(`${command === "update" ? "Update" : "Upgrade"} accepts no arguments.`);
+    }
+    return { command: "update" };
   }
   if (command === "login") {
     if (options.includes("--help") || options.includes("-h")) {
