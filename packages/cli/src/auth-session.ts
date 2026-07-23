@@ -33,6 +33,7 @@ export interface AuthSessionDependencies {
   saveCredentials?: typeof saveCredentials;
   deleteCredentials?: typeof deleteCredentials;
   now?: () => number;
+  signal?: AbortSignal;
 }
 
 function endpoint(issuer: string, pathname: string): string {
@@ -83,6 +84,7 @@ export async function refreshCredentials(
       client_id: credentials.clientId,
       refresh_token: credentials.refreshToken,
     }),
+    ...(dependencies.signal ? { signal: dependencies.signal } : {}),
   });
   const data = (await response.json()) as OAuthTokenResponse | OAuthError;
 
@@ -147,9 +149,11 @@ function parseProfile(value: unknown): UserProfile {
 async function requestProfile(
   credentials: StoredCredentials,
   fetchRequest: FetchLike,
+  signal?: AbortSignal,
 ): Promise<Response> {
   return await fetchRequest(endpoint(credentials.issuer, "userinfo"), {
     headers: { authorization: `${credentials.tokenType} ${credentials.accessToken}` },
+    ...(signal ? { signal } : {}),
   });
 }
 
@@ -159,11 +163,11 @@ export async function loadUserProfile(
 ): Promise<{ credentials: StoredCredentials; profile: UserProfile }> {
   const fetchRequest = dependencies.fetch ?? fetch;
   let current = await validCredentials(credentials, dependencies);
-  let response = await requestProfile(current, fetchRequest);
+  let response = await requestProfile(current, fetchRequest, dependencies.signal);
 
   if (response.status === 401 && current.refreshToken) {
     current = await refreshCredentials(current, dependencies);
-    response = await requestProfile(current, fetchRequest);
+    response = await requestProfile(current, fetchRequest, dependencies.signal);
   }
 
   if (!response.ok) {
