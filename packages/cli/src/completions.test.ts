@@ -20,6 +20,8 @@ test("every script mentions glossa and its core commands", () => {
     assert.ok(script.includes("status"), `${shell} script did not list status`);
     assert.ok(script.includes("doctor"), `${shell} script did not list doctor`);
     assert.ok(script.includes("completions"), `${shell} script did not list completions`);
+    assert.ok(script.includes("update"), `${shell} script did not list update`);
+    assert.ok(script.includes("upgrade"), `${shell} script did not list upgrade`);
   }
 });
 
