@@ -39,6 +39,80 @@ test("blocks Windows junction traversal", async (context) => {
   });
 });
 
+test("applies exact guarded edits and returns a unified diff", async (context) => {
+  const root = await temporaryDirectory(context);
+  const files = new FileService(await PathPolicy.create(root));
+  const original = await files.writeText(
+    "note.txt",
+    "const alpha = 1;\nbeta\ngamma\n",
+  );
+
+  const result = await files.editText(
+    "note.txt",
+    [
+      { oldText: "alpha", newText: "ALPHA" },
+      { oldText: "gamma", newText: "G" },
+    ],
+    original.sha256,
+  );
+
+  assert.equal(result.replacements, 2);
+  assert.equal(result.diffTruncated, false);
+  assert.equal(
+    result.diff,
+    [
+      "--- a/note.txt",
+      "+++ b/note.txt",
+      "@@ -1,1 +1,1 @@",
+      "-const alpha = 1;",
+      "+const ALPHA = 1;",
+      "@@ -3,1 +3,1 @@",
+      "-gamma",
+      "+G",
+      "",
+    ].join("\n"),
+  );
+  assert.equal(
+    await readFile(path.join(root, "note.txt"), "utf8"),
+    "const ALPHA = 1;\nbeta\nG\n",
+  );
+});
+
+test("rejects absent, ambiguous, overlapping, and stale edits", async (context) => {
+  const root = await temporaryDirectory(context);
+  const files = new FileService(await PathPolicy.create(root));
+  const original = await files.writeText("note.txt", "same same abcdef");
+
+  await assert.rejects(
+    files.editText("note.txt", [{ oldText: "missing", newText: "x" }]),
+    { code: "edit_not_found" },
+  );
+  await assert.rejects(
+    files.editText("note.txt", [{ oldText: "same", newText: "x" }]),
+    { code: "edit_ambiguous" },
+  );
+  await assert.rejects(
+    files.editText("note.txt", [
+      { oldText: "abcde", newText: "x" },
+      { oldText: "cdef", newText: "y" },
+    ]),
+    { code: "edit_overlap" },
+  );
+  await assert.rejects(
+    files.editText(
+      "note.txt",
+      [{ oldText: "abcdef", newText: "changed" }],
+      "0".repeat(64),
+    ),
+    { code: "stale_revision" },
+  );
+  assert.equal(
+    await readFile(path.join(root, "note.txt"), "utf8"),
+    "same same abcdef",
+  );
+  assert.equal((await files.readText("note.txt")).sha256, original.sha256);
+});
+
 test("writes atomically and rejects stale revisions", async (context) => {
   const root = await temporaryDirectory(context);
   const files = new FileService(await PathPolicy.create(root));

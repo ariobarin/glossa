@@ -34,12 +34,20 @@ export class LocalWorker {
             job.expectedSha256,
           );
           break;
+        case "edit_file":
+          value = await this.files.editText(
+            job.path,
+            job.edits,
+            job.expectedSha256,
+          );
+          break;
         case "run_command":
           value = await this.commands.start({
             ...(job.argv ? { argv: job.argv } : {}),
             ...(job.shellCommand ? { shellCommand: job.shellCommand } : {}),
             ...(job.stdin !== undefined ? { stdin: job.stdin } : {}),
             timeoutMs: job.timeoutMs,
+            ...(job.waitMs === undefined ? {} : { waitMs: job.waitMs }),
           });
           break;
         case "get_command":
