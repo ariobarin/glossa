@@ -53,7 +53,10 @@ export async function ensureSignedIn(
 
   if (loaded && credentialsMatchLoginOptions(loaded.credentials, options)) {
     try {
-      await validate(loaded.credentials);
+      await validate(
+        loaded.credentials,
+        options.signal ? { signal: options.signal } : {},
+      );
       return false;
     } catch (error) {
       if (!(error instanceof SessionExpiredError)) throw error;
