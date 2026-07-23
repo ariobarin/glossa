@@ -137,8 +137,12 @@ function wrapText(value: string, width: number): string[] {
   return lines;
 }
 
-function sectionTitle(label: string, color: boolean): string {
-  return style(color, `${PALETTE.purpleReadable};1`, label.toUpperCase());
+function sectionTitle(
+  label: string,
+  color: boolean,
+  tone: string = PALETTE.purpleReadable,
+): string {
+  return style(color, `${tone};1`, label.toUpperCase());
 }
 
 function renderHeader(view: HudView, usable: number, color: boolean): string[] {
@@ -155,7 +159,7 @@ function renderHeader(view: HudView, usable: number, color: boolean): string[] {
   );
   const gap = " ".repeat(Math.max(1, usable - brand.length - viewLabel.length));
   return [
-    `${style(color, `${PALETTE.purple};1`, brand)}${gap}${style(color, PALETTE.muted, viewLabel)}`,
+    `${style(color, `${PALETTE.purple};1`, brand)}${gap}${style(color, `${PALETTE.coral};1`, viewLabel)}`,
     style(color, PALETTE.line, "─".repeat(usable)),
   ];
 }
@@ -203,7 +207,7 @@ function renderSession(state: HudState, usable: number, color: boolean): string[
   }
   lines.push(
     "",
-    sectionTitle("Authority", color),
+    sectionTitle("Authority", color, PALETTE.coral),
     ...wrapText("Full account permissions", Math.max(8, usable - 2)).map((line, index) =>
       `${index === 0 ? style(color, `${PALETTE.coral};1`, "!") : " "} ${style(color, PALETTE.ink, line)}`
     ),
@@ -257,7 +261,7 @@ function renderStatus(state: HudState, usable: number, color: boolean): string[]
     style(color, PALETTE.ink, truncate(state.status.account, usable)),
     style(color, PALETTE.muted, truncate(state.status.relay, usable)),
     "",
-    sectionTitle("Active workspaces", color),
+    sectionTitle("Active workspaces", color, PALETTE.coral),
     style(
       color,
       PALETTE.ink,
@@ -280,7 +284,7 @@ function renderStatus(state: HudState, usable: number, color: boolean): string[]
           : PALETTE.muted;
     lines.push(
       "",
-      `${style(color, `${PALETTE.purpleReadable};1`, String(index + 1).padStart(2))}  ${style(color, `${PALETTE.ink};1`, truncate(device.name, Math.max(8, usable - 4)))}`,
+      `${style(color, `${PALETTE.coral};1`, String(index + 1).padStart(2))}  ${style(color, `${PALETTE.ink};1`, truncate(device.name, Math.max(8, usable - 4)))}`,
       `    ${style(color, statusTone, device.status)}`,
       `    ${style(color, PALETTE.muted, truncate(`${device.platform}  •  seen ${device.lastSeen}`, Math.max(8, usable - 4)))}`,
     );
@@ -311,10 +315,10 @@ function renderHelp(usable: number, color: boolean): string[] {
     ...helpRows("S", "Account and devices", usable, color),
     ...helpRows("?", "Close help", usable, color),
     "",
-    sectionTitle("Manage", color),
-    ...helpRows("R", "Revoke a device from the status view", usable, color),
-    ...helpRows("L", "Sign out", usable, color),
-    ...helpRows("U", "Update Glossa", usable, color),
+    sectionTitle("Manage", color, PALETTE.coral),
+    ...helpRows("R", "Revoke a device from the status view", usable, color, PALETTE.coral),
+    ...helpRows("L", "Sign out", usable, color, PALETTE.coral),
+    ...helpRows("U", "Update Glossa", usable, color, PALETTE.coral),
     "",
     sectionTitle("Session", color),
     ...helpRows("Q", "Disconnect and quit", usable, color, PALETTE.coral),
@@ -344,16 +348,17 @@ function promptText(state: HudState): { message: string; choices?: string } | un
 interface HudHint {
   key: string;
   label: string;
+  tone?: string;
 }
 
 function footerHints(state: HudState): HudHint[] {
   if (state.view === "status") {
     return [
-      { key: "R", label: "Revoke" },
-      { key: "L", label: "Sign out" },
-      { key: "U", label: "Update" },
+      { key: "R", label: "Revoke", tone: PALETTE.coral },
+      { key: "L", label: "Sign out", tone: PALETTE.coral },
+      { key: "U", label: "Update", tone: PALETTE.coral },
       { key: "Esc", label: "Session" },
-      { key: "Q", label: "Disconnect" },
+      { key: "Q", label: "Disconnect", tone: PALETTE.coral },
     ];
   }
   if (state.view === "activity") {
@@ -361,20 +366,20 @@ function footerHints(state: HudState): HudHint[] {
       { key: "D", label: "Session" },
       { key: "S", label: "Status" },
       { key: "?", label: "Help" },
-      { key: "Q", label: "Disconnect" },
+      { key: "Q", label: "Disconnect", tone: PALETTE.coral },
     ];
   }
   if (state.view === "help") {
     return [
       { key: "?", label: "Session" },
-      { key: "Q", label: "Disconnect" },
+      { key: "Q", label: "Disconnect", tone: PALETTE.coral },
     ];
   }
   return [
     { key: "D", label: "Activity" },
     { key: "S", label: "Status" },
     { key: "?", label: "Help" },
-    { key: "Q", label: "Disconnect" },
+    { key: "Q", label: "Disconnect", tone: PALETTE.coral },
   ];
 }
 
@@ -392,7 +397,7 @@ function renderFooter(state: HudState, usable: number, color: boolean): string[]
   }
   return rows.map((row) =>
     row.map((hint) =>
-      `${style(color, `${PALETTE.purpleReadable};1`, hint.key)} ${style(color, PALETTE.muted, hint.label)}`
+      `${style(color, `${hint.tone ?? PALETTE.purpleReadable};1`, hint.key)} ${style(color, PALETTE.muted, hint.label)}`
     ).join("   ")
   );
 }

@@ -114,9 +114,10 @@ test("hud contains account and device management", () => {
 test("hud uses the Glossa paper, purple, coral, ink, and muted palette", () => {
   const view = renderHud(initialHudState("/work/glossa"), 80, true);
   assert.match(view, /\u001b\[38;2;128;84;255;1mGlossa/);
+  assert.match(view, /\u001b\[38;2;255;102;95;1mSESSION/);
   assert.match(view, /\u001b\[22;38;2;244;241;251;48;2;17;16;22m/);
   assert.match(view, /\u001b\[38;2;173;152;255;1mWORKSPACE/);
-  assert.match(view, /\u001b\[38;2;255;102;95;1m!/);
+  assert.match(view, /\u001b\[38;2;255;102;95;1mAUTHORITY/);
   assert.match(view, /\u001b\[38;2;170;164;181m/);
 });
 
