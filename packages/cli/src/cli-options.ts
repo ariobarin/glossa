@@ -9,6 +9,7 @@ export type HelpTopic =
   | "ui"
   | "start"
   | "status"
+  | "doctor"
   | "devices"
   | "completions"
   | "login"
@@ -18,6 +19,7 @@ export type CliInvocation =
   | { command: "ui"; path?: string; allowBroadRoot: boolean; deviceName?: string }
   | { command: "start"; path?: string; allowBroadRoot: boolean; deviceName?: string }
   | { command: "status"; json: boolean }
+  | { command: "doctor"; json: boolean }
   | { command: "devices"; action: "list"; json: boolean }
   | { command: "devices"; action: "rename"; deviceId: string; name: string }
   | { command: "devices"; action: "revoke"; deviceId: string }
@@ -31,6 +33,7 @@ const helpTopics = new Set<HelpTopic>([
   "ui",
   "start",
   "status",
+  "doctor",
   "devices",
   "completions",
   "login",
@@ -124,6 +127,7 @@ const KNOWN_COMMANDS = [
   "ui",
   "start",
   "status",
+  "doctor",
   "devices",
   "completions",
   "login",
@@ -199,6 +203,12 @@ export function parseInvocation(args: string[]): CliInvocation {
       return { command: "help", topic: "status" };
     }
     return { command: "status", json: singleJsonOption("Status", options) };
+  }
+  if (command === "doctor") {
+    if (options.includes("--help") || options.includes("-h")) {
+      return { command: "help", topic: "doctor" };
+    }
+    return { command: "doctor", json: singleJsonOption("Doctor", options) };
   }
   if (command === "devices") return parseDevices(options);
   if (command === "completions") {

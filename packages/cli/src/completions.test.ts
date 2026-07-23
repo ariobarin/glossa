@@ -18,6 +18,7 @@ test("every script mentions glossa and its core commands", () => {
     assert.ok(script.includes("ui"), `${shell} script did not list ui`);
     assert.ok(script.includes("start"), `${shell} script did not list start`);
     assert.ok(script.includes("status"), `${shell} script did not list status`);
+    assert.ok(script.includes("doctor"), `${shell} script did not list doctor`);
     assert.ok(script.includes("completions"), `${shell} script did not list completions`);
   }
 });
@@ -76,10 +77,11 @@ test("fish keeps the workspace path completable", () => {
   assert.match(script, /count \(commandline -opc\)\) -eq 2/);
 });
 
-test("scripts only advertise commands the parser actually accepts", () => {
+test("scripts advertise doctor with its JSON option", () => {
   for (const shell of SUPPORTED_SHELLS) {
     const script = completionScript(shell);
-    assert.ok(!script.includes("doctor"), `${shell} script advertised an unimplemented command`);
+    assert.ok(script.includes("doctor"), `${shell} script omitted doctor`);
+    assert.ok(script.includes("json"), `${shell} script omitted JSON options`);
   }
 });
 

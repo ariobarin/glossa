@@ -124,3 +124,17 @@ test("parses completions for a supported shell and rejects others", () => {
   assert.throws(() => parseInvocation(["completions"]), UsageError);
   assert.throws(() => parseInvocation(["completions", "tcsh"]), UsageError);
 });
+
+
+test("parses doctor readiness options", () => {
+  assert.deepEqual(parseInvocation(["doctor"]), { command: "doctor", json: false });
+  assert.deepEqual(parseInvocation(["doctor", "--json"]), {
+    command: "doctor",
+    json: true,
+  });
+  assert.deepEqual(parseInvocation(["doctor", "--help"]), {
+    command: "help",
+    topic: "doctor",
+  });
+  assert.throws(() => parseInvocation(["doctor", "--browser"]), UsageError);
+});

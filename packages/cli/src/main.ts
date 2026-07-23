@@ -6,6 +6,7 @@ import { ensureSignedIn } from "./auth-login.js";
 import { parseInvocation, UsageError, type HelpTopic } from "./cli-options.js";
 import { loadCredentials, type StoredCredentials } from "./config-store.js";
 import { completionScript } from "./completions.js";
+import { runDoctor } from "./doctor.js";
 import {
   listDevices,
   loadRelayEndpoints,
@@ -32,6 +33,7 @@ Usage:
   glossa ui [directory] [--allow-broad-root] [--device-name <name>]
   glossa start [directory] [--allow-broad-root] [--device-name <name>]
   glossa status [--json]
+  glossa doctor [--json]
   glossa devices list [--json]
   glossa devices rename <id> <name>
   glossa devices revoke <id>
@@ -53,6 +55,9 @@ Outside Git, provide a directory. --device-name names this computer the first ti
   status: `Usage: glossa status [--json]
 
 Validates Google login, contacts the relay, and reports enrolled devices and active workers.`,
+  doctor: `Usage: glossa doctor [--json]
+
+Checks Node.js, Git, relay and worker reachability, and read-only sign-in state, then reports whether Glossa is ready to start.`,
   devices: `Usage:
   glossa devices list [--json]
   glossa devices rename <id> <name>
@@ -200,6 +205,9 @@ async function main(): Promise<void> {
     await runExposure(invocation.path, invocation.allowBroadRoot, invocation.deviceName);
   } else if (invocation.command === "status") {
     await showStatus(invocation.json);
+  } else if (invocation.command === "doctor") {
+    const ok = await runDoctor(invocation.json);
+    if (!ok) process.exitCode = 1;
   } else if (invocation.command === "login") {
     const { loginPerformed } = await authenticatedCredentials();
     if (!loginPerformed) console.log("Signed in to Glossa.");
