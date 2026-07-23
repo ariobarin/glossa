@@ -28,9 +28,11 @@ Set-Location C:\path\to\a\test-repo
 glossa
 ```
 
-You can also run `glossa start .`. Start more workers in other terminals when you want to expose several workspaces from the same computer.
+You can also run `glossa start .`. Start more workers in other terminals when you want to expose several workspaces from the same computer. Pass `--device-name <name>` to name this computer the first time it enrolls, so it is easy to tell apart in `glossa devices list`.
 
-Glossa opens Google sign-in automatically when needed. `glossa login` is available as an optional preflight. Choose the Google account you want to use for Glossa. After sign-in, the terminal prints the exposed root, device name, connection state, and security warning. Leave that terminal open while using Glossa. Press Ctrl+C to disconnect.
+To try the experimental compact session HUD instead, run `glossa ui .`. It immediately starts the worker, shows connection and tool activity, and keeps the worker-account authority warning visible. Press `d` for details, `?` for help, or `q` to disconnect.
+
+Glossa opens Google sign-in automatically when needed. `glossa login` is available as an optional preflight. Choose the Google account you want to use for Glossa. After sign-in, the terminal prints the exposed root, device name, connection state, and security warning. On the first successful managed-relay connection on a computer, it also prints the ChatGPT quickstart link. A `connect-hint-shown` marker in the local Glossa config directory suppresses that hint on later runs. Leave that terminal open while using Glossa. Press Ctrl+C to disconnect.
 
 Starting Glossa authorizes connected clients to modify files inside the exposed root and run commands with the full environment and permissions of your Windows account. Do not expose your home directory, a drive root, or a repository containing credentials.
 
@@ -76,4 +78,4 @@ Press Ctrl+C in the worker terminal. The device remains enrolled for later sessi
 
 Run `glossa logout` to remove only the CLI's local OAuth credentials. Run `glossa logout --browser` when switching Google accounts; it also opens Glossa's browser-session logout endpoint.
 
-Use `glossa devices list`, `glossa devices rename <id> <name>`, or `glossa devices revoke <id>` to recover stale enrollments and remove computers you no longer trust.
+Use `glossa devices list`, `glossa devices rename <id> <name>`, or `glossa devices revoke <id>` to recover stale enrollments and remove computers you no longer trust. Each listed device shows its platform and when the relay last saw it, which helps identify computers that are offline or duplicated.
