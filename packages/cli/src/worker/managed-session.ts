@@ -21,12 +21,40 @@ import {
   type RemoteWorkerStatus,
 } from "./remote-worker.js";
 
-const visibleActivity = new Set(["write_file", "run_command", "cancel_command"]);
+const visibleActivity = new Set([
+  "write_file",
+  "edit_file",
+  "run_command",
+  "cancel_command",
+]);
 
 function activityLabel(type: WorkerJob["type"], finished: boolean, ok = true): string {
-  if (type === "run_command") return finished ? (ok ? "Command started" : "Command rejected") : "Command requested";
-  if (type === "write_file") return finished ? (ok ? "File write completed" : "File write rejected") : "File write started";
-  return finished ? (ok ? "Command cancellation completed" : "Command cancellation rejected") : "Command cancellation requested";
+  if (type === "run_command") {
+    return finished
+      ? ok
+        ? "Command started"
+        : "Command rejected"
+      : "Command requested";
+  }
+  if (type === "write_file") {
+    return finished
+      ? ok
+        ? "File write completed"
+        : "File write rejected"
+      : "File write started";
+  }
+  if (type === "edit_file") {
+    return finished
+      ? ok
+        ? "File edit completed"
+        : "File edit rejected"
+      : "File edit started";
+  }
+  return finished
+    ? ok
+      ? "Command cancellation completed"
+      : "Command cancellation rejected"
+    : "Command cancellation requested";
 }
 
 function visibleWorker(worker: LocalWorker): WorkerHandler {

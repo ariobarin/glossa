@@ -95,6 +95,7 @@ Tools:
 - `logout`
 - `read_file`
 - `write_file`
+- `edit_file`
 - `run_command`
 - `get_command`
 - `cancel_command`
@@ -103,7 +104,7 @@ Tools:
 
 `logout` requires no worker. It returns the Auth0 browser logout URL and instructions that the model must present to the user. It does not navigate the browser, revoke credentials, or claim the user completed logout.
 
-Tool annotations must describe actual behavior. `write_file` and `run_command` are non-read-only and destructive-capable.
+Tool annotations must describe actual behavior. `write_file`, `edit_file`, and `run_command` are non-read-only and destructive-capable.
 Every tool advertises the `glossa:access` OAuth scheme in descriptor metadata and is visible to the model. `run_command` declares `openWorldHint: true` because a command can use the worker account's inherited network access and affect external systems. All other tools declare `openWorldHint: false`.
 Tool descriptions state when the model should select each operation. Every public input and output field includes a description, and successful results provide both structured content and an equivalent JSON text fallback.
 
@@ -120,12 +121,20 @@ type WorkerJob =
       expectedSha256?: string;
     }
   | {
+      type: "edit_file";
+      requestId: string;
+      path: string;
+      edits: Array<{ oldText: string; newText: string }>;
+      expectedSha256?: string;
+    }
+  | {
       type: "run_command";
       requestId: string;
       argv?: string[];
       shellCommand?: string;
       stdin?: string;
       timeoutMs: number;
+      waitMs?: number;
     }
   | {
       type: "get_command";
@@ -138,11 +147,13 @@ type WorkerJob =
 
 `argv` and `shellCommand` are mutually exclusive.
 
-An active worker executes valid `write_file` and bounded `run_command` jobs without a separate local confirmation round trip. Session startup is the local authorization boundary. File tools remain confined to the exposed root. Commands retain the full authority and permissions of the local worker account.
+An active worker executes valid `write_file`, `edit_file`, and bounded `run_command` jobs without a separate local confirmation round trip. Session startup is the local authorization boundary. File tools remain confined to the exposed root. Commands retain the full authority and permissions of the local worker account.
+
+`edit_file` applies one or more exact old-text/new-text replacements against the same original file. Every old-text value must be non-empty and occur exactly once, replacements may not overlap, and the worker always guards the final atomic write with the hash of the file it read. The optional caller-provided SHA-256 adds an earlier stale-revision check. A successful result returns the new hash, replacement count, and a bounded unified diff of the affected lines.
 
 Command processes inherit the complete environment of the Glossa worker process. Glossa does not enumerate or transmit that environment unless a user-authorized command explicitly reads or prints part of it.
 
-`run_command` returns a command ID and status once the worker accepts the job. `get_command` may wait up to 15 seconds, then reports `running`, `succeeded`, `failed`, `canceled`, or `timed_out`, and includes bounded output after completion. Public MCP results omit worker-local lifecycle timestamps because clients do not need them to manage a command. `cancel_command` terminates the process tree. Disconnecting the worker rejects new jobs and terminates an active command. Command state, worker IDs, and output remain transient and are never persisted by the relay.
+`run_command` waits up to 750 milliseconds by default for fast completion, configurable from 0 through 5,000 milliseconds. A command that finishes within that budget returns its terminal status and bounded output in the same tool call; a longer command returns a running command ID. `get_command` may wait up to 15 seconds, then reports `running`, `succeeded`, `failed`, `canceled`, or `timed_out`, and includes bounded output after completion. Public MCP results omit worker-local lifecycle timestamps because clients do not need them to manage a command. `cancel_command` terminates the process tree. Disconnecting the worker rejects new jobs and terminates an active command. Command state, worker IDs, and output remain transient and are never persisted by the relay.
 
 Text file content and each captured command stream are limited to 1 MiB. Command output beyond that limit is truncated. One command may run at a time per worker; another `run_command` request returns `command_busy` until the active command finishes or is canceled.
 
@@ -154,5 +165,5 @@ These are ordinary MCP tools so clients do not need native MCP Tasks support. Na
 
 - Return stable machine-readable codes.
 - Do not include local absolute paths in hosted errors.
-- Distinguish offline, timeout, stale revision, output truncated, and command spawn failure.
+- Distinguish offline, timeout, stale revision, absent or ambiguous edit targets, overlapping edits, output truncated, and command spawn failure.
 - Authentication errors disclose no device/account existence.
