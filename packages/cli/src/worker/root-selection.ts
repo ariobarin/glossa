@@ -19,6 +19,18 @@ async function gitWorktreeRoot(cwd: string): Promise<string | null> {
   }
 }
 
+async function rootRequiredMessage(cwd: string): Promise<string> {
+  try {
+    await canonicalizeRoot(cwd, false);
+    return `No Git worktree was found in ${cwd}. Run "glossa start ." to expose the current folder, or "glossa start <path>" to expose another directory.`;
+  } catch (error) {
+    if (error instanceof WorkerError && error.code === "broad_root_refused") {
+      return `No Git worktree was found in ${cwd}, and this protected root is too broad to expose by default. Run "glossa start <path>" with a project directory, or "glossa start . --allow-broad-root" to expose the current folder anyway.`;
+    }
+    throw error;
+  }
+}
+
 export async function selectExposureRoot(
   explicitPath: string | undefined,
   allowBroadRoot = false,
@@ -26,10 +38,7 @@ export async function selectExposureRoot(
 ): Promise<string> {
   const selected = explicitPath ?? (await gitWorktreeRoot(cwd));
   if (!selected) {
-    throw new WorkerError(
-      "root_required",
-      "Outside a Git worktree, provide an explicit directory to expose.",
-    );
+    throw new WorkerError("root_required", await rootRequiredMessage(cwd));
   }
   return await canonicalizeRoot(selected, allowBroadRoot);
 }

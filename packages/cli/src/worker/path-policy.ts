@@ -50,9 +50,10 @@ export async function canonicalizeRoot(
     const filesystemRoot = path.parse(root).root;
     const home = await realpath(os.homedir()).catch(() => path.resolve(os.homedir()));
     if (samePath(root, filesystemRoot) || samePath(root, home)) {
+      const kind = samePath(root, home) ? "your home directory" : "a filesystem root";
       throw new WorkerError(
         "broad_root_refused",
-        "Home and filesystem roots require --allow-broad-root.",
+        `The selected root is ${kind}, which Glossa protects by default. Add --allow-broad-root to expose it anyway.`,
       );
     }
   }
