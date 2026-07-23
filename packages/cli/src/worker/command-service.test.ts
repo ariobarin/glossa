@@ -22,6 +22,37 @@ async function commandFixture(
   return { root: policy.root, commands };
 }
 
+test("returns completed output for fast commands without a second lookup", async (context) => {
+  const { commands } = await commandFixture(context);
+  const completed = await commands.start({
+    argv: [process.execPath, "-e", "process.stdout.write('fast')"],
+    timeoutMs: 10_000,
+    waitMs: 5_000,
+  });
+
+  assert.equal(completed.status, "succeeded");
+  assert.equal(completed.exitCode, 0);
+  assert.equal(completed.stdout, "fast");
+});
+
+test("returns a handle when a command outlives the fast wait", async (context) => {
+  const { commands } = await commandFixture(context);
+  const started = await commands.start({
+    argv: [
+      process.execPath,
+      "-e",
+      "setTimeout(() => process.stdout.write('later'), 250)",
+    ],
+    timeoutMs: 10_000,
+    waitMs: 10,
+  });
+
+  assert.equal(started.status, "running");
+  const completed = await commands.get(started.commandId, 15_000);
+  assert.equal(completed.status, "succeeded");
+  assert.equal(completed.stdout, "later");
+});
+
 test("runs PowerShell inside the exposed root", async (context) => {
   const { root, commands } = await commandFixture(context);
   const started = await commands.start({

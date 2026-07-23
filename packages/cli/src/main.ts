@@ -13,6 +13,7 @@ import {
   type RelayDevice,
 } from "./relay-client.js";
 import { logoutFromGlossa } from "./logout.js";
+import { runSessionHud } from "./ui-hud.js";
 import { runManagedSession } from "./worker/managed-session.js";
 import { selectExposureRoot } from "./worker/root-selection.js";
 
@@ -26,7 +27,8 @@ const helpText: Record<HelpTopic | "main", string> = {
 Usage:
   glossa
   glossa [directory]
-  glossa start [directory] [--allow-broad-root]
+  glossa ui [directory] [--allow-broad-root] [--device-name <name>]
+  glossa start [directory] [--allow-broad-root] [--device-name <name>]
   glossa status [--json]
   glossa devices list [--json]
   glossa devices rename <id> <name>
@@ -37,10 +39,14 @@ Usage:
   glossa --help
 
 Glossa signs in automatically and exposes each started workspace through the managed MCP relay.`,
-  start: `Usage: glossa start [directory] [--allow-broad-root]
+  ui: `Usage: glossa ui [directory] [--allow-broad-root] [--device-name <name>]
+
+Opens an experimental compact session HUD for the current workspace.
+It starts immediately, shows connection and activity, and exits with q or Ctrl+C. --device-name names this computer on first enrollment.`,
+  start: `Usage: glossa start [directory] [--allow-broad-root] [--device-name <name>]
 
 Starts a foreground worker. Inside Git, the default directory is the worktree root.
-Outside Git, provide a directory. Press Ctrl+C to disconnect.`,
+Outside Git, provide a directory. --device-name names this computer the first time it enrolls; once enrolled the name is reused. Press Ctrl+C to disconnect.`,
   status: `Usage: glossa status [--json]
 
 Validates Google login, contacts the relay, and reports enrolled devices and active workers.`,
@@ -58,9 +64,7 @@ Ensures the CLI has a valid Google session. Starting Glossa also signs in automa
 Removes local OAuth credentials. --browser also opens the browser-session logout used when switching Google accounts. Running workers remain connected until stopped or revoked.`,
 };
 
-async function withLoginSignal<T>(
-  action: (signal: AbortSignal) => Promise<T>,
-): Promise<T> {
+async function withLoginSignal<T>(action: (signal: AbortSignal) => Promise<T>): Promise<T> {
   const controller = new AbortController();
   const cancel = () => controller.abort();
   process.once("SIGINT", cancel);
@@ -71,13 +75,15 @@ async function withLoginSignal<T>(
   }
 }
 
-async function authenticatedCredentials(): Promise<{
+async function authenticatedCredentials(signal?: AbortSignal): Promise<{
   credentials: StoredCredentials;
   loginPerformed: boolean;
 }> {
-  const loginPerformed = await withLoginSignal(async (signal) => {
-    return await ensureSignedIn({ ...loadAuthConfig(), signal });
-  });
+  const loginPerformed = signal
+    ? await ensureSignedIn({ ...loadAuthConfig(), signal })
+    : await withLoginSignal(async (loginSignal) => {
+        return await ensureSignedIn({ ...loadAuthConfig(), signal: loginSignal });
+      });
   const loaded = await loadCredentials();
   if (!loaded) throw new Error("Glossa could not load the completed login.");
   return {
@@ -86,10 +92,16 @@ async function authenticatedCredentials(): Promise<{
   };
 }
 
-async function runExposure(path: string | undefined, allowBroadRoot: boolean): Promise<void> {
+async function runExposure(
+  path: string | undefined,
+  allowBroadRoot: boolean,
+  deviceName?: string,
+): Promise<void> {
   const root = await selectExposureRoot(path, allowBroadRoot);
   await authenticatedCredentials();
-  await runManagedSession(root, loadRelayEndpoints(), allowBroadRoot);
+  await runManagedSession(root, loadRelayEndpoints(), allowBroadRoot, {
+    ...(deviceName ? { deviceName } : {}),
+  });
 }
 
 function deviceStatus(device: RelayDevice): string {
@@ -146,14 +158,45 @@ async function deviceCredentials(): Promise<{
   };
 }
 
+async function showDevices(json: boolean): Promise<void> {
+  const { endpoints, credentials } = await deviceCredentials();
+  const devices = await listDevices(endpoints, credentials);
+  if (json) console.log(JSON.stringify({ devices }, null, 2));
+  else if (devices.length === 0) console.log("No devices enrolled.");
+  else for (const device of devices) console.log(`${device.id}  ${device.name}  ${deviceStatus(device)}`);
+}
+
+async function runInteractive(
+  path: string | undefined,
+  allowBroadRoot: boolean,
+  deviceName?: string,
+): Promise<void> {
+  const root = await selectExposureRoot(path, allowBroadRoot);
+  await runSessionHud({
+    workspace: root,
+    run: async (signal, onEvent) => {
+      await authenticatedCredentials(signal);
+      await runManagedSession(root, loadRelayEndpoints(), allowBroadRoot, {
+        signal,
+        onEvent,
+        quiet: true,
+        handleProcessSignals: false,
+        ...(deviceName ? { deviceName } : {}),
+      });
+    },
+  });
+}
+
 async function main(): Promise<void> {
   const invocation = parseInvocation(process.argv.slice(2));
   if (invocation.command === "help") {
     console.log(helpText[invocation.topic ?? "main"]);
   } else if (invocation.command === "version") {
     console.log(VERSION);
+  } else if (invocation.command === "ui") {
+    await runInteractive(invocation.path, invocation.allowBroadRoot, invocation.deviceName);
   } else if (invocation.command === "start") {
-    await runExposure(invocation.path, invocation.allowBroadRoot);
+    await runExposure(invocation.path, invocation.allowBroadRoot, invocation.deviceName);
   } else if (invocation.command === "status") {
     await showStatus(invocation.json);
   } else if (invocation.command === "login") {
@@ -162,11 +205,7 @@ async function main(): Promise<void> {
   } else if (invocation.command === "logout") {
     await logoutFromGlossa({ browser: invocation.browser });
   } else if (invocation.action === "list") {
-    const { endpoints, credentials } = await deviceCredentials();
-    const devices = await listDevices(endpoints, credentials);
-    if (invocation.json) console.log(JSON.stringify({ devices }, null, 2));
-    else if (devices.length === 0) console.log("No devices enrolled.");
-    else for (const device of devices) console.log(`${device.id}  ${device.name}  ${deviceStatus(device)}`);
+    await showDevices(invocation.json);
   } else if (invocation.action === "rename") {
     const { endpoints, credentials } = await deviceCredentials();
     const device = await renameDevice(endpoints, credentials, invocation.deviceId, invocation.name);

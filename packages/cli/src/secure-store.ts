@@ -5,7 +5,8 @@ import path from "node:path";
 const KEYRING_SERVICE = "Glossa";
 
 interface KeyringEntry {
-  setPassword(password: string): Promise<void>;
+  setSecret(secret: Uint8Array): Promise<void>;
+  getSecret(): Promise<Uint8Array | number[] | null | undefined>;
   getPassword(): Promise<string | null | undefined>;
   deleteCredential(): Promise<boolean>;
 }
@@ -33,6 +34,7 @@ export function configDirectory(): string {
 
 export class SecureStore<T> {
   readonly #options: SecureStoreOptions<T>;
+  #warned = false;
 
   constructor(options: SecureStoreOptions<T>) {
     this.#options = options;
@@ -43,7 +45,7 @@ export class SecureStore<T> {
     const entry = await this.#entry();
     if (entry) {
       try {
-        await entry.setPassword(serialized);
+        await this.#writeEntry(entry, serialized);
         await rm(this.#options.file, { force: true });
         return "keyring";
       } catch {
@@ -70,27 +72,8 @@ export class SecureStore<T> {
   async load(): Promise<{ value: T; backend: StorageBackend } | null> {
     const entry = await this.#entry();
     if (entry) {
-      let serialized: string | null | undefined;
-      try {
-        serialized = await entry.getPassword();
-      } catch {
-        // An existing file can still provide the warned fallback.
-      }
-      if (serialized != null) {
-        try {
-          return { value: this.#options.parse(serialized), backend: "keyring" };
-        } catch {
-          // The keyring returned a value that doesn't parse as valid
-          // credentials (e.g. some backends return the string "null"
-          // instead of undefined when no entry exists). Treat it as
-          // absent rather than crashing, and clear the bad entry.
-          try {
-            await entry.deleteCredential();
-          } catch {
-            // Best effort cleanup of a corrupt keyring entry.
-          }
-        }
-      }
+      const value = await this.#readEntry(entry, true);
+      if (value != null) return { value, backend: "keyring" };
     }
 
     let value: T;
@@ -103,7 +86,7 @@ export class SecureStore<T> {
 
     if (entry) {
       try {
-        await entry.setPassword(JSON.stringify(value));
+        await this.#writeEntry(entry, JSON.stringify(value));
         await rm(this.#options.file, { force: true });
         return { value, backend: "keyring" };
       } catch {
@@ -120,19 +103,8 @@ export class SecureStore<T> {
     // into the keyring (unlike load, which writes and removes the file).
     const entry = await this.#entry();
     if (entry) {
-      let serialized: string | null | undefined;
-      try {
-        serialized = await entry.getPassword();
-      } catch {
-        // Fall through to the file below.
-      }
-      if (serialized != null) {
-        try {
-          return { value: this.#options.parse(serialized), backend: "keyring" };
-        } catch {
-          // Unreadable keyring entry: fall through to the file.
-        }
-      }
+      const value = await this.#readEntry(entry, false);
+      if (value != null) return { value, backend: "keyring" };
     }
     try {
       return {
@@ -151,7 +123,7 @@ export class SecureStore<T> {
     if (entry) {
       try {
         const deleted = await entry.deleteCredential();
-        if (!deleted && (await entry.getPassword()) != null) {
+        if (!deleted && (await entry.getSecret()) != null) {
           keyringDeleteFailed = true;
         }
       } catch {
@@ -182,7 +154,60 @@ export class SecureStore<T> {
     }
   }
 
+  async #readEntry(entry: KeyringEntry, migrateLegacy: boolean): Promise<T | null> {
+    let found = false;
+    try {
+      const secret = await entry.getSecret();
+      if (secret != null) {
+        found = true;
+        try {
+          const bytes = secret instanceof Uint8Array ? secret : Uint8Array.from(secret);
+          return this.#options.parse(
+            new TextDecoder("utf-8", { fatal: true }).decode(bytes),
+          );
+        } catch {
+          // Older Glossa versions stored strings, so try that format below.
+        }
+      }
+    } catch {
+      // An existing password entry or file can still provide the credential.
+    }
+
+    try {
+      const serialized = await entry.getPassword();
+      if (serialized != null) {
+        found = true;
+        const value = this.#options.parse(serialized);
+        if (migrateLegacy) {
+          try {
+            await this.#writeEntry(entry, serialized);
+          } catch {
+            // The readable legacy entry remains available.
+          }
+        }
+        return value;
+      }
+    } catch {
+      // Fall through to cleanup or the file below.
+    }
+
+    if (found && migrateLegacy) {
+      try {
+        await entry.deleteCredential();
+      } catch {
+        // Best effort cleanup of a corrupt keyring entry.
+      }
+    }
+    return null;
+  }
+
+  async #writeEntry(entry: KeyringEntry, serialized: string): Promise<void> {
+    await entry.setSecret(new TextEncoder().encode(serialized));
+  }
+
   #warn(): void {
+    if (this.#warned) return;
+    this.#warned = true;
     (this.#options.warn ?? console.warn)(this.#options.warning);
   }
 }
