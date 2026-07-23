@@ -24,7 +24,7 @@ test("rejects Windows absolute and parent paths", () => {
   assert.equal(validateRelativePath("src\\index.ts"), "src\\index.ts");
 });
 
-test("blocks Windows junction traversal", async (context) => {
+test("blocks linked directory traversal", async (context) => {
   const fixture = await temporaryDirectory(context);
   const root = path.join(fixture, "root");
   const outside = path.join(fixture, "outside");
@@ -34,7 +34,7 @@ test("blocks Windows junction traversal", async (context) => {
   await symlink(outside, path.join(root, "linked"), "junction");
 
   const policy = await PathPolicy.create(root);
-  await assert.rejects(policy.resolveExisting("linked\\secret.txt"), {
+  await assert.rejects(policy.resolveExisting(path.join("linked", "secret.txt")), {
     code: "linked_path",
   });
 });

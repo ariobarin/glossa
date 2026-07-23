@@ -52,14 +52,14 @@ Opens an experimental compact session HUD for the current workspace.
 It starts immediately, shows connection and activity, and exits with q or Ctrl+C. --device-name names this computer on first enrollment.`,
   start: `Usage: glossa start [directory] [--allow-broad-root] [--device-name <name>]
 
-Starts a foreground worker. Inside Git, the default directory is the worktree root.
-Outside Git, provide a directory. --device-name names this computer the first time it enrolls; once enrolled the name is reused. Press Ctrl+C to disconnect.`,
+Starts a foreground worker in the selected directory. Pass . to select the current directory explicitly.
+--device-name names this computer the first time it enrolls; once enrolled the name is reused. Press Ctrl+C to disconnect.`,
   status: `Usage: glossa status [--json]
 
 Validates Google login, contacts the relay, and reports enrolled devices and active workers.`,
   doctor: `Usage: glossa doctor [--json]
 
-Checks Node.js, Git, relay and worker reachability, and read-only sign-in state, then reports whether Glossa is ready to start.`,
+Checks Node.js, relay and worker reachability, and read-only sign-in state, then reports whether Glossa is ready to start.`,
   devices: `Usage:
   glossa devices list [--json]
   glossa devices rename <id> <name>

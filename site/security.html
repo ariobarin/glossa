@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="description" content="Glossa does not clone your repository into the hosted relay. The local worker reads files and runs commands. Requested file contents, command details, and command results are transmitted through the relay to the connected client." />
+    <meta name="description" content="Glossa does not copy your selected folder into the hosted relay. The local worker reads files and runs commands. Requested file contents, command details, and command results are transmitted through the relay to the connected client." />
     <meta name="theme-color" content="#111016" />
     <title>Security | Glossa</title>
     <link rel="icon" href="/glossa-symbol.svg" type="image/svg+xml" />
@@ -67,7 +67,7 @@
           <h1>Your worker controls workspace access.</h1>
           <button class="copy-page-button" type="button" data-copy-page aria-label="Copy page link">Copy page</button>
         </div>
-        <p class="docs-summary">Glossa does not clone your repository into the hosted relay. The local worker reads files and runs commands. Requested file contents, command details, and command results are transmitted through the relay to the connected client.</p>
+        <p class="docs-summary">Glossa does not copy your selected folder into the hosted relay. The local worker reads files and runs commands. Requested file contents, command details, and command results are transmitted through the relay to the connected client.</p>
       </header>
 
       <nav class="docs-toc" aria-label="On this page">
@@ -82,12 +82,12 @@
       </nav>
       <article class="docs-content">
 <blockquote>
-<p><strong>Command access is powerful.</strong> Commands run with the full environment and permissions of the Windows account that launched Glossa. File boundaries do not turn shell commands into a sandbox.</p>
+<p><strong>Command access is powerful.</strong> Commands run with the full environment and permissions of the operating-system account that launched Glossa. File boundaries do not turn shell commands into a sandbox.</p>
 </blockquote>
 <section class="doc-section">
 <h2 id="what-you-authorize"><a class="heading-anchor" href="#what-you-authorize" aria-label="Link to What you authorize"></a>What you authorize</h2>
 <ul>
-<li>You choose one Git worktree or explicit directory when you start Glossa.</li>
+<li>You choose one local directory when you start Glossa.</li>
 <li>Connected clients can read and modify files inside that root.</li>
 <li>Connected clients can run commands with the worker account&#39;s authority.</li>
 <li>Press Ctrl+C in the worker terminal to start disconnecting. The worker is disconnected when the process exits.</li>
@@ -101,15 +101,15 @@
 <li>Path containment and process controls are enforced on the local worker.</li>
 <li>Every relay resource is scoped to the authenticated account.</li>
 <li>The relay database stores only salted hashes of random device secrets.</li>
-<li>The worker keeps its recoverable device secret in the Windows credential store, or uses a warned local file fallback whose access controls depend on the operating system.</li>
+<li>The worker keeps its recoverable device secret in the operating-system credential store, or uses a warned local file fallback whose access controls depend on the operating system.</li>
 <li>Hosted logs contain operational metadata rather than request or response content.</li>
 </ul>
 </section><section class="doc-section">
 <h2 id="use-glossa-safely"><a class="heading-anchor" href="#use-glossa-safely" aria-label="Link to Use Glossa safely"></a>Use Glossa safely</h2>
 <ul>
-<li>Start with a disposable repository.</li>
-<li>Never expose your home directory, a drive root, or a repository containing credentials.</li>
-<li>Run the worker under a dedicated Windows account when you need a stronger boundary.</li>
+<li>Start with a folder you can safely test.</li>
+<li>Never expose your home directory, a filesystem root, or a folder containing credentials.</li>
+<li>Run the worker under a dedicated operating-system account when you need a stronger boundary.</li>
 <li>Use a container or virtual machine when operating-system isolation is required.</li>
 </ul>
 </section><section class="doc-section">

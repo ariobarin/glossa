@@ -140,7 +140,9 @@ export const runCommandRequestSchema = z
       .string()
       .max(64 * 1024)
       .optional()
-      .describe("PowerShell command text. Provide this or argv, not both."),
+      .describe(
+        "Shell command text. Glossa uses PowerShell on Windows and the user's shell on macOS and Linux. Provide this or argv, not both.",
+      ),
     stdin: boundedTextSchema
       .optional()
       .describe("Optional UTF-8 text sent to the command standard input."),
