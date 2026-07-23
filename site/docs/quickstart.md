@@ -13,11 +13,8 @@ Make sure you have:
 
 ## Step 1: Install Glossa
 
-Choose your operating system. The npm package supports Windows, macOS, and
-Linux. Windows also has a hosted PowerShell installer.
-
 <div class="docs-switcher" data-docs-tabs data-tabs-storage="glossa-install-platform">
-  <p class="docs-switcher-label">Operating system</p>
+  <p class="docs-switcher-label">Platform</p>
   <div class="docs-tabs" role="tablist" aria-label="Operating system">
     <button id="platform-windows-tab" type="button" role="tab" aria-selected="true" aria-controls="platform-windows" data-docs-tab="windows">Windows</button>
     <button id="platform-macos-tab" type="button" role="tab" aria-selected="false" aria-controls="platform-macos" data-docs-tab="macos" tabindex="-1">macOS</button>
@@ -25,7 +22,7 @@ Linux. Windows also has a hosted PowerShell installer.
   </div>
   <div id="platform-windows" class="docs-tab-panel" role="tabpanel" aria-labelledby="platform-windows-tab" data-docs-tab-panel="windows">
     <div class="docs-switcher docs-switcher-nested" data-docs-tabs data-tabs-storage="glossa-windows-install-method">
-      <p class="docs-switcher-label">Install method</p>
+      <p class="docs-switcher-label">Install with</p>
       <div class="docs-tabs" role="tablist" aria-label="Windows install method">
         <button id="windows-powershell-tab" type="button" role="tab" aria-selected="true" aria-controls="windows-powershell" data-docs-tab="powershell">PowerShell</button>
         <button id="windows-npm-tab" type="button" role="tab" aria-selected="false" aria-controls="windows-npm" data-docs-tab="npm" tabindex="-1">npm</button>

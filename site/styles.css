@@ -433,11 +433,11 @@ p {
 }
 
 .doc-section {
-  padding-bottom: 50px;
+  padding-bottom: 0;
 }
 
 .doc-section + .doc-section {
-  padding-top: 50px;
+  padding-top: 42px;
   border-top: 1px solid var(--line);
 }
 
@@ -553,11 +553,21 @@ p {
 
 .docs-switcher {
   max-width: 720px;
-  margin: 24px 0 10px;
+  margin: 22px 0 10px;
 }
 
 .docs-switcher-nested {
-  margin-top: 22px;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  gap: 14px;
+  width: 100%;
+  min-width: 0;
+  margin-top: 18px;
+}
+
+.docs-switcher-nested > * {
+  min-width: 0;
 }
 
 .docs-content .docs-switcher-label {
@@ -565,6 +575,16 @@ p {
   color: var(--ink);
   font-size: 13px;
   font-weight: 700;
+}
+
+.docs-content .docs-switcher-nested .docs-switcher-label {
+  margin: 0;
+}
+
+.docs-switcher-nested .docs-tab-panel {
+  grid-column: 1 / -1;
+  width: 100%;
+  margin-top: 4px;
 }
 
 .docs-tabs {
@@ -913,16 +933,21 @@ p {
     padding-inline: 10px;
   }
 
+  .docs-switcher-nested {
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+
   .docs-content h2 {
     font-size: 26px;
   }
 
   .doc-section {
-    padding-bottom: 38px;
+    padding-bottom: 0;
   }
 
   .doc-section + .doc-section {
-    padding-top: 38px;
+    padding-top: 32px;
   }
 
 }
