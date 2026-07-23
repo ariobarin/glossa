@@ -1,5 +1,5 @@
 import type { WorkerJob, WorkerResult } from "@glossa/protocol";
-import { validCredentials } from "../auth-session.js";
+import { type FetchLike, validCredentials } from "../auth-session.js";
 import { loadCredentials } from "../config-store.js";
 import {
   deleteDeviceCredential,
@@ -118,11 +118,13 @@ export interface ManagedDeviceDependencies {
   accountOwnsDevice?: typeof accountOwnsDevice;
   enrollDevice?: typeof enrollDevice;
   defaultDeviceName?: typeof defaultDeviceName;
+  fetch?: FetchLike;
 }
 
 export async function deviceForSession(
   endpoints: RelayEndpoints,
   dependencies: ManagedDeviceDependencies = {},
+  signal?: AbortSignal,
 ): Promise<StoredDeviceCredential> {
   const loadDevice = dependencies.loadDeviceCredential ?? loadDeviceCredential;
   const loadLogin = dependencies.loadCredentials ?? loadCredentials;
@@ -132,15 +134,31 @@ export async function deviceForSession(
   const enroll = dependencies.enrollDevice ?? enrollDevice;
   const saveDevice = dependencies.saveDeviceCredential ?? saveDeviceCredential;
   const name = dependencies.defaultDeviceName ?? defaultDeviceName;
+  const baseFetch = dependencies.fetch ?? fetch;
+  const fetchRequest: FetchLike = signal
+    ? async (input, init) => await baseFetch(input, { ...init, signal })
+    : baseFetch;
+
+  signal?.throwIfAborted();
   const stored = await loadDevice();
   const loaded = await loadLogin();
   if (!loaded) throw new Error("Not signed in. Run Glossa again to sign in.");
-  const credentials = await validate(loaded.credentials);
+  const credentials = await validate(loaded.credentials, { fetch: fetchRequest });
+  signal?.throwIfAborted();
   if (stored?.relayOrigin === endpoints.relayOrigin) {
-    if (await ownsDevice(endpoints, credentials, stored.deviceId)) return stored;
+    if (
+      await ownsDevice(
+        endpoints,
+        credentials,
+        stored.deviceId,
+        fetchRequest,
+      )
+    ) {
+      return stored;
+    }
     await removeDevice();
   }
-  const enrolled = await enroll(endpoints, credentials, name());
+  const enrolled = await enroll(endpoints, credentials, name(), fetchRequest);
   await saveDevice(enrolled);
   return enrolled;
 }
@@ -163,11 +181,10 @@ export async function runManagedSession(
   allowBroadRoot = false,
   options: ManagedSessionOptions = {},
 ): Promise<void> {
-  const device = await deviceForSession(endpoints);
-  const worker = await LocalWorker.create(root, allowBroadRoot);
   const controller = new AbortController();
   const stop = (): void => controller.abort();
   const handleProcessSignals = options.handleProcessSignals ?? true;
+  let worker: LocalWorker | undefined;
 
   if (options.signal?.aborted) controller.abort();
   else options.signal?.addEventListener("abort", stop, { once: true });
@@ -176,20 +193,25 @@ export async function runManagedSession(
     process.once("SIGTERM", stop);
   }
 
-  report(
-    options,
-    { type: "session", root: worker.policy.root, deviceName: device.deviceName },
-    `Glossa worker root: ${worker.policy.root}`,
-  );
-  if (!options.quiet) {
-    console.error(`Glossa device: ${device.deviceName}`);
-    console.error(
-      "Files may be modified and commands have the full environment and permissions of this account. Press Ctrl+C to disconnect.",
-    );
-  }
-
-  let connectionState: RemoteWorkerStatus["state"] | undefined;
   try {
+    const device = await deviceForSession(endpoints, {}, controller.signal);
+    controller.signal.throwIfAborted();
+    worker = await LocalWorker.create(root, allowBroadRoot);
+    controller.signal.throwIfAborted();
+
+    report(
+      options,
+      { type: "session", root: worker.policy.root, deviceName: device.deviceName },
+      `Glossa worker root: ${worker.policy.root}`,
+    );
+    if (!options.quiet) {
+      console.error(`Glossa device: ${device.deviceName}`);
+      console.error(
+        "Files may be modified and commands have the full environment and permissions of this account. Press Ctrl+C to disconnect.",
+      );
+    }
+
+    let connectionState: RemoteWorkerStatus["state"] | undefined;
     await new RemoteWorker({
       origin: endpoints.workerOrigin,
       deviceToken: device.token,
@@ -223,6 +245,6 @@ export async function runManagedSession(
       process.removeListener("SIGINT", stop);
       process.removeListener("SIGTERM", stop);
     }
-    await worker.shutdown();
+    await worker?.shutdown();
   }
 }

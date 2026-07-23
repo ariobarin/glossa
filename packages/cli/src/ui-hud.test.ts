@@ -1,6 +1,8 @@
 import assert from "node:assert/strict";
+import { PassThrough } from "node:stream";
 import test from "node:test";
-import { applyHudEvent, initialHudState, renderHud } from "./ui-hud.js";
+import type { ReadStream, WriteStream } from "node:tty";
+import { applyHudEvent, initialHudState, renderHud, runSessionHud } from "./ui-hud.js";
 
 test("hud reduces session events into a compact current state", () => {
   let state = initialHudState("/work/glossa");
@@ -43,4 +45,40 @@ test("hud keeps the title centered in a narrow terminal", () => {
 test("hud colors the title from the Glossa palette", () => {
   const view = renderHud(initialHudState("/work/glossa"), 80, true);
   assert.match(view, /\u001b\[38;2;120;77;250;1mGlossa/);
+});
+
+
+test("hud restores the terminal and propagates session failures", async () => {
+  const input = Object.assign(new PassThrough(), {
+    isTTY: true,
+    isRaw: false,
+    setRawMode(value: boolean) {
+      this.isRaw = value;
+      return this;
+    },
+  });
+  input.pause();
+  const output = Object.assign(new PassThrough(), { isTTY: true, columns: 80 });
+  let rendered = "";
+  output.on("data", (chunk: Buffer) => {
+    rendered += chunk.toString("utf8");
+  });
+
+  await assert.rejects(
+    runSessionHud(
+      {
+        workspace: "/work/glossa",
+        async run() {
+          throw new Error("startup failed");
+        },
+      },
+      input as unknown as ReadStream,
+      output as unknown as WriteStream,
+    ),
+    /startup failed/,
+  );
+
+  assert.equal(input.isRaw, false);
+  assert.equal(input.isPaused(), true);
+  assert.match(rendered, /\u001b\[\?1049l/);
 });

@@ -220,9 +220,7 @@ export async function runSessionHud(
         }
       };
       input.on("keypress", onKeypress);
-      session.finally(() => {
-        if (state.connection === "disconnected" && controller.signal.aborted) resolve();
-      }).catch(() => undefined);
+      void session.catch(() => stopUi?.());
       stopUi = () => {
         input.removeListener("keypress", onKeypress);
         resolve();
