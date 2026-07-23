@@ -5,7 +5,6 @@ import { loadAuthConfig } from "./auth-config.js";
 import { ensureSignedIn } from "./auth-login.js";
 import { parseInvocation, UsageError, type HelpTopic } from "./cli-options.js";
 import { loadCredentials, type StoredCredentials } from "./config-store.js";
-import { completionScript } from "./completions.js";
 import { runDoctor } from "./doctor.js";
 import {
   listDevices,
@@ -37,7 +36,6 @@ Usage:
   glossa devices list [--json]
   glossa devices rename <id> <name>
   glossa devices revoke <id>
-  glossa completions <shell>
   glossa update
   glossa login
   glossa logout [--browser]
@@ -61,9 +59,6 @@ Checks Node.js, Git, relay and worker reachability, and read-only sign-in state,
   glossa devices revoke <id>
 
 Lists, renames, or revokes computers enrolled with the current Google account.`,
-  completions: `Usage: glossa completions <shell>
-
-Prints a completion script for powershell, bash, zsh, or fish. Source it from your shell profile, for example: glossa completions powershell | Out-String | Invoke-Expression.`,
   update: `Usage: glossa update
 
 Updates the global Glossa installation from the npm beta channel. glossa upgrade is an alias.`,
@@ -209,8 +204,6 @@ async function main(): Promise<void> {
     if (!loginPerformed) console.log("Signed in to Glossa.");
   } else if (invocation.command === "logout") {
     await logoutFromGlossa({ browser: invocation.browser });
-  } else if (invocation.command === "completions") {
-    console.log(completionScript(invocation.shell));
   } else if (invocation.command === "update") {
     updateGlossa();
   } else if (invocation.action === "list") {

@@ -68,8 +68,9 @@ test("validates device management arguments", () => {
   assert.throws(() => parseInvocation(["devices", "rename", "device-id"]), UsageError);
 });
 
-test("does not expose the session display as a separate command", () => {
+test("does not expose unnecessary convenience commands", () => {
   assert.throws(() => parseInvocation(["ui"]), UsageError);
+  assert.throws(() => parseInvocation(["completions", "powershell"]), UsageError);
 });
 
 
@@ -103,24 +104,6 @@ test("rejects a missing or invalid device name", () => {
     () => parseInvocation(["start", "--device-name", "x".repeat(81)]),
     UsageError,
   );
-});
-
-
-test("parses completions for a supported shell and rejects others", () => {
-  assert.deepEqual(parseInvocation(["completions", "bash"]), {
-    command: "completions",
-    shell: "bash",
-  });
-  assert.deepEqual(parseInvocation(["completions", "fish"]), {
-    command: "completions",
-    shell: "fish",
-  });
-  assert.deepEqual(parseInvocation(["completions", "--help"]), {
-    command: "help",
-    topic: "completions",
-  });
-  assert.throws(() => parseInvocation(["completions"]), UsageError);
-  assert.throws(() => parseInvocation(["completions", "tcsh"]), UsageError);
 });
 
 

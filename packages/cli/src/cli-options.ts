@@ -1,7 +1,6 @@
 import { existsSync } from "node:fs";
 import path from "node:path";
 import { deviceNameSchema } from "@glossa/protocol";
-import { SUPPORTED_SHELLS, type SupportedShell } from "./completions.js";
 
 export class UsageError extends Error {}
 
@@ -10,7 +9,6 @@ export type HelpTopic =
   | "status"
   | "doctor"
   | "devices"
-  | "completions"
   | "update"
   | "login"
   | "logout";
@@ -22,7 +20,6 @@ export type CliInvocation =
   | { command: "devices"; action: "list"; json: boolean }
   | { command: "devices"; action: "rename"; deviceId: string; name: string }
   | { command: "devices"; action: "revoke"; deviceId: string }
-  | { command: "completions"; shell: SupportedShell }
   | { command: "update" }
   | { command: "login" }
   | { command: "logout"; browser: boolean }
@@ -34,7 +31,6 @@ const helpTopics = new Set<HelpTopic>([
   "status",
   "doctor",
   "devices",
-  "completions",
   "update",
   "login",
   "logout",
@@ -128,7 +124,6 @@ const KNOWN_COMMANDS = [
   "status",
   "doctor",
   "devices",
-  "completions",
   "update",
   "upgrade",
   "login",
@@ -211,21 +206,6 @@ export function parseInvocation(args: string[]): CliInvocation {
     return { command: "doctor", json: singleJsonOption("Doctor", options) };
   }
   if (command === "devices") return parseDevices(options);
-  if (command === "completions") {
-    if (options.includes("--help") || options.includes("-h")) {
-      return { command: "help", topic: "completions" };
-    }
-    if (options.length !== 1) {
-      throw new UsageError("Use: glossa completions <shell>.");
-    }
-    const shell = options[0]!;
-    if (!(SUPPORTED_SHELLS as readonly string[]).includes(shell)) {
-      throw new UsageError(
-        `Unsupported shell: ${shell}. Use one of: ${SUPPORTED_SHELLS.join(", ")}.`,
-      );
-    }
-    return { command: "completions", shell: shell as SupportedShell };
-  }
   if (command === "update" || command === "upgrade") {
     if (options.includes("--help") || options.includes("-h")) {
       return { command: "help", topic: "update" };
