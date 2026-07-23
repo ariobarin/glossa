@@ -36,6 +36,17 @@ test("hud defaults to one calm status surface", () => {
   assert.doesNotMatch(view, /Recent activity/);
 });
 
+test("hud renders connected relay compatibility notices", () => {
+  let state = initialHudState("/work/glossa");
+  state = { ...state, connection: "connected" };
+  state = applyHudEvent(state, {
+    type: "notice",
+    message: "The relay needs an update before this computer can expose several workspaces at once.",
+  });
+  const view = renderHud(state, 120, false);
+  assert.match(view, /relay needs an update/);
+});
+
 test("hud keeps the title centered in a narrow terminal", () => {
   const view = renderHud(initialHudState("/work/glossa"), 24, false);
   assert.match(view, /^ {9}Glossa$/m);

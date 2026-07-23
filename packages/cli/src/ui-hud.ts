@@ -99,7 +99,11 @@ function wrapText(value: string, width: number): string[] {
 
 function connectionCopy(state: HudState): { glyph: string; label: string; detail: string } {
   if (state.connection === "connected") {
-    return { glyph: "●", label: "Connected", detail: "ChatGPT can use this workspace." };
+    return {
+      glyph: "●",
+      label: "Connected",
+      detail: state.message ?? "ChatGPT can use this workspace.",
+    };
   }
   if (state.connection === "connecting" || state.connection === "starting") {
     return { glyph: "◌", label: "Connecting", detail: "Establishing the managed relay session…" };
