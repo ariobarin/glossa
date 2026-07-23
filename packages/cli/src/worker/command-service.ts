@@ -3,7 +3,9 @@ import { randomUUID } from "node:crypto";
 import { StringDecoder } from "node:string_decoder";
 import { setTimeout as delay } from "node:timers/promises";
 import {
+  DEFAULT_COMMAND_FAST_WAIT_MS,
   DEFAULT_COMMAND_TIMEOUT_MS,
+  MAX_COMMAND_FAST_WAIT_MS,
   MAX_COMMAND_STATUS_WAIT_MS,
   MAX_COMMAND_TIMEOUT_MS,
   MAX_TEXT_BYTES,
@@ -23,6 +25,7 @@ export interface StartCommandOptions {
   shellCommand?: string;
   stdin?: string;
   timeoutMs?: number;
+  waitMs?: number;
 }
 
 export interface CommandSnapshot {
@@ -150,6 +153,13 @@ export class CommandService {
         "Command timeout must be between 1 millisecond and 60 minutes.",
       );
     }
+    const waitMs = options.waitMs ?? DEFAULT_COMMAND_FAST_WAIT_MS;
+    if (!Number.isInteger(waitMs) || waitMs < 0 || waitMs > MAX_COMMAND_FAST_WAIT_MS) {
+      throw new WorkerError(
+        "invalid_wait",
+        "Command start wait must be between 0 and 5 seconds.",
+      );
+    }
     const cwd = this.policy.root;
     const invocation = options.argv
       ? { file: options.argv[0]!, args: options.argv.slice(1) }
@@ -221,6 +231,17 @@ export class CommandService {
         error instanceof Error ? error.message : "Command failed to start.",
       );
     });
+    if (record.status === "running" && waitMs > 0) {
+      const waitController = new AbortController();
+      try {
+        await Promise.race([
+          record.completion,
+          delay(waitMs, undefined, { signal: waitController.signal }),
+        ]);
+      } finally {
+        waitController.abort();
+      }
+    }
     return this.snapshot(record);
   }
 
