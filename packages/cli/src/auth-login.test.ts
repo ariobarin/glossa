@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { ensureSignedIn } from "./auth-login.js";
+import { ensureSignedIn, signedInSession } from "./auth-login.js";
 import type { StoredCredentials } from "./config-store.js";
 import type { LoginOptions } from "./device-flow.js";
 
@@ -63,4 +63,26 @@ test("forwards cancellation while validating matching stored credentials", async
 
   await assert.rejects(pending, { name: "AbortError" });
   assert.equal(loginCalled, false);
+});
+
+test("returns validated credentials without loading them twice", async () => {
+  const controller = new AbortController();
+  const stored = credentials({ expiresAt: "2099-01-01T00:00:00.000Z" });
+  const validated = { ...stored, accessToken: "validated" };
+  let loads = 0;
+
+  const result = await signedInSession(loginOptions(controller.signal), {
+    loadCredentials: async () => {
+      loads += 1;
+      return { credentials: stored, backend: "file" };
+    },
+    validCredentials: async () => validated,
+    loginWithDeviceFlow: async () => {
+      throw new Error("login should not run");
+    },
+  });
+
+  assert.equal(loads, 1);
+  assert.equal(result.loginPerformed, false);
+  assert.equal(result.credentials, validated);
 });

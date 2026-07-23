@@ -2,7 +2,13 @@ import assert from "node:assert/strict";
 import { PassThrough } from "node:stream";
 import test from "node:test";
 import type { ReadStream, WriteStream } from "node:tty";
-import { applyHudEvent, initialHudState, renderHud, runSessionHud } from "./ui-hud.js";
+import {
+  applyHudEvent,
+  initialHudState,
+  renderHud,
+  runSessionHud,
+  type HudStatus,
+} from "./ui-hud.js";
 
 const hudDevice = {
   id: "device-1",
@@ -280,4 +286,123 @@ test("status and device revocation stay inside the TUI", async () => {
   );
 
   assert.equal(revoked, "device-1");
+});
+
+test("status shows cached data while its refresh is still pending", async () => {
+  const input = Object.assign(new PassThrough(), {
+    isTTY: true,
+    isRaw: false,
+    setRawMode(value: boolean) {
+      this.isRaw = value;
+      return this;
+    },
+  });
+  const output = Object.assign(new PassThrough(), { isTTY: true, columns: 80 });
+  let rendered = "";
+  output.on("data", (chunk: Buffer) => {
+    rendered += chunk.toString("utf8");
+  });
+  const cached = {
+    account: "cached@example.com",
+    relay: "https://mcp.glossa.test",
+    activeWorkers: 1,
+    devices: [hudDevice],
+  };
+
+  setImmediate(() => input.write("s"));
+  setTimeout(() => input.write("q"), 10);
+
+  await runSessionHud(
+    {
+      workspace: "/work/glossa",
+      peekStatus: () => cached,
+      async run(signal, onEvent) {
+        onEvent({
+          type: "status",
+          status: { state: "connected", reconnected: false, legacyRelay: false },
+        });
+        await new Promise<void>((resolve) => {
+          signal.addEventListener("abort", () => resolve(), { once: true });
+        });
+      },
+      async loadStatus(signal) {
+        await new Promise<void>((resolve) => {
+          signal.addEventListener("abort", () => resolve(), { once: true });
+        });
+        return cached;
+      },
+      async revokeDevice() {
+        throw new Error("unused");
+      },
+    },
+    input as unknown as ReadStream,
+    output as unknown as WriteStream,
+  );
+
+  assert.match(rendered, /cached@example\.com/);
+  assert.doesNotMatch(rendered, /Loading account and devices/);
+});
+
+test("status view updates when account details finish", async () => {
+  const input = Object.assign(new PassThrough(), {
+    isTTY: true,
+    isRaw: false,
+    setRawMode(value: boolean) {
+      this.isRaw = value;
+      return this;
+    },
+  });
+  const output = Object.assign(new PassThrough(), { isTTY: true, columns: 80 });
+  let rendered = "";
+  let publishStatus: ((status: HudStatus) => void) | undefined;
+  output.on("data", (chunk: Buffer) => {
+    rendered += chunk.toString("utf8");
+  });
+
+  setImmediate(() => input.write("s"));
+  setTimeout(() => {
+    publishStatus?.({
+      account: "dev@example.com",
+      relay: "https://mcp.glossa.test",
+      activeWorkers: 1,
+      devices: [hudDevice],
+    });
+  }, 10);
+  setTimeout(() => input.write("q"), 20);
+
+  await runSessionHud(
+    {
+      workspace: "/work/glossa",
+      subscribeStatus(listener) {
+        publishStatus = listener;
+        return () => {
+          publishStatus = undefined;
+        };
+      },
+      async run(signal, onEvent) {
+        onEvent({
+          type: "status",
+          status: { state: "connected", reconnected: false, legacyRelay: false },
+        });
+        await new Promise<void>((resolve) => {
+          signal.addEventListener("abort", () => resolve(), { once: true });
+        });
+      },
+      async loadStatus() {
+        return {
+          account: "Loading account…",
+          relay: "https://mcp.glossa.test",
+          activeWorkers: 1,
+          devices: [hudDevice],
+        };
+      },
+      async revokeDevice() {
+        throw new Error("unused");
+      },
+    },
+    input as unknown as ReadStream,
+    output as unknown as WriteStream,
+  );
+
+  assert.match(rendered, /dev@example\.com/);
 });

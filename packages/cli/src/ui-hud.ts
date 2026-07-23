@@ -49,6 +49,8 @@ export interface HudState {
 export interface HudUiActions {
   workspace: string;
   run(signal: AbortSignal, onEvent: (event: ManagedSessionEvent) => void): Promise<void>;
+  peekStatus?(): HudStatus | undefined;
+  subscribeStatus?(listener: (status: HudStatus) => void): () => void;
   loadStatus(signal: AbortSignal): Promise<HudStatus>;
   revokeDevice(deviceId: string): Promise<void>;
 }
@@ -460,17 +462,20 @@ export async function runSessionHud(
       render();
       return;
     }
+    const cached = state.status ?? actions.peekStatus?.();
     state = {
       ...state,
       view: "status",
-      statusLoading: true,
+      status: cached,
+      statusLoading: !cached,
       prompt: undefined,
       notice: undefined,
     };
     render();
     try {
-      const status = await actions.loadStatus(controller.signal);
+      const refreshed = await actions.loadStatus(controller.signal);
       if (controller.signal.aborted) return;
+      const status = actions.peekStatus?.() ?? refreshed;
       state = { ...state, status, statusLoading: false };
     } catch (error) {
       if (controller.signal.aborted) return;
@@ -482,6 +487,11 @@ export async function runSessionHud(
     }
     render();
   };
+
+  const unsubscribeStatus = actions.subscribeStatus?.((status) => {
+    state = { ...state, status, statusLoading: false };
+    if (state.view === "status") render();
+  }) ?? (() => undefined);
 
   const session = actions.run(controller.signal, (event) => {
     state = applyHudEvent(state, event);
@@ -606,6 +616,7 @@ export async function runSessionHud(
     await session;
     return exitAction;
   } finally {
+    unsubscribeStatus();
     process.removeListener("SIGINT", stopFromSignal);
     process.removeListener("SIGTERM", stopFromSignal);
     input.setRawMode(wasRaw);

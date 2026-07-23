@@ -101,6 +101,25 @@ test("enrolls with the computer hostname", async () => {
   assert.equal(result.deviceName, "HOSTNAME");
 });
 
+test("reuses credentials already validated by session startup", async () => {
+  let received: StoredCredentials | undefined;
+  await deviceForSession(enrollmentEndpoints, {
+    ...enrollmentDependencies(),
+    credentials: enrollmentCredentials,
+    loadCredentials: async () => {
+      throw new Error("credentials should not be loaded again");
+    },
+    validCredentials: async () => {
+      throw new Error("credentials should not be validated again");
+    },
+    enrollDevice: async (_endpoints, credentials, name) => {
+      received = credentials;
+      return { ...enrollmentResult, deviceName: name };
+    },
+  });
+  assert.equal(received, enrollmentCredentials);
+});
+
 test("keeps the existing device without reenrolling", async () => {
   const stored: StoredDeviceCredential = {
     ...enrollmentResult,

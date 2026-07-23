@@ -1,6 +1,6 @@
 import type { WorkerJob, WorkerResult } from "@glossa/protocol";
 import { type FetchLike, validCredentials } from "../auth-session.js";
-import { loadCredentials } from "../config-store.js";
+import { loadCredentials, type StoredCredentials } from "../config-store.js";
 import { announceConnectHint, connectHintStore, shouldShowConnectHint } from "../first-run.js";
 import {
   deleteDeviceCredential,
@@ -70,6 +70,7 @@ export interface ManagedSessionOptions {
   onEvent?: (event: ManagedSessionEvent) => void;
   quiet?: boolean;
   handleProcessSignals?: boolean;
+  credentials?: StoredCredentials;
 }
 
 function report(
@@ -111,6 +112,7 @@ function visibleWorker(worker: LocalWorker, options: ManagedSessionOptions): Wor
 }
 
 export interface ManagedDeviceDependencies {
+  credentials?: StoredCredentials;
   loadCredentials?: typeof loadCredentials;
   validCredentials?: typeof validCredentials;
   loadDeviceCredential?: typeof loadDeviceCredential;
@@ -142,9 +144,12 @@ export async function deviceForSession(
 
   signal?.throwIfAborted();
   const stored = await loadDevice();
-  const loaded = await loadLogin();
-  if (!loaded) throw new Error("Not signed in. Run Glossa again to sign in.");
-  const credentials = await validate(loaded.credentials, { fetch: fetchRequest });
+  let credentials = dependencies.credentials;
+  if (!credentials) {
+    const loaded = await loadLogin();
+    if (!loaded) throw new Error("Not signed in. Run Glossa again to sign in.");
+    credentials = await validate(loaded.credentials, { fetch: fetchRequest });
+  }
   signal?.throwIfAborted();
   if (stored?.relayOrigin === endpoints.relayOrigin) {
     if (
@@ -199,7 +204,11 @@ export async function runManagedSession(
   }
 
   try {
-    const device = await deviceForSession(endpoints, {}, controller.signal);
+    const device = await deviceForSession(
+      endpoints,
+      options.credentials ? { credentials: options.credentials } : {},
+      controller.signal,
+    );
     controller.signal.throwIfAborted();
     worker = await LocalWorker.create(root);
     controller.signal.throwIfAborted();

@@ -1,10 +1,12 @@
 #!/usr/bin/env node
 import { validCredentials } from "./auth-session.js";
-import { loadUserProfile } from "./auth-session.js";
 import { loadAuthConfig } from "./auth-config.js";
-import { ensureSignedIn } from "./auth-login.js";
+import {
+  signedInSession,
+  type SignedInSession,
+} from "./auth-login.js";
 import { parseInvocation, UsageError } from "./cli-options.js";
-import { loadCredentials, type StoredCredentials } from "./config-store.js";
+import type { StoredCredentials } from "./config-store.js";
 import {
   deviceStatus,
   formatDeviceRow,
@@ -15,9 +17,16 @@ import {
   listDevices,
   loadRelayEndpoints,
   revokeDevice,
-  type RelayDevice,
 } from "./relay-client.js";
-import { runSessionHud, type HudStatus } from "./ui-hud.js";
+import {
+  WorkspaceStatusService,
+  type StatusDetails,
+} from "./status-service.js";
+import {
+  runSessionHud,
+  type HudExitAction,
+  type HudStatus,
+} from "./ui-hud.js";
 import { updateGlossa } from "./update.js";
 import { runManagedSession } from "./worker/managed-session.js";
 import { selectExposureRoot } from "./worker/root-selection.js";
@@ -63,50 +72,31 @@ async function withLoginSignal<T>(
   }
 }
 
+async function authenticatedSession(
+  signal?: AbortSignal,
+): Promise<SignedInSession> {
+  if (signal) return await signedInSession({ ...loadAuthConfig(), signal });
+  return await withLoginSignal(async (loginSignal) =>
+    await signedInSession({ ...loadAuthConfig(), signal: loginSignal })
+  );
+}
+
 async function authenticatedCredentials(
   signal?: AbortSignal,
 ): Promise<StoredCredentials> {
-  if (signal) await ensureSignedIn({ ...loadAuthConfig(), signal });
-  else {
-    await withLoginSignal(async (loginSignal) => {
-      await ensureSignedIn({ ...loadAuthConfig(), signal: loginSignal });
-    });
-  }
-  const loaded = await loadCredentials();
-  if (!loaded) throw new Error("Glossa could not load the completed login.");
-  return await validCredentials(
-    loaded.credentials,
-    signal ? { signal } : {},
-  );
-}
-
-interface StatusDetails {
-  account: string;
-  relay: string;
-  activeWorkers: number | null;
-  devices: RelayDevice[];
+  return (await authenticatedSession(signal)).credentials;
 }
 
 async function loadStatusDetails(signal?: AbortSignal): Promise<StatusDetails> {
-  const initial = await authenticatedCredentials(signal);
-  const { credentials, profile } = await loadUserProfile(initial);
+  const credentials = await authenticatedCredentials(signal);
   const endpoints = loadRelayEndpoints();
-  const devices = await listDevices(endpoints, credentials);
-  const workerCountsCurrent = devices.every(
-    (device) => device.activeWorkers !== null,
-  );
-  return {
-    account: profile.email ?? profile.name ?? profile.sub,
-    relay: endpoints.relayOrigin,
-    activeWorkers: workerCountsCurrent
-      ? devices.reduce((sum, device) => sum + device.activeWorkers!, 0)
-      : null,
-    devices,
-  };
+  return await new WorkspaceStatusService(
+    credentials,
+    endpoints,
+  ).refresh(signal, true);
 }
 
-async function loadHudStatus(signal: AbortSignal): Promise<HudStatus> {
-  const status = await loadStatusDetails(signal);
+function hudStatus(status: StatusDetails): HudStatus {
   return {
     ...status,
     devices: status.devices.map((device) => ({
@@ -156,20 +146,75 @@ async function runWorkspace(
   path: string | undefined,
 ): Promise<void> {
   const root = await selectExposureRoot(path);
-  const exitAction = await runSessionHud({
-    workspace: root,
-    run: async (signal, onEvent) => {
-      await authenticatedCredentials(signal);
-      await runManagedSession(root, loadRelayEndpoints(), {
-        signal,
-        onEvent,
-        quiet: true,
-        handleProcessSignals: false,
-      });
-    },
-    loadStatus: loadHudStatus,
-    revokeDevice: revokeKnownDevice,
-  });
+  const endpoints = loadRelayEndpoints();
+  let credentials: StoredCredentials | undefined;
+  let statusService: WorkspaceStatusService | undefined;
+  let statusListener: ((status: HudStatus) => void) | undefined;
+  let unsubscribeStatusService = (): void => undefined;
+
+  const createStatusService = (
+    sessionCredentials: StoredCredentials,
+  ): WorkspaceStatusService => {
+    unsubscribeStatusService();
+    const service = new WorkspaceStatusService(sessionCredentials, endpoints);
+    unsubscribeStatusService = service.subscribe((status) => {
+      statusListener?.(hudStatus(status));
+    });
+    statusService = service;
+    return service;
+  };
+
+  const refreshStatus = async (signal: AbortSignal): Promise<HudStatus> => {
+    const service = statusService ?? createStatusService(
+      credentials ??= await authenticatedCredentials(signal),
+    );
+    return hudStatus(await service.refresh(signal));
+  };
+
+  let exitAction: HudExitAction;
+  try {
+    exitAction = await runSessionHud({
+      workspace: root,
+      peekStatus: () => {
+        const cached = statusService?.peek();
+        return cached ? hudStatus(cached) : undefined;
+      },
+      subscribeStatus: (listener) => {
+        statusListener = listener;
+        return () => {
+          if (statusListener === listener) statusListener = undefined;
+        };
+      },
+      run: async (signal, onEvent) => {
+        credentials = (await authenticatedSession(signal)).credentials;
+        createStatusService(credentials);
+        await runManagedSession(root, endpoints, {
+          credentials,
+          signal,
+          onEvent(event) {
+            onEvent(event);
+            if (
+              event.type === "status" &&
+              event.status.state === "connected" &&
+              !statusService?.peek()
+            ) {
+              void statusService?.refresh(signal).catch(() => undefined);
+            }
+          },
+          quiet: true,
+          handleProcessSignals: false,
+        });
+      },
+      loadStatus: refreshStatus,
+      revokeDevice: async (deviceId) => {
+        credentials ??= await authenticatedCredentials();
+        credentials = await validCredentials(credentials);
+        await revokeDevice(endpoints, credentials, deviceId);
+      },
+    });
+  } finally {
+    unsubscribeStatusService();
+  }
 
   if (exitAction === "logout") await logoutFromGlossa();
   else if (exitAction === "update") updateGlossa();
@@ -186,8 +231,8 @@ async function main(): Promise<void> {
   } else if (invocation.command === "status") {
     await showStatus(invocation.json);
   } else if (invocation.command === "login") {
-    await authenticatedCredentials();
-    console.log("Signed in to Glossa.");
+    const session = await authenticatedSession();
+    if (!session.loginPerformed) console.log("Signed in to Glossa.");
   } else if (invocation.command === "logout") {
     await logoutFromGlossa();
   } else if (invocation.command === "update") {
