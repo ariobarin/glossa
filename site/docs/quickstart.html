@@ -113,15 +113,15 @@
 </div>
 </section><section class="doc-section">
 <h2 id="step-2-start-a-workspace"><a class="heading-anchor" href="#step-2-start-a-workspace" aria-label="Link to Step 2: Start a workspace"></a>Step 2: Start a workspace</h2>
-<p>Open a terminal in the folder where you want ChatGPT to work, then run:</p>
+<p>Open a terminal in the folder where you want ChatGPT to work. On this computer&#39;s first enrollment, choose a recognizable device name:</p>
 <div class="code-block">
   <button class="copy-button" type="button" data-copy-target="docs-quickstart-code-3" aria-label="Copy code">
     <span class="copy-tooltip" aria-hidden="true">Copy</span>
   </button>
-  <pre><code class="language-shell" id="docs-quickstart-code-3">glossa .
+  <pre><code class="language-shell" id="docs-quickstart-code-3">glossa --device-name &quot;Ari&#39;s workstation&quot; .
 </code></pre>
 </div>
-<p><code>glossa start .</code> is the explicit form. You can start more workers in other terminals to expose additional workspaces from the same computer.</p>
+<p><code>--device-name</code> is used only during initial enrollment. Later starts reuse the enrolled name; use <code>glossa devices rename &lt;id&gt; &lt;name&gt;</code> to change it. <code>glossa start .</code> is the explicit form. You can start more workers in other terminals to expose additional workspaces from the same computer.</p>
 <blockquote>
 <p>Keep this terminal open. Closing it disconnects that local workspace from ChatGPT.</p>
 </blockquote>
