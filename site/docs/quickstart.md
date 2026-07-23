@@ -14,10 +14,18 @@ Make sure you have:
 
 ## Step 1: Install Glossa
 
-Open PowerShell and install the current beta:
+Open PowerShell and install the current beta with either method.
+
+Hosted installer:
 
 ```shell
 irm https://glossa.sh/install | iex
+```
+
+Direct npm install:
+
+```shell
+npm install --global @ariobarin/glossa@beta
 ```
 
 The installer checks Windows, Node.js, and npm, then installs and verifies
@@ -29,8 +37,7 @@ Get-Content .\install.ps1
 .\install.ps1
 ```
 
-The direct npm fallback is
-`npm install --global @ariobarin/glossa@beta`. Confirm the command is available:
+Confirm the command is available:
 
 ```shell
 glossa --version
