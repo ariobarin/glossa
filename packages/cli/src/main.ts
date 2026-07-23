@@ -59,7 +59,7 @@ Starts a foreground worker in the selected directory. Pass . to select the curre
 Validates Google login, contacts the relay, and reports enrolled devices and active workers.`,
   doctor: `Usage: glossa doctor [--json]
 
-Checks Node.js, relay and worker reachability, and read-only sign-in state, then reports whether Glossa is ready to start.`,
+Checks the runtime, relay and worker reachability, and read-only sign-in state, then reports whether Glossa is ready to start.`,
   devices: `Usage:
   glossa devices list [--json]
   glossa devices rename <id> <name>
@@ -71,7 +71,7 @@ Lists, renames, or revokes computers enrolled with the current Google account.`,
 Prints a completion script for powershell, bash, zsh, or fish. Source it from your shell profile, for example: glossa completions powershell | Out-String | Invoke-Expression.`,
   update: `Usage: glossa update
 
-Updates the global Glossa installation from the npm beta channel. glossa upgrade is an alias.`,
+Updates Glossa using the same installation method. glossa upgrade is an alias.`,
   login: `Usage: glossa login
 
 Ensures the CLI has a valid Google session. Starting Glossa also signs in automatically.`,
@@ -224,7 +224,7 @@ async function main(): Promise<void> {
   } else if (invocation.command === "completions") {
     console.log(completionScript(invocation.shell));
   } else if (invocation.command === "update") {
-    updateGlossa();
+    await updateGlossa({ currentVersion: VERSION });
   } else if (invocation.action === "list") {
     await showDevices(invocation.json);
   } else if (invocation.action === "rename") {

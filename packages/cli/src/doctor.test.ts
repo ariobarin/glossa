@@ -43,6 +43,35 @@ test("reports a ready machine with every check passing", async () => {
   );
 });
 
+test("reports a self-contained runtime without requiring Node.js", async () => {
+  const checks = await runDoctorChecks({
+    ...healthy,
+    standalone: true,
+    nodeVersion: "1.0.0",
+    probeStandaloneRuntime: async () => true,
+  });
+  assert.deepEqual(checks[0], {
+    name: "Runtime",
+    status: "pass",
+    detail: "Self-contained Glossa executable.",
+  });
+  assert.equal(checks.some((check) => check.name === "Node.js"), false);
+});
+
+test("fails a standalone runtime missing its native credential module", async () => {
+  const checks = await runDoctorChecks({
+    ...healthy,
+    standalone: true,
+    probeStandaloneRuntime: async () => false,
+  });
+  assert.deepEqual(checks[0], {
+    name: "Runtime",
+    status: "fail",
+    detail: "The executable is missing its native credential module.",
+    nextStep: "Reinstall Glossa with npm or the direct installer.",
+  });
+});
+
 test("fails on an unreachable relay", async () => {
   const checks = await runDoctorChecks({
     ...healthy,

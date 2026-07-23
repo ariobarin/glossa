@@ -4,6 +4,7 @@ import {
   loadRelayEndpoints,
   type RelayEndpoints,
 } from "./relay-client.js";
+import { isStandaloneExecutable } from "./runtime.js";
 
 export const MIN_NODE_MAJOR = 22;
 export const MIN_NODE_MINOR = 9;
@@ -22,6 +23,8 @@ export type CredentialProbe = "present" | "absent" | "error";
 
 export interface DoctorDependencies {
   nodeVersion?: string;
+  standalone?: boolean;
+  probeStandaloneRuntime?: () => Promise<boolean>;
   endpoints?: RelayEndpoints;
   loadEndpoints?: () => RelayEndpoints;
   fetchHealthz?: (origin: string) => Promise<boolean>;
@@ -44,17 +47,34 @@ export function nodeVersionSatisfies(version: string): boolean {
 export async function runDoctorChecks(
   dependencies: DoctorDependencies = {},
 ): Promise<DoctorCheck[]> {
-  const nodeVersion = dependencies.nodeVersion ?? process.versions.node;
-  const nodeOk = nodeVersionSatisfies(nodeVersion);
-  const displayedNodeVersion = nodeVersion.startsWith("v") ? nodeVersion : `v${nodeVersion}`;
-  const checks: DoctorCheck[] = [
-    {
+  const standalone =
+    dependencies.standalone ?? isStandaloneExecutable();
+  const checks: DoctorCheck[] = [];
+  if (standalone) {
+    const runtimeReady = await (
+      dependencies.probeStandaloneRuntime ?? defaultProbeStandaloneRuntime
+    )();
+    checks.push({
+      name: "Runtime",
+      status: runtimeReady ? "pass" : "fail",
+      detail: runtimeReady
+        ? "Self-contained Glossa executable."
+        : "The executable is missing its native credential module.",
+      ...(runtimeReady
+        ? {}
+        : { nextStep: "Reinstall Glossa with npm or the direct installer." }),
+    });
+  } else {
+    const nodeVersion = dependencies.nodeVersion ?? process.versions.node;
+    const nodeOk = nodeVersionSatisfies(nodeVersion);
+    const displayedNodeVersion = nodeVersion.startsWith("v") ? nodeVersion : `v${nodeVersion}`;
+    checks.push({
       name: "Node.js",
       status: nodeOk ? "pass" : "fail",
       detail: `Node.js ${displayedNodeVersion}`,
       ...(nodeOk ? {} : { nextStep: `Install Node.js ${MIN_NODE_MAJOR}.${MIN_NODE_MINOR} or newer and restart your terminal.` }),
-    },
-  ];
+    });
+  }
 
   let endpoints = dependencies.endpoints;
   if (!endpoints) {
@@ -106,6 +126,15 @@ export async function runDoctorChecks(
   checks.push(deviceCredentialCheck(deviceCredentialState));
 
   return checks;
+}
+
+async function defaultProbeStandaloneRuntime(): Promise<boolean> {
+  try {
+    const keyring = await import("@napi-rs/keyring");
+    return typeof keyring.AsyncEntry === "function";
+  } catch {
+    return false;
+  }
 }
 
 function signInCheck(state: CredentialProbe): DoctorCheck {

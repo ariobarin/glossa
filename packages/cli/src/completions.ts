@@ -135,7 +135,7 @@ _glossa() {
     'doctor:check local and relay readiness'
     'devices:manage enrolled computers'
     'completions:emit a shell completion script'
-    'update:update from the npm beta channel'
+    'update:update the current Glossa installation'
     'upgrade:alias for update'
     'login:ensure a Glossa session'
     'logout:remove local credentials'
