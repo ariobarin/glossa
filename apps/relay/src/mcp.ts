@@ -404,7 +404,7 @@ function registerTools(
     "run_command",
     {
       title: "Run Command",
-      description: "Use when the task requires a Windows command, tests, builds, version control, or multi-file work. Starts a bounded process with the full authority, inherited environment, and network access of the worker account. It waits briefly for fast commands and returns their completed output immediately; longer commands return a handle for get_command. The command may modify local or external systems.",
+      description: "Use when the task requires a shell command, tests, builds, version control, or multi-file work. Starts a bounded process with the full authority, inherited environment, and network access of the worker account. It waits briefly for fast completion and returns output immediately; longer commands return a handle for get_command. The command may modify local or external systems.",
       inputSchema: runCommandInputSchema,
       outputSchema: commandOutputSchema,
       _meta: toolMetadata,

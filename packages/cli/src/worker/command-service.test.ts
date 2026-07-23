@@ -53,24 +53,32 @@ test("returns a handle when a command outlives the fast wait", async (context) =
   assert.equal(completed.stdout, "later");
 });
 
-test("runs PowerShell inside the exposed root", async (context) => {
+test("runs the platform shell inside the exposed root", async (context) => {
   const { root, commands } = await commandFixture(context);
   const started = await commands.start({
-    shellCommand: "Write-Output (Get-Location).Path",
+    shellCommand: process.platform === "win32"
+      ? "Write-Output (Get-Location).Path"
+      : "pwd",
     timeoutMs: 10_000,
   });
   const completed = await commands.get(started.commandId, 15_000);
 
   assert.equal(completed.status, "succeeded");
   assert.equal(completed.exitCode, 0);
-  assert.equal(completed.stdout?.trim().toLowerCase(), root.toLowerCase());
+  const reportedRoot = completed.stdout?.trim() ?? "";
+  assert.equal(
+    process.platform === "win32" ? reportedRoot.toLowerCase() : reportedRoot,
+    process.platform === "win32" ? root.toLowerCase() : root,
+  );
   assert.equal(completed.stderr, "");
 });
 
-test("terminates a PowerShell process after its timeout", async (context) => {
+test("terminates a shell process after its timeout", async (context) => {
   const { commands } = await commandFixture(context);
   const started = await commands.start({
-    shellCommand: "Start-Sleep -Seconds 30",
+    shellCommand: process.platform === "win32"
+      ? "Start-Sleep -Seconds 30"
+      : "sleep 30",
     timeoutMs: 100,
   });
   const completed = await commands.get(started.commandId, 15_000);

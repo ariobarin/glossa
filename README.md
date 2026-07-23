@@ -6,7 +6,7 @@ Glossa lets ChatGPT work inside one local coding workspace that the user explici
 ChatGPT
   -> OAuth protected MCP relay
   -> authenticated outbound worker connection
-  -> one local Git worktree or explicit directory
+  -> one explicitly exposed local directory
 ```
 
 Glossa is an execution bridge, not an agent. ChatGPT owns the model, conversation, planning, and approvals. The local worker owns file containment and command execution.
@@ -17,19 +17,17 @@ Codex and ChatGPT Work share usage. Glossa connects the regular Chat surface to 
 
 ## Status
 
-Glossa is a Windows-first open beta. The managed relay is live at `https://mcp.glossa.sh/mcp`. A valid Glossa login activates access automatically.
+Glossa is an open beta for Windows, macOS, and Linux. The managed relay is live at `https://mcp.glossa.sh/mcp`. A valid Glossa login activates access automatically.
 
-Install the open-beta CLI from PowerShell. Choose either method.
+On Windows, install the open-beta CLI with the hosted PowerShell installer:
 
-Hosted installer:
-
-```powershell
+```shell
 irm https://glossa.sh/install | iex
 ```
 
-Direct npm install:
+On Windows, macOS, or Linux, install directly from npm:
 
-```powershell
+```shell
 npm install --global @ariobarin/glossa@beta
 ```
 
@@ -37,9 +35,9 @@ The installer is a small [tracked PowerShell script](site/install.ps1). To inspe
 it first, download it with `irm https://glossa.sh/install -OutFile install.ps1`,
 review it, then run `.\install.ps1`.
 
-Open PowerShell in the repository you want to expose, then run:
+Open a terminal in the repository you want to expose, then run:
 
-```powershell
+```shell
 glossa
 ```
 
@@ -47,7 +45,7 @@ Glossa signs in automatically and uses the current Git worktree. Pass a director
 
 On the first successful managed-relay connection on a computer, Glossa prints the ChatGPT quickstart link once. It records a `connect-hint-shown` marker in the local Glossa config directory so later starts stay quiet.
 
-Starting `glossa` opens the live session display and authorizes connected clients to modify files inside that root and run commands with the full environment and permissions of the Windows account that launched it. Press `q` or Ctrl+C to disconnect.
+Starting `glossa` opens the live session display and authorizes connected clients to modify files inside that root and run commands with the full environment and permissions of the operating-system account that launched it. Press `q` or Ctrl+C to disconnect.
 
 ## ChatGPT
 

@@ -1,43 +1,53 @@
-# Connect ChatGPT to a folder.
+# Quickstart
 
-Start Glossa, connect it to ChatGPT, and confirm it works.
+Connect ChatGPT to a local workspace.
 
 ## Before you begin
 
 Make sure you have:
 
-- Windows with Node.js 22.9 or newer
-- A Git repository you are comfortable exposing to ChatGPT
-- ChatGPT Pro for personal read access, or ChatGPT Business, Enterprise, or Edu for full read, write, and command access through [Developer Mode](https://help.openai.com/en/articles/12584461-developer-mode-and-full-mcp-connectors-in-chatgpt-beta)
+- Node.js 22.9 or newer
+- [Developer Mode](https://help.openai.com/en/articles/12584461-developer-mode-and-full-mcp-connectors-in-chatgpt-beta) enabled in ChatGPT
 
-> Glossa gives ChatGPT the operating-system authority of the account running the worker. Start with a disposable repository and review the [security model](/docs/security) before enabling write actions.
+> Glossa can modify files and run commands on your computer. Review the [security model](/docs/security).
 
 ## Step 1: Install Glossa
 
-Open PowerShell and install the current beta with either method.
+<div class="docs-switcher" data-docs-tabs data-tabs-storage="glossa-install-platform">
+  <p class="docs-switcher-label">Platform</p>
+  <div class="docs-tabs" role="tablist" aria-label="Operating system">
+    <button id="platform-windows-tab" type="button" role="tab" aria-selected="true" aria-controls="platform-windows" data-docs-tab="windows">Windows</button>
+    <button id="platform-macos-tab" type="button" role="tab" aria-selected="false" aria-controls="platform-macos" data-docs-tab="macos" tabindex="-1">macOS</button>
+    <button id="platform-linux-tab" type="button" role="tab" aria-selected="false" aria-controls="platform-linux" data-docs-tab="linux" tabindex="-1">Linux</button>
+  </div>
+  <div id="platform-windows" class="docs-tab-panel" role="tabpanel" aria-labelledby="platform-windows-tab" data-docs-tab-panel="windows">
+    <div class="docs-switcher docs-switcher-nested" data-docs-tabs data-tabs-storage="glossa-windows-install-method">
+      <p class="docs-switcher-label">Install with</p>
+      <div class="docs-tabs" role="tablist" aria-label="Windows install method">
+        <button id="windows-powershell-tab" type="button" role="tab" aria-selected="true" aria-controls="windows-powershell" data-docs-tab="powershell">PowerShell</button>
+        <button id="windows-npm-tab" type="button" role="tab" aria-selected="false" aria-controls="windows-npm" data-docs-tab="npm" tabindex="-1">npm</button>
+      </div>
+      <div id="windows-powershell" class="docs-tab-panel" role="tabpanel" aria-labelledby="windows-powershell-tab" data-docs-tab-panel="powershell">
+        <p>Run the hosted installer in PowerShell:</p>
+        <pre><code class="language-powershell">irm https://glossa.sh/install | iex</code></pre>
+      </div>
+      <div id="windows-npm" class="docs-tab-panel" role="tabpanel" aria-labelledby="windows-npm-tab" data-docs-tab-panel="npm" hidden>
+        <p>Install the beta directly from npm:</p>
+        <pre><code class="language-powershell">npm install --global @ariobarin/glossa@beta</code></pre>
+      </div>
+    </div>
+  </div>
+  <div id="platform-macos" class="docs-tab-panel" role="tabpanel" aria-labelledby="platform-macos-tab" data-docs-tab-panel="macos" hidden>
+    <p>Install the beta from npm in Terminal:</p>
+    <pre><code class="language-shell">npm install --global @ariobarin/glossa@beta</code></pre>
+  </div>
+  <div id="platform-linux" class="docs-tab-panel" role="tabpanel" aria-labelledby="platform-linux-tab" data-docs-tab-panel="linux" hidden>
+    <p>Install the beta from npm in your terminal:</p>
+    <pre><code class="language-shell">npm install --global @ariobarin/glossa@beta</code></pre>
+  </div>
+</div>
 
-Hosted installer:
-
-```shell
-irm https://glossa.sh/install | iex
-```
-
-Direct npm install:
-
-```shell
-npm install --global @ariobarin/glossa@beta
-```
-
-The installer checks Windows, Node.js, and npm, then installs and verifies
-Glossa. If you prefer to review it before running:
-
-```shell
-irm https://glossa.sh/install -OutFile install.ps1
-Get-Content .\install.ps1
-.\install.ps1
-```
-
-Confirm the command is available:
+Confirm Glossa is available:
 
 ```shell
 glossa --version
@@ -57,83 +67,34 @@ glossa
 
 ## Step 3: Connect ChatGPT
 
-Choose the path that matches the ChatGPT account you are using. Your selection stays in sync across this guide.
-
-<!-- audience-switcher:start -->
-<!-- audience:personal -->
-
-### Personal Pro
-
-OpenAI currently limits custom MCP apps on ChatGPT Pro to read and fetch tools. You can connect Glossa for personal inspection, but file writes and commands require a managed workspace.
-
-1. In ChatGPT web, open **Settings > Plugins**, choose **Developer mode**, and enable it under **Security and login**. If your account shows **Apps** settings instead, use **Settings > Apps > Advanced Settings**.
-2. Open **Settings > Apps > Create**.
+1. Open **Settings > Plugins/Apps** and enable **Developer Mode**.
+2. Choose **Create**.
 3. Name the app **Glossa** and enter this MCP server URL:
 
 ```text
 https://mcp.glossa.sh/mcp
 ```
 
-4. Choose **OAuth**, then **Scan Tools**.
-5. Complete authorization with the same Google account used by the Glossa CLI, wait for the scan to finish, then choose **Create**.
-
-> Personal limitation: ChatGPT Pro can use Glossa's read-oriented tools, but OpenAI currently reserves full MCP write and modify actions for Business, Enterprise, and Edu workspaces.
-
-<!-- audience:workspace -->
-
-### Business, Enterprise, or Edu
-
-Managed workspaces support Glossa's full MCP tool set, including file changes and commands. Developer Mode must be enabled by the right workspace role.
-
-1. **Business:** an admin or owner opens **Workspace settings > Apps > Create** and enables Developer Mode for their account.
-2. **Enterprise or Edu:** an admin or owner grants Developer Mode access. An authorized user then enables it from **Settings > Apps > Advanced Settings**.
-3. Create the app from **Workspace settings > Apps > Create** as an admin or owner, or from **Settings > Apps > Create** as an authorized user.
-4. Name the app **Glossa** and enter this MCP server URL:
-
-```text
-https://mcp.glossa.sh/mcp
-```
-
-5. Choose **OAuth**, then **Scan Tools**.
-6. Complete authorization with the same Google account used by the Glossa CLI, wait for the scan to finish, then choose **Create**.
-
-> Workspace access: admins and owners control who can use the app and which actions it can take. Review Glossa's write and command tools before publishing it to other members.
-
-<!-- audience-switcher:end -->
+4. Choose **OAuth**.
+5. Sign in with the same Google account used by the Glossa CLI, then choose **Create**.
 
 ## Step 4: Verify the connection
 
 Press `s` in Glossa to check the account, relay, enrolled device, and active worker. Press Esc to return to the workspace view. You can also run `glossa status` in another terminal.
 
-<!-- audience-switcher:start -->
-<!-- audience:personal -->
-
-### Try a personal read
+### Try a read
 
 In ChatGPT, select Glossa and send:
 
 ```text
-Use Glossa to list my connected devices, then read package.json from my active workspace.
+Use Glossa to list my connected workspaces.
 ```
 
-If ChatGPT blocks a write or command tool, that is the current Pro plan boundary rather than a worker connection failure.
-
-<!-- audience:workspace -->
-
-### Try the full workspace flow
-
-Start with a read-only check:
-
-```text
-Use Glossa to list my connected devices, then read package.json from my active workspace.
-```
-
-When that works, test a small edit inside a disposable repository and review ChatGPT's confirmation before it runs.
-
-<!-- audience-switcher:end -->
+If Glossa lists the workspace, the connection is ready. Ask it to read a file
+next.
 
 ## What next
 
 - Read [why Glossa works this way](/docs/why).
 - Review the complete [security model](/docs/security).
-- Visit [support](/support) if the worker, OAuth flow, or tool scan does not connect.
+- Visit [support](/support) if the worker, OAuth flow, or app does not connect.

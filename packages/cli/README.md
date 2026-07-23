@@ -1,21 +1,21 @@
 # @ariobarin/glossa
 
 This package contains the `glossa` executable. Node.js 22.9 or newer is required.
-Install the open beta with either the hosted installer:
+On Windows, install the open beta with the hosted PowerShell installer:
 
 ```powershell
 irm https://glossa.sh/install | iex
 ```
 
-Or install directly from npm:
+On Windows, macOS, or Linux, install directly from npm:
 
 ```powershell
 npm install --global @ariobarin/glossa@beta
 ```
 
-Open PowerShell in the repository you want to expose, then run:
+Open a terminal in the repository you want to expose, then run:
 
-```powershell
+```shell
 glossa
 ```
 
