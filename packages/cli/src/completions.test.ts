@@ -1,0 +1,106 @@
+import assert from "node:assert/strict";
+import test from "node:test";
+import {
+  completionScript,
+  SUPPORTED_SHELLS,
+  type SupportedShell,
+} from "./completions.js";
+
+test("exposes the four supported shells", () => {
+  assert.deepEqual([...SUPPORTED_SHELLS], ["powershell", "bash", "zsh", "fish"]);
+});
+
+test("every script mentions glossa and its core commands", () => {
+  for (const shell of SUPPORTED_SHELLS) {
+    const script = completionScript(shell);
+    assert.ok(script.length > 0, `${shell} script was empty`);
+    assert.ok(script.includes("glossa"), `${shell} script did not name glossa`);
+    assert.ok(script.includes("ui"), `${shell} script did not list ui`);
+    assert.ok(script.includes("start"), `${shell} script did not list start`);
+    assert.ok(script.includes("status"), `${shell} script did not list status`);
+    assert.ok(script.includes("completions"), `${shell} script did not list completions`);
+  }
+});
+
+test("powershell registers a native argument completer", () => {
+  const script = completionScript("powershell");
+  assert.match(script, /Register-ArgumentCompleter -Native -CommandName glossa/);
+  // The command fallback is gated to the first argument position, derived from
+  // the cursor vs. the last token, so an empty glossa <TAB> still offers
+  // commands while path positions fall through to filesystem completion.
+  assert.match(script, /\$cursorPosition -gt \$last\.Extent\.EndOffset/);
+  assert.match(script, /if \(\$position -eq 1\)/);
+  assert.match(script, /if \(\$position -eq 2\)/);
+});
+
+test("bash installs a complete -F handler with a filename fallback", () => {
+  const script = completionScript("bash");
+  assert.match(script, /^_glossa\(\) \{/m);
+  assert.match(script, /complete -o default -F _glossa glossa/);
+  assert.match(script, /\$\{COMP_WORDS\[COMP_CWORD\]\}/);
+});
+
+test("bash gates device actions and list options to valid positions", () => {
+  const script = completionScript("bash");
+  assert.match(script, /if \[ "\$COMP_CWORD" -eq 2 \]; then\n\s+COMPREPLY=.*list rename revoke/s);
+  assert.match(
+    script,
+    /if \[ "\$COMP_CWORD" -eq 3 \] && \[ "\$\{COMP_WORDS\[2\]\}" = "list" \]; then/,
+  );
+});
+
+test("zsh registers sourced completion and offers files for the path", () => {
+  const script = completionScript("zsh");
+  assert.match(script, /^# Zsh completion for Glossa\. Source this after compinit/m);
+  assert.doesNotMatch(script, /^#compdef/m);
+  assert.doesNotMatch(script, /local -a commands/);
+  assert.match(script, /local context state state_descr line/);
+  assert.match(script, /typeset -A opt_args/);
+  assert.match(script, /local -a glossa_commands/);
+  assert.match(script, /_describe 'glossa command' glossa_commands/);
+  // Zsh includes the command itself at words[1], so the subcommand is words[2]
+  // and its first value is argument position 2.
+  assert.match(script, /case \$words\[2\] in/);
+  assert.match(script, /_values 'device action' list rename revoke/);
+  assert.match(script, /_arguments '2:shell:\(powershell bash zsh fish\)'/);
+  assert.match(script, /compdef _glossa glossa/);
+  assert.match(script, /_files/);
+});
+
+test("fish keeps the workspace path completable", () => {
+  const script = completionScript("fish");
+  // No blanket -f disabling file completion at the root position.
+  assert.doesNotMatch(script, /\ncomplete -c glossa -f\n/);
+  assert.match(script, /__fish_use_subcommand/);
+  assert.match(script, /__fish_seen_subcommand_from completions/);
+  assert.match(script, /count \(commandline -opc\)\) -eq 2/);
+});
+
+test("scripts only advertise commands the parser actually accepts", () => {
+  for (const shell of SUPPORTED_SHELLS) {
+    const script = completionScript(shell);
+    assert.ok(!script.includes("doctor"), `${shell} script advertised an unimplemented command`);
+  }
+});
+
+test("every script offers the four completion shells", () => {
+  for (const shell of SUPPORTED_SHELLS) {
+    const script = completionScript(shell);
+    for (const offered of SUPPORTED_SHELLS) {
+      assert.ok(
+        script.includes(offered),
+        `${shell} script did not offer the ${offered} shell`,
+      );
+    }
+  }
+});
+
+
+test("every script offers current workspace options", () => {
+  for (const shell of SUPPORTED_SHELLS) {
+    const script = completionScript(shell);
+    assert.ok(script.includes("ui"));
+    assert.ok(script.includes("allow-broad-root"));
+    assert.ok(script.includes("device-name"));
+  }
+});

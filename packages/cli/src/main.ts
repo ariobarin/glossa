@@ -5,6 +5,7 @@ import { loadAuthConfig } from "./auth-config.js";
 import { ensureSignedIn } from "./auth-login.js";
 import { parseInvocation, UsageError, type HelpTopic } from "./cli-options.js";
 import { loadCredentials, type StoredCredentials } from "./config-store.js";
+import { completionScript } from "./completions.js";
 import {
   listDevices,
   loadRelayEndpoints,
@@ -34,6 +35,7 @@ Usage:
   glossa devices list [--json]
   glossa devices rename <id> <name>
   glossa devices revoke <id>
+  glossa completions <shell>
   glossa login
   glossa logout [--browser]
   glossa --version
@@ -57,6 +59,9 @@ Validates Google login, contacts the relay, and reports enrolled devices and act
   glossa devices revoke <id>
 
 Lists, renames, or revokes computers enrolled with the current Google account.`,
+  completions: `Usage: glossa completions <shell>
+
+Prints a completion script for powershell, bash, zsh, or fish. Source it from your shell profile, for example: glossa completions powershell | Out-String | Invoke-Expression.`,
   login: `Usage: glossa login
 
 Ensures the CLI has a valid Google session. Starting Glossa also signs in automatically.`,
@@ -200,6 +205,8 @@ async function main(): Promise<void> {
     if (!loginPerformed) console.log("Signed in to Glossa.");
   } else if (invocation.command === "logout") {
     await logoutFromGlossa({ browser: invocation.browser });
+  } else if (invocation.command === "completions") {
+    console.log(completionScript(invocation.shell));
   } else if (invocation.action === "list") {
     await showDevices(invocation.json);
   } else if (invocation.action === "rename") {

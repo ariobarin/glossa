@@ -106,3 +106,21 @@ test("rejects a missing or invalid device name", () => {
     UsageError,
   );
 });
+
+
+test("parses completions for a supported shell and rejects others", () => {
+  assert.deepEqual(parseInvocation(["completions", "bash"]), {
+    command: "completions",
+    shell: "bash",
+  });
+  assert.deepEqual(parseInvocation(["completions", "fish"]), {
+    command: "completions",
+    shell: "fish",
+  });
+  assert.deepEqual(parseInvocation(["completions", "--help"]), {
+    command: "help",
+    topic: "completions",
+  });
+  assert.throws(() => parseInvocation(["completions"]), UsageError);
+  assert.throws(() => parseInvocation(["completions", "tcsh"]), UsageError);
+});
