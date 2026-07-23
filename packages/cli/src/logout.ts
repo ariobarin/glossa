@@ -6,10 +6,6 @@ import {
 } from "./config-store.js";
 import { openBrowser } from "./open-browser.js";
 
-export interface LogoutOptions {
-  browser: boolean;
-}
-
 export interface LogoutDependencies {
   deleteCredentials?: typeof deleteCredentials;
   peekCredentials?: typeof peekCredentials;
@@ -26,7 +22,6 @@ export function browserLogoutUrl(issuer: string): string {
 }
 
 export async function logoutFromGlossa(
-  options: LogoutOptions,
   dependencies: LogoutDependencies = {},
 ): Promise<void> {
   const remove = dependencies.deleteCredentials ?? deleteCredentials;
@@ -54,10 +49,9 @@ export async function logoutFromGlossa(
   await remove();
   log(
     present
-      ? "Signed out of Glossa locally."
-      : "Already signed out of Glossa locally.",
+      ? "Signed out of Glossa."
+      : "Already signed out of Glossa.",
   );
-  if (!options.browser) return;
 
   const url = browserLogoutUrl(issuer ?? loadAuthConfig().issuer);
   const opened = await browse(url);
@@ -67,7 +61,4 @@ export async function logoutFromGlossa(
     log("Open this URL to finish signing out in your browser:");
     log(url);
   }
-  log(
-    "Reconnect Glossa in ChatGPT, then choose the same Google account when the CLI signs in.",
-  );
 }

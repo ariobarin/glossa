@@ -226,7 +226,7 @@ export async function updateGlossa(
     dependencies.platform,
     dependencies.environment,
   );
-  log("Updating Glossa from npm...");
+  log("Updating Glossa from the npm beta channel...");
   const result = run(invocation.command, invocation.args, { stdio: "inherit" });
   if (result.error) {
     throw new Error(`Glossa could not start npm: ${result.error.message}`);
@@ -236,5 +236,7 @@ export async function updateGlossa(
       `npm could not update Glossa (exit ${result.status ?? "unknown"}).`,
     );
   }
-  log("Glossa updated. Run glossa --version to verify the installed version.");
+  log("Glossa updated.");
+  log("Next: run glossa to reopen this workspace.");
+  log("Inside Glossa, press ? for controls.");
 }

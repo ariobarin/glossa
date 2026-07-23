@@ -3,9 +3,14 @@ import test from "node:test";
 import type { StoredCredentials } from "../config-store.js";
 import type { StoredDeviceCredential } from "../device-store.js";
 import type { RelayEndpoints } from "../relay-client.js";
-import { deviceForSession } from "./managed-session.js";
+import {
+  deviceForSession,
+  reenrollRejectedDevice,
+  shouldRecoverRejectedDevice,
+} from "./managed-session.js";
+import { DeviceRejectedError } from "./remote-worker.js";
 
-test("aborts relay setup fetches when the UI session stops", async () => {
+test("aborts device enrollment when the UI session stops", async () => {
   const controller = new AbortController();
   const endpoints = {
     relayOrigin: "https://relay.example",
@@ -19,12 +24,6 @@ test("aborts relay setup fetches when the UI session stops", async () => {
     expiresAt: new Date(Date.now() + 10 * 60_000).toISOString(),
     tokenType: "Bearer",
   };
-  const stored = {
-    relayOrigin: endpoints.relayOrigin,
-    deviceId: "device-id",
-    deviceName: "Test device",
-    token: "device-token",
-  };
   let fetchStarted!: () => void;
   const started = new Promise<void>((resolve) => {
     fetchStarted = resolve;
@@ -33,7 +32,7 @@ test("aborts relay setup fetches when the UI session stops", async () => {
   const pending = deviceForSession(
     endpoints,
     {
-      loadDeviceCredential: async () => stored,
+      loadDeviceCredential: async () => null,
       loadCredentials: async () => ({ credentials, backend: "keyring" }),
       fetch: async (_input, init) => {
         assert.equal(init?.signal, controller.signal);
@@ -78,8 +77,9 @@ const enrollmentResult: StoredDeviceCredential = {
   token: "gld_laptop_token",
 };
 
-function enrollmentDependencies(deviceName?: string) {
+function enrollmentDependencies() {
   return {
+    accessTokenSubject: () => "google-oauth2|account-1",
     loadDeviceCredential: async () => null,
     loadCredentials: async () => enrollmentLoaded,
     validCredentials: async (value: StoredCredentials) => value,
@@ -90,28 +90,56 @@ function enrollmentDependencies(deviceName?: string) {
     }),
     saveDeviceCredential: async () => undefined,
     defaultDeviceName: () => "HOSTNAME",
-    ...(deviceName ? { deviceName } : {}),
   };
 }
 
-test("enrolls with the requested device name on first enrollment", async () => {
+test("enrolls with the computer hostname", async () => {
   const result = await deviceForSession(
     enrollmentEndpoints,
-    enrollmentDependencies("Laptop"),
+    enrollmentDependencies(),
   );
-  assert.equal(result.deviceName, "Laptop");
+  assert.equal(result.deviceName, "HOSTNAME");
 });
 
-test("keeps the existing device and ignores a requested name once enrolled", async () => {
+test("reuses credentials already validated by session startup", async () => {
+  let received: StoredCredentials | undefined;
+  await deviceForSession(enrollmentEndpoints, {
+    ...enrollmentDependencies(),
+    credentials: enrollmentCredentials,
+    loadCredentials: async () => {
+      throw new Error("credentials should not be loaded again");
+    },
+    validCredentials: async () => {
+      throw new Error("credentials should not be validated again");
+    },
+    enrollDevice: async (_endpoints, credentials, name) => {
+      received = credentials;
+      return { ...enrollmentResult, deviceName: name };
+    },
+  });
+  assert.equal(received, enrollmentCredentials);
+});
+
+test("keeps the existing device without reenrolling", async () => {
   const stored: StoredDeviceCredential = {
     ...enrollmentResult,
+    accountSubject: "google-oauth2|account-1",
     deviceName: "Old Desk",
   };
   let enrollCalled = false;
   const result = await deviceForSession(enrollmentEndpoints, {
-    ...enrollmentDependencies("Laptop"),
+    ...enrollmentDependencies(),
+    credentials: enrollmentCredentials,
     loadDeviceCredential: async () => stored,
-    accountOwnsDevice: async () => true,
+    loadCredentials: async () => {
+      throw new Error("credentials should not be loaded for a stored device");
+    },
+    fetch: async () => {
+      throw new Error("the relay should not be called for a stored device");
+    },
+    accountOwnsDevice: async () => {
+      throw new Error("bound devices should not need an ownership request");
+    },
     enrollDevice: async () => {
       enrollCalled = true;
       return enrollmentResult;
@@ -121,10 +149,97 @@ test("keeps the existing device and ignores a requested name once enrolled", asy
   assert.equal(result.deviceName, "Old Desk");
 });
 
-test("falls back to the default device name when none is requested", async () => {
-  const result = await deviceForSession(
-    enrollmentEndpoints,
-    enrollmentDependencies(),
+test("verifies and binds a legacy stored device once", async () => {
+  const stored: StoredDeviceCredential = {
+    ...enrollmentResult,
+    deviceName: "Legacy device",
+  };
+  let ownershipCalls = 0;
+  let saved: StoredDeviceCredential | undefined;
+  const result = await deviceForSession(enrollmentEndpoints, {
+    ...enrollmentDependencies(),
+    credentials: enrollmentCredentials,
+    loadDeviceCredential: async () => stored,
+    accountOwnsDevice: async () => {
+      ownershipCalls += 1;
+      return true;
+    },
+    saveDeviceCredential: async (device) => {
+      saved = device;
+    },
+  });
+
+  assert.equal(ownershipCalls, 1);
+  assert.equal(result.accountSubject, "google-oauth2|account-1");
+  assert.equal(saved, result);
+});
+
+test("re-enrolls instead of using a device from another account", async () => {
+  let deleteCalls = 0;
+  let ownershipCalls = 0;
+  let enrollCalls = 0;
+  const result = await deviceForSession(enrollmentEndpoints, {
+    ...enrollmentDependencies(),
+    credentials: enrollmentCredentials,
+    loadDeviceCredential: async () => ({
+      ...enrollmentResult,
+      accountSubject: "google-oauth2|old-account",
+    }),
+    deleteDeviceCredential: async () => {
+      deleteCalls += 1;
+    },
+    accountOwnsDevice: async () => {
+      ownershipCalls += 1;
+      return true;
+    },
+    enrollDevice: async () => {
+      enrollCalls += 1;
+      return enrollmentResult;
+    },
+  });
+
+  assert.equal(deleteCalls, 1);
+  assert.equal(ownershipCalls, 0);
+  assert.equal(enrollCalls, 1);
+  assert.equal(result.accountSubject, "google-oauth2|account-1");
+});
+
+test("re-enrolls once worker registration rejects the stored device", async () => {
+  let stored: StoredDeviceCredential | null = {
+    ...enrollmentResult,
+    deviceName: "Revoked device",
+  };
+  let deleteCalls = 0;
+  let enrollCalls = 0;
+  const result = await reenrollRejectedDevice(enrollmentEndpoints, {
+    ...enrollmentDependencies(),
+    credentials: enrollmentCredentials,
+    loadDeviceCredential: async () => stored,
+    deleteDeviceCredential: async () => {
+      deleteCalls += 1;
+      stored = null;
+    },
+    enrollDevice: async () => {
+      enrollCalls += 1;
+      return enrollmentResult;
+    },
+  });
+
+  assert.equal(deleteCalls, 1);
+  assert.equal(enrollCalls, 1);
+  assert.deepEqual(result, {
+    ...enrollmentResult,
+    accountSubject: "google-oauth2|account-1",
+  });
+});
+
+test("only recovers a rejected device before its worker connects", () => {
+  const rejection = new DeviceRejectedError();
+  assert.equal(shouldRecoverRejectedDevice(rejection, false, false), true);
+  assert.equal(shouldRecoverRejectedDevice(rejection, true, false), false);
+  assert.equal(shouldRecoverRejectedDevice(rejection, false, true), false);
+  assert.equal(
+    shouldRecoverRejectedDevice(new Error("offline"), false, false),
+    false,
   );
-  assert.equal(result.deviceName, "HOSTNAME");
 });

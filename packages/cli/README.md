@@ -24,29 +24,26 @@ macOS or Linux:
 curl -fsSL https://glossa.sh/install.sh | sh
 ```
 
-Then choose a recognizable name during this computer's first enrollment:
+Open a terminal in the repository you want to expose, then run:
 
 ```shell
-cd path/to/a/project
-glossa --device-name "my-workstation" .
+glossa
 ```
 
 The hosted commands run the tracked scripts in `site`. They verify native
-release checksums before installing. Use `glossa update` or its
-`glossa upgrade` alias to update later with the original installation method.
+release checksums before installing. Use `glossa update` later with the original
+installation method.
 
 Glossa opens Google sign-in automatically when needed using OAuth Device Authorization Flow. Public client and resource identifiers are built in, so testers do not configure OAuth values. Use the same Google account when authorizing Glossa in ChatGPT.
 
 OAuth and device credentials use the operating-system credential store. If it is unavailable, Glossa warns before using a restricted credential file.
 
-`--device-name` is used only during initial enrollment. Later starts reuse the enrolled name; use `glossa devices rename <id> <name>` to change it. Without the option, the first managed session enrolls the computer under its hostname. `glossa start .` selects the current directory explicitly. Each process registers an independent workspace, so the same computer may expose several workspaces at once. The process prints the canonical root, connection state, shell authority warning, and write or command activity. Press Ctrl+C to disconnect.
+Glossa signs in automatically and exposes the current Git worktree. Pass a directory to expose a different workspace. The live session display shows the connection, authority, and recent activity.
 
-The experimental `glossa ui .` command opens a compact live session HUD and immediately exposes the selected workspace. Press `d` for recent activity, `?` for help, and `q` to disconnect. The screen keeps the worker-account authority warning visible.
+The live display contains the full interactive workflow. Press `s` for account and device status, `r` to revoke a device, `l` to sign out, `u` to update, `d` for recent activity, or `q` or Ctrl+C to disconnect. Press `?` to see the keys at any time.
 
-Glossa signs in automatically whenever an authenticated command needs an account. `glossa login` is an optional preflight. `glossa status` validates the session and relay, then reports enrolled devices and active workers. `glossa doctor` performs a read-only readiness check, including the local device credential, and supports `--json`. Use `glossa devices list`, `glossa devices rename <id> <name>`, and `glossa devices revoke <id>` to manage enrolled computers.
-
-Generate shell completion with `glossa completions <powershell|bash|zsh|fish>` and source the output from your shell profile. For example, use `glossa completions powershell | Out-String | Invoke-Expression` in PowerShell, `source <(glossa completions bash)` in Bash, `source <(glossa completions zsh)` after `compinit` in Zsh, or `glossa completions fish | source` in Fish.
+The same core actions remain available directly with `glossa status`, `glossa devices`, `glossa devices revoke <id>`, `glossa login`, `glossa logout`, and `glossa update`. Status and device listings accept `--json` for scripts.
 
 The managed endpoint defaults to `https://mcp.glossa.sh`. Development deployments may override `GLOSSA_RELAY_ORIGIN` and `GLOSSA_WORKER_ORIGIN`. Plain HTTP is accepted only for loopback relay origins and loopback or private IPv4 worker origins.
 
-Run `glossa logout` to remove the CLI's local OAuth credentials. Running workers remain connected until stopped or revoked. Run `glossa logout --browser` before switching Google accounts so the next Glossa authorization does not silently reuse the previous browser session.
+Signing out removes local OAuth credentials, opens the browser logout page, and disconnects the current workspace. Other running Glossa sessions remain connected until stopped or revoked.

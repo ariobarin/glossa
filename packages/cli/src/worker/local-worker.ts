@@ -11,8 +11,8 @@ export class LocalWorker {
     readonly commands: CommandService,
   ) {}
 
-  static async create(root: string, allowBroadRoot = false): Promise<LocalWorker> {
-    const policy = await PathPolicy.create(root, allowBroadRoot);
+  static async create(root: string): Promise<LocalWorker> {
+    const policy = await PathPolicy.create(root);
     return new LocalWorker(
       policy,
       new FileService(policy),

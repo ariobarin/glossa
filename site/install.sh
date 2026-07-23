@@ -75,4 +75,5 @@ esac
 
 version="$("$install_directory/glossa" --version)"
 echo "Installed Glossa $version."
-echo "Open a new terminal, then run glossa doctor."
+echo "Next: open a new terminal in a project and run glossa."
+echo "Inside Glossa, press ? for controls."

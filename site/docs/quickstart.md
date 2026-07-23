@@ -51,17 +51,17 @@ Confirm Glossa is available:
 glossa --version
 ```
 
-Update later with `glossa update`.
+After Glossa starts, press `u` to install the newest beta. You can also run `glossa update` directly.
 
 ## Step 2: Start a workspace
 
-Open a terminal in the folder you want to expose, then run:
+Open a terminal in the folder where you want ChatGPT to work:
 
 ```shell
-glossa --device-name "my-workstation" .
+glossa
 ```
 
-> Keep this terminal open while using Glossa.
+> Keep this terminal open. Closing it disconnects that local workspace from ChatGPT.
 
 ## Step 3: Connect ChatGPT
 
@@ -77,6 +77,10 @@ https://mcp.glossa.sh/mcp
 5. Sign in with the same Google account used by the Glossa CLI, then choose **Create**.
 
 ## Step 4: Verify the connection
+
+Press `s` in Glossa to check the account, relay, enrolled device, and active worker. Press Esc to return to the workspace view. You can also run `glossa status` in another terminal.
+
+### Try a read
 
 In ChatGPT, select Glossa and send:
 

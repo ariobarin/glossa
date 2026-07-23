@@ -100,7 +100,8 @@ function Invoke-GlossaInstaller {
         throw "Glossa was installed, but its version check failed."
     }
     Write-Host "Installed Glossa $version."
-    Write-Host "Open a new terminal, then run glossa doctor."
+    Write-Host "Next: open a new terminal in a project and run glossa."
+    Write-Host "Inside Glossa, press ? for controls."
 }
 
 Invoke-GlossaInstaller

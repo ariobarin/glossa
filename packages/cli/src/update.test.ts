@@ -54,7 +54,12 @@ test("updates npm installations without loading account state", async () => {
       ],
     },
   ]);
-  assert.match(messages.join("\n"), /Glossa updated/);
+  assert.deepEqual(messages, [
+    "Updating Glossa from the npm beta channel...",
+    "Glossa updated.",
+    "Next: run glossa to reopen this workspace.",
+    "Inside Glossa, press ? for controls.",
+  ]);
 });
 
 test("reports npm startup and exit failures", async () => {

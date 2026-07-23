@@ -98,7 +98,9 @@ function relayError(status: number, data: RelayErrorResponse): Error {
     );
   }
   if (status === 409 && data.error === "device_name_conflict") {
-    return new Error("A Glossa device already uses this name. Run glossa devices list, then rename or revoke the old device.");
+    return new Error(
+      "Glossa could not choose a unique name for this computer. Try again.",
+    );
   }
   if (status === 404 && data.error === "device_not_found") {
     return new Error("The Glossa device was not found.");
@@ -171,35 +173,61 @@ export async function enrollDevice(
   deviceName: string,
   fetchRequest: FetchLike = fetch,
 ): Promise<StoredDeviceCredential> {
-  const name = deviceNameSchema.parse(deviceName);
-  const response = await fetchRequest(`${endpoints.relayOrigin}/v1/devices/enroll`, {
-    method: "POST",
-    headers: {
-      authorization: `${credentials.tokenType} ${credentials.accessToken}`,
-      "content-type": "application/json",
-    },
-    body: JSON.stringify({ name, platform: `${process.platform}-${process.arch}` }),
-  });
-  let data: EnrollmentResponse = {};
-  try {
-    data = (await response.json()) as EnrollmentResponse;
-  } catch {
-    // Status-specific errors below remain stable for non-JSON proxy responses.
+  const baseName = deviceNameSchema.parse(deviceName);
+  let name = baseName;
+
+  for (let attempt = 0; attempt < 3; attempt += 1) {
+    const response = await fetchRequest(`${endpoints.relayOrigin}/v1/devices/enroll`, {
+      method: "POST",
+      headers: {
+        authorization: `${credentials.tokenType} ${credentials.accessToken}`,
+        "content-type": "application/json",
+      },
+      body: JSON.stringify({ name, platform: `${process.platform}-${process.arch}` }),
+    });
+    let data: EnrollmentResponse = {};
+    try {
+      data = (await response.json()) as EnrollmentResponse;
+    } catch {
+      // Status-specific errors below remain stable for non-JSON proxy responses.
+    }
+    if (
+      response.status === 409 &&
+      data.error === "device_name_conflict" &&
+      attempt < 2
+    ) {
+      const activeNames = new Set(
+        (await listDevices(endpoints, credentials, fetchRequest))
+          .filter((device) => device.revokedAt === null)
+          .map((device) => device.name),
+      );
+      for (let suffix = 2; ; suffix += 1) {
+        const ending = `-${suffix}`;
+        const candidate = `${baseName.slice(0, 80 - ending.length)}${ending}`;
+        if (!activeNames.has(candidate)) {
+          name = deviceNameSchema.parse(candidate);
+          break;
+        }
+      }
+      continue;
+    }
+    if (!response.ok) throw relayError(response.status, data);
+    if (
+      typeof data.device?.id !== "string" ||
+      typeof data.device.name !== "string" ||
+      typeof data.device_token !== "string"
+    ) {
+      throw new Error("The Glossa relay returned an invalid device enrollment response.");
+    }
+    return {
+      relayOrigin: endpoints.relayOrigin,
+      deviceId: data.device.id,
+      deviceName: data.device.name,
+      token: data.device_token,
+    };
   }
-  if (!response.ok) throw relayError(response.status, data);
-  if (
-    typeof data.device?.id !== "string" ||
-    typeof data.device.name !== "string" ||
-    typeof data.device_token !== "string"
-  ) {
-    throw new Error("The Glossa relay returned an invalid device enrollment response.");
-  }
-  return {
-    relayOrigin: endpoints.relayOrigin,
-    deviceId: data.device.id,
-    deviceName: data.device.name,
-    token: data.device_token,
-  };
+
+  throw new Error("Glossa could not enroll this computer.");
 }
 
 export async function renameDevice(

@@ -41,23 +41,17 @@ Get-Content .\install.ps1
 .\install.ps1
 ```
 
-Run `glossa update` later. It uses npm or the direct release channel to match the
-original installation. `glossa upgrade` is an alias.
+After Glossa starts, press `u` to update using the original installation method. You can also run `glossa update` directly.
 
 ## Start a worker
 
-Change to the folder you want to expose and start Glossa. On this computer's first enrollment, choose a recognizable device name:
+Open a terminal in a disposable repository and run:
 
 ```shell
-cd path/to/a/test-folder
-glossa --device-name "my-workstation" .
+glossa
 ```
 
-`--device-name` is used only during initial enrollment. Later starts reuse the enrolled name; use `glossa devices rename <id> <name>` to change it. `glossa start .` is the explicit form. Start more workers in other terminals when you want to expose several workspaces from the same computer.
-
-To try the experimental compact session HUD instead, run `glossa ui .`. It immediately starts the worker, shows connection and tool activity, and keeps the worker-account authority warning visible. Press `d` for details, `?` for help, or `q` to disconnect.
-
-Glossa opens Google sign-in automatically when needed. `glossa login` is available as an optional preflight. Choose the Google account you want to use for Glossa. After sign-in, the terminal prints the exposed root, device name, connection state, and security warning. On the first successful managed-relay connection on a computer, it also prints the ChatGPT quickstart link. A `connect-hint-shown` marker in the local Glossa config directory suppresses that hint on later runs. Leave that terminal open while using Glossa. Press Ctrl+C to disconnect.
+Glossa opens Google sign-in automatically when needed. Choose the Google account you want to use for Glossa. After sign-in, the session display shows the workspace, connection, activity, and security warning. Press `s` for account and device status, `d` for recent activity, or `q` or Ctrl+C to disconnect. Press `?` to see every key.
 
 Starting Glossa authorizes connected clients to modify files inside the exposed root and run commands with the full environment and permissions of your operating-system account. Do not expose your home directory, a filesystem root, or a folder containing credentials.
 
@@ -89,19 +83,18 @@ Only test writes and commands inside a folder you are comfortable modifying.
 
 ## Troubleshooting
 
-- Run `glossa status` to validate Google login, relay access, enrolled devices, and active workers.
-- Run `glossa doctor` to check the runtime, relay reachability, sign-in state, and the local device credential before reporting a problem.
+- Press `s` in Glossa or run `glossa status` to check the account, relay, enrolled devices, and active workers.
 - No Create option: confirm Developer Mode is enabled and your workspace role has access.
 - No online devices: confirm the `glossa` terminal is still running.
 - App setup cannot discover tools: confirm `https://mcp.glossa.sh/healthz` returns `{"ok":true,"service":"glossa-relay"}`.
 - OAuth loops or expires: reopen the custom Glossa app and authorize it again.
-- Wrong Google account: stop the worker, run `glossa logout --browser`, open Glossa under **Settings > Plugins** in ChatGPT and disconnect it, then reconnect and sign in on both sides with the same Google account. Use **Settings > Apps** if that is the label your workspace shows.
+- Wrong Google account: press `l` in Glossa and confirm, or run `glossa logout`. Open Glossa under **Settings > Plugins** in ChatGPT and disconnect it, then reconnect and sign in on both sides with the same Google account. Use **Settings > Apps** if that is the label your workspace shows.
 - Account access fails: open a GitHub issue without including tokens, credentials, or local paths.
 
 ## Disconnect
 
-Press Ctrl+C in the worker terminal. The device remains enrolled for later sessions, but it is offline and cannot access the local workspace while the worker is stopped.
+Press `q` or Ctrl+C in the worker terminal. The device remains enrolled for later sessions, but it is offline and cannot access the local workspace while the worker is stopped.
 
-Run `glossa logout` to remove only the CLI's local OAuth credentials. Run `glossa logout --browser` when switching Google accounts; it also opens Glossa's browser-session logout endpoint.
+Press `l` and confirm, or run `glossa logout`, to sign out locally and in the browser.
 
-Use `glossa devices list`, `glossa devices rename <id> <name>`, or `glossa devices revoke <id>` to recover stale enrollments and remove computers you no longer trust. Each listed device shows its platform and when the relay last saw it, which helps identify computers that are offline or duplicated.
+Press `s` to list enrolled computers, then `r` to revoke one. The direct forms are `glossa devices` and `glossa devices revoke <id>`.

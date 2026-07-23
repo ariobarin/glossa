@@ -1,269 +1,84 @@
-import { existsSync } from "node:fs";
-import path from "node:path";
-import { deviceNameSchema } from "@glossa/protocol";
-import { SUPPORTED_SHELLS, type SupportedShell } from "./completions.js";
-
 export class UsageError extends Error {}
 
-export type HelpTopic =
-  | "ui"
-  | "start"
-  | "status"
-  | "doctor"
-  | "devices"
-  | "completions"
-  | "update"
-  | "login"
-  | "logout";
-
 export type CliInvocation =
-  | { command: "ui"; path?: string; allowBroadRoot: boolean; deviceName?: string }
-  | { command: "start"; path?: string; allowBroadRoot: boolean; deviceName?: string }
+  | { command: "workspace"; path?: string }
   | { command: "status"; json: boolean }
-  | { command: "doctor"; json: boolean }
   | { command: "devices"; action: "list"; json: boolean }
-  | { command: "devices"; action: "rename"; deviceId: string; name: string }
   | { command: "devices"; action: "revoke"; deviceId: string }
-  | { command: "completions"; shell: SupportedShell }
   | { command: "update" }
   | { command: "login" }
-  | { command: "logout"; browser: boolean }
-  | { command: "help"; topic?: HelpTopic }
+  | { command: "logout" }
+  | { command: "help" }
   | { command: "version" };
 
-const helpTopics = new Set<HelpTopic>([
-  "ui",
-  "start",
-  "status",
-  "doctor",
-  "devices",
-  "completions",
-  "update",
-  "login",
-  "logout",
-]);
-
-function parseDeviceName(value: string): string {
-  const parsed = deviceNameSchema.safeParse(value);
-  if (!parsed.success) {
-    throw new UsageError(
-      "Device names must be 1 to 80 characters with no control characters.",
-    );
-  }
-  return parsed.data;
-}
-
-function parseWorkspaceCommand(command: "ui" | "start", args: string[]): CliInvocation {
-  if (args.includes("--help") || args.includes("-h")) {
-    return { command: "help", topic: command };
-  }
+function parseWorkspace(args: string[]): CliInvocation {
   let selectedPath: string | undefined;
-  let allowBroadRoot = false;
-  let deviceName: string | undefined;
   let optionsEnded = false;
-  for (let index = 0; index < args.length; index += 1) {
-    const argument = args[index]!;
+
+  for (const argument of args) {
     if (!optionsEnded && argument === "--") {
       optionsEnded = true;
-    } else if (!optionsEnded && argument === "--allow-broad-root") {
-      allowBroadRoot = true;
-    } else if (!optionsEnded && argument === "--device-name") {
-      const value = args[index + 1];
-      if (value === undefined || value.startsWith("-")) {
-        throw new UsageError("--device-name requires a value.");
-      }
-      deviceName = parseDeviceName(value);
-      index += 1;
-    } else if (!optionsEnded && argument.startsWith("--device-name=")) {
-      deviceName = parseDeviceName(argument.slice("--device-name=".length));
     } else if (!optionsEnded && argument.startsWith("-")) {
-      throw new UsageError(`Unknown ${command} option: ${argument}`);
+      throw new UsageError(`Unknown option: ${argument}`);
     } else if (selectedPath) {
-      throw new UsageError(`${command === "ui" ? "UI" : "Start"} accepts at most one directory.`);
+      throw new UsageError("Glossa accepts at most one directory.");
     } else {
       selectedPath = argument;
     }
   }
+
   return {
-    command,
+    command: "workspace",
     ...(selectedPath ? { path: selectedPath } : {}),
-    allowBroadRoot,
-    ...(deviceName ? { deviceName } : {}),
   };
 }
 
-function singleJsonOption(command: string, args: string[]): boolean {
+function parseJsonOption(command: string, args: string[]): boolean {
   if (args.length === 0) return false;
   if (args.length === 1 && args[0] === "--json") return true;
   throw new UsageError(`${command} accepts only --json.`);
 }
 
 function parseDevices(args: string[]): CliInvocation {
-  const [action, ...options] = args;
-  if (!action || action === "--help" || action === "-h") {
-    return { command: "help", topic: "devices" };
+  if (args.length === 0 || (args.length === 1 && args[0] === "--json")) {
+    return {
+      command: "devices",
+      action: "list",
+      json: parseJsonOption("Devices", args),
+    };
   }
-  if (action === "list") {
-    return { command: "devices", action, json: singleJsonOption("Devices list", options) };
+  if (args[0] === "revoke" && args.length === 2) {
+    return { command: "devices", action: "revoke", deviceId: args[1]! };
   }
-  if (action === "rename" && options.length === 2) {
-    return { command: "devices", action, deviceId: options[0]!, name: options[1]! };
-  }
-  if (action === "revoke" && options.length === 1) {
-    return { command: "devices", action, deviceId: options[0]! };
-  }
-  throw new UsageError("Use: glossa devices list, rename <id> <name>, or revoke <id>.");
+  throw new UsageError("Use: glossa devices [--json] or glossa devices revoke <id>.");
 }
 
-function likelyDirectory(value: string): boolean {
-  return (
-    value === "." ||
-    value === ".." ||
-    path.isAbsolute(value) ||
-    value.includes("/") ||
-    value.includes("\\") ||
-    existsSync(value)
-  );
-}
-
-const KNOWN_COMMANDS = [
-  "ui",
-  "start",
-  "status",
-  "doctor",
-  "devices",
-  "completions",
-  "update",
-  "upgrade",
-  "login",
-  "logout",
-] as const;
-
-function editDistance(a: string, b: string): number {
-  const m = a.length;
-  const n = b.length;
-  if (m === 0) return n;
-  if (n === 0) return m;
-  let previous = Array.from({ length: n + 1 }, (_, index) => index);
-  for (let i = 1; i <= m; i += 1) {
-    const current = [i];
-    for (let j = 1; j <= n; j += 1) {
-      const cost = a[i - 1] === b[j - 1] ? 0 : 1;
-      current[j] = Math.min(
-        previous[j]! + 1,
-        current[j - 1]! + 1,
-        previous[j - 1]! + cost,
-      );
-    }
-    previous = current;
-  }
-  return previous[n]!;
-}
-
-export function suggestCommand(input: string): string | undefined {
-  const lower = input.toLowerCase();
-  if (lower.length >= 3) {
-    const prefixMatches = KNOWN_COMMANDS.filter((command) => command.startsWith(lower));
-    if (prefixMatches.length === 1) return prefixMatches[0];
-  }
-  let best: string | undefined;
-  let bestDistance = Infinity;
-  for (const command of KNOWN_COMMANDS) {
-    const distance = editDistance(lower, command);
-    if (distance < bestDistance) {
-      bestDistance = distance;
-      best = command;
-    }
-  }
-  if (best && bestDistance <= 3 && bestDistance <= Math.ceil(lower.length / 2)) {
-    return best;
-  }
-  return undefined;
+function noOptions(command: string, args: string[]): void {
+  if (args.length > 0) throw new UsageError(`${command} accepts no options.`);
 }
 
 export function parseInvocation(args: string[]): CliInvocation {
   const [command, ...options] = args;
-  if (!command) return parseWorkspaceCommand("start", []);
+  if (!command) return parseWorkspace([]);
   if (command === "--help" || command === "-h") {
-    if (options.length > 0) throw new UsageError("Help accepts one command name.");
+    noOptions("Help", options);
     return { command: "help" };
   }
-  if (command === "help") {
-    if (options.length > 1) throw new UsageError("Help accepts one command name.");
-    const topic = options[0];
-    if (!topic) return { command: "help" };
-    if (!helpTopics.has(topic as HelpTopic)) {
-      throw new UsageError(`Unknown help topic: ${topic}`);
-    }
-    return { command: "help", topic: topic as HelpTopic };
-  }
   if (command === "--version" || command === "-v") {
-    if (options.length > 0) throw new UsageError("Version accepts no arguments.");
+    noOptions("Version", options);
     return { command: "version" };
   }
-  if (command === "ui") return parseWorkspaceCommand("ui", options);
-  if (command === "start") return parseWorkspaceCommand("start", options);
-  if (command === "status") {
-    if (options.includes("--help") || options.includes("-h")) {
-      return { command: "help", topic: "status" };
-    }
-    return { command: "status", json: singleJsonOption("Status", options) };
+  if (command === "--") return parseWorkspace(args);
+  if (options.includes("--help") || options.includes("-h")) {
+    return { command: "help" };
   }
-  if (command === "doctor") {
-    if (options.includes("--help") || options.includes("-h")) {
-      return { command: "help", topic: "doctor" };
-    }
-    return { command: "doctor", json: singleJsonOption("Doctor", options) };
+  if (command === "status") {
+    return { command, json: parseJsonOption("Status", options) };
   }
   if (command === "devices") return parseDevices(options);
-  if (command === "completions") {
-    if (options.includes("--help") || options.includes("-h")) {
-      return { command: "help", topic: "completions" };
-    }
-    if (options.length !== 1) {
-      throw new UsageError("Use: glossa completions <shell>.");
-    }
-    const shell = options[0]!;
-    if (!(SUPPORTED_SHELLS as readonly string[]).includes(shell)) {
-      throw new UsageError(
-        `Unsupported shell: ${shell}. Use one of: ${SUPPORTED_SHELLS.join(", ")}.`,
-      );
-    }
-    return { command: "completions", shell: shell as SupportedShell };
+  if (command === "update" || command === "login" || command === "logout") {
+    noOptions(command[0]!.toUpperCase() + command.slice(1), options);
+    return { command };
   }
-  if (command === "update" || command === "upgrade") {
-    if (options.includes("--help") || options.includes("-h")) {
-      return { command: "help", topic: "update" };
-    }
-    if (options.length > 0) {
-      throw new UsageError(`${command === "update" ? "Update" : "Upgrade"} accepts no arguments.`);
-    }
-    return { command: "update" };
-  }
-  if (command === "login") {
-    if (options.includes("--help") || options.includes("-h")) {
-      return { command: "help", topic: "login" };
-    }
-    if (options.length > 0) throw new UsageError("Login accepts no arguments.");
-    return { command: "login" };
-  }
-  if (command === "logout") {
-    if (options.includes("--help") || options.includes("-h")) {
-      return { command: "help", topic: "logout" };
-    }
-    if (options.length === 0) return { command: "logout", browser: false };
-    if (options.length === 1 && options[0] === "--browser") {
-      return { command: "logout", browser: true };
-    }
-    throw new UsageError("Logout accepts only --browser.");
-  }
-  if (command === "--") return parseWorkspaceCommand("start", options);
-  if (command.startsWith("-")) return parseWorkspaceCommand("start", args);
-  if (likelyDirectory(command)) return parseWorkspaceCommand("start", args);
-  const suggestion = suggestCommand(command);
-  throw new UsageError(
-    suggestion
-      ? `Unknown command: ${command}. Did you mean "${suggestion}"?`
-      : `Unknown command: ${command}`,
-  );
+  return parseWorkspace(args);
 }

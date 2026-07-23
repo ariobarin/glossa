@@ -6,6 +6,7 @@ export const FILE_DEVICE_WARNING =
 
 export interface StoredDeviceCredential {
   relayOrigin: string;
+  accountSubject?: string;
   deviceId: string;
   deviceName: string;
   token: string;
@@ -34,6 +35,9 @@ export function parseDeviceCredential(value: string): StoredDeviceCredential {
     ) ||
     typeof parsed.deviceName !== "string" ||
     parsed.deviceName.length === 0 ||
+    (parsed.accountSubject !== undefined &&
+      (typeof parsed.accountSubject !== "string" ||
+        parsed.accountSubject.length === 0)) ||
     typeof parsed.token !== "string" ||
     !parsed.token.startsWith(`gld_${parsed.deviceId}_`)
   ) {
