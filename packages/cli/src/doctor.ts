@@ -49,11 +49,12 @@ export async function runDoctorChecks(
 ): Promise<DoctorCheck[]> {
   const nodeVersion = dependencies.nodeVersion ?? process.versions.node;
   const nodeOk = nodeVersionSatisfies(nodeVersion);
+  const displayedNodeVersion = nodeVersion.startsWith("v") ? nodeVersion : `v${nodeVersion}`;
   const checks: DoctorCheck[] = [
     {
       name: "Node.js",
       status: nodeOk ? "pass" : "fail",
-      detail: `Node.js v${nodeVersion}`,
+      detail: `Node.js ${displayedNodeVersion}`,
       ...(nodeOk ? {} : { nextStep: `Install Node.js ${MIN_NODE_MAJOR}.${MIN_NODE_MINOR} or newer and restart your terminal.` }),
     },
   ];
