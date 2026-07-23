@@ -24,8 +24,8 @@ releases="$temporary_directory/releases.json"
 curl -fsSL -H "Accept: application/vnd.github+json" -H "User-Agent: glossa-installer" \
   "$repository_api" -o "$releases"
 
-binary_url="$(sed -n "s|.*\"browser_download_url\": \"\\([^\"]*/${asset}\\)\".*|\\1|p" "$releases" | head -n 1)"
-checksum_url="$(sed -n "s|.*\"browser_download_url\": \"\\([^\"]*/${asset}\\.sha256\\)\".*|\\1|p" "$releases" | head -n 1)"
+binary_url="$(sed -n "s|.*\"browser_download_url\"[[:space:]]*:[[:space:]]*\"\\([^\"]*/${asset}\\)\".*|\\1|p" "$releases" | head -n 1)"
+checksum_url="$(sed -n "s|.*\"browser_download_url\"[[:space:]]*:[[:space:]]*\"\\([^\"]*/${asset}\\.sha256\\)\".*|\\1|p" "$releases" | head -n 1)"
 if [ -z "$binary_url" ] || [ -z "$checksum_url" ]; then
   echo "No Glossa direct-install release supports this computer yet. Use npm or try again after the next release." >&2
   exit 1
