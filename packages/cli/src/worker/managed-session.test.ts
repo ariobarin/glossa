@@ -1,0 +1,130 @@
+import assert from "node:assert/strict";
+import test from "node:test";
+import type { StoredCredentials } from "../config-store.js";
+import type { StoredDeviceCredential } from "../device-store.js";
+import type { RelayEndpoints } from "../relay-client.js";
+import { deviceForSession } from "./managed-session.js";
+
+test("aborts relay setup fetches when the UI session stops", async () => {
+  const controller = new AbortController();
+  const endpoints = {
+    relayOrigin: "https://relay.example",
+    workerOrigin: "wss://worker.example",
+  };
+  const credentials = {
+    issuer: "https://issuer.example",
+    clientId: "client",
+    audience: "relay",
+    accessToken: "access",
+    expiresAt: new Date(Date.now() + 10 * 60_000).toISOString(),
+    tokenType: "Bearer",
+  };
+  const stored = {
+    relayOrigin: endpoints.relayOrigin,
+    deviceId: "device-id",
+    deviceName: "Test device",
+    token: "device-token",
+  };
+  let fetchStarted!: () => void;
+  const started = new Promise<void>((resolve) => {
+    fetchStarted = resolve;
+  });
+
+  const pending = deviceForSession(
+    endpoints,
+    {
+      loadDeviceCredential: async () => stored,
+      loadCredentials: async () => ({ credentials, backend: "keyring" }),
+      fetch: async (_input, init) => {
+        assert.equal(init?.signal, controller.signal);
+        fetchStarted();
+        return await new Promise<Response>((_resolve, reject) => {
+          const signal = init?.signal;
+          if (!signal) {
+            reject(new Error("missing abort signal"));
+            return;
+          }
+          if (signal.aborted) reject(signal.reason);
+          else signal.addEventListener("abort", () => reject(signal.reason), { once: true });
+        });
+      },
+    },
+    controller.signal,
+  );
+
+  await started;
+  controller.abort();
+  await assert.rejects(pending, { name: "AbortError" });
+});
+
+
+const enrollmentEndpoints: RelayEndpoints = {
+  relayOrigin: "https://mcp.glossa.test",
+  workerOrigin: "https://mcp.glossa.test",
+};
+const enrollmentCredentials: StoredCredentials = {
+  issuer: "https://identity.glossa.test/",
+  clientId: "client",
+  audience: "https://mcp.glossa.test/",
+  accessToken: "access",
+  expiresAt: "2099-01-01T00:00:00.000Z",
+  tokenType: "Bearer",
+};
+const enrollmentLoaded = { credentials: enrollmentCredentials, backend: "file" as const };
+const enrollmentResult: StoredDeviceCredential = {
+  relayOrigin: enrollmentEndpoints.relayOrigin,
+  deviceId: "00000000-0000-4000-8000-000000000001",
+  deviceName: "Laptop",
+  token: "gld_laptop_token",
+};
+
+function enrollmentDependencies(deviceName?: string) {
+  return {
+    loadDeviceCredential: async () => null,
+    loadCredentials: async () => enrollmentLoaded,
+    validCredentials: async (value: StoredCredentials) => value,
+    accountOwnsDevice: async () => false,
+    enrollDevice: async (_endpoints: RelayEndpoints, _credentials: StoredCredentials, name: string) => ({
+      ...enrollmentResult,
+      deviceName: name,
+    }),
+    saveDeviceCredential: async () => undefined,
+    defaultDeviceName: () => "HOSTNAME",
+    ...(deviceName ? { deviceName } : {}),
+  };
+}
+
+test("enrolls with the requested device name on first enrollment", async () => {
+  const result = await deviceForSession(
+    enrollmentEndpoints,
+    enrollmentDependencies("Laptop"),
+  );
+  assert.equal(result.deviceName, "Laptop");
+});
+
+test("keeps the existing device and ignores a requested name once enrolled", async () => {
+  const stored: StoredDeviceCredential = {
+    ...enrollmentResult,
+    deviceName: "Old Desk",
+  };
+  let enrollCalled = false;
+  const result = await deviceForSession(enrollmentEndpoints, {
+    ...enrollmentDependencies("Laptop"),
+    loadDeviceCredential: async () => stored,
+    accountOwnsDevice: async () => true,
+    enrollDevice: async () => {
+      enrollCalled = true;
+      return enrollmentResult;
+    },
+  });
+  assert.equal(enrollCalled, false);
+  assert.equal(result.deviceName, "Old Desk");
+});
+
+test("falls back to the default device name when none is requested", async () => {
+  const result = await deviceForSession(
+    enrollmentEndpoints,
+    enrollmentDependencies(),
+  );
+  assert.equal(result.deviceName, "HOSTNAME");
+});

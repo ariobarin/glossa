@@ -8,6 +8,7 @@ import { RouterState } from "./router-state.js";
 
 const expectedTools = [
   "cancel_command",
+  "edit_file",
   "get_command",
   "list_devices",
   "logout",
@@ -111,6 +112,10 @@ test("publishes reviewable MCP tool contracts", async (context) => {
   assert.equal(byName.get("write_file")?.annotations?.readOnlyHint, false);
   assert.equal(byName.get("write_file")?.annotations?.destructiveHint, true);
   assert.equal(byName.get("write_file")?.annotations?.openWorldHint, false);
+  assert.equal(byName.get("edit_file")?.annotations?.readOnlyHint, false);
+  assert.equal(byName.get("edit_file")?.annotations?.destructiveHint, true);
+  assert.equal(byName.get("edit_file")?.annotations?.openWorldHint, false);
+  assert.match(byName.get("edit_file")?.description ?? "", /exactly once/);
 
   const result = await client.callTool({
     name: "list_devices",

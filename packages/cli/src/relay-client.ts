@@ -4,7 +4,7 @@ import type { StoredCredentials } from "./config-store.js";
 import type { FetchLike } from "./auth-session.js";
 import type { StoredDeviceCredential } from "./device-store.js";
 
-const DEFAULT_RELAY_ORIGIN = "https://mcp.glossa.sh";
+export const DEFAULT_RELAY_ORIGIN = "https://mcp.glossa.sh";
 
 export interface RelayEndpoints {
   relayOrigin: string;
