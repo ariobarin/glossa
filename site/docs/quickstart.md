@@ -28,13 +28,13 @@ glossa --version
 
 ## Step 2: Start a workspace
 
-Open a terminal in the folder where you want ChatGPT to work, then run:
+Open a terminal in the folder where you want ChatGPT to work. On this computer's first enrollment, choose a recognizable device name:
 
 ```shell
-glossa .
+glossa --device-name "Ari's workstation" .
 ```
 
-`glossa start .` is the explicit form. You can start more workers in other terminals to expose additional workspaces from the same computer.
+`--device-name` is used only during initial enrollment. Later starts reuse the enrolled name; use `glossa devices rename <id> <name>` to change it. `glossa start .` is the explicit form. You can start more workers in other terminals to expose additional workspaces from the same computer.
 
 > Keep this terminal open. Closing it disconnects that local workspace from ChatGPT.
 

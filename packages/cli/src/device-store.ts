@@ -11,7 +11,7 @@ export interface StoredDeviceCredential {
   token: string;
 }
 
-function parseDeviceCredential(value: string): StoredDeviceCredential {
+export function parseDeviceCredential(value: string): StoredDeviceCredential {
   let parsed: Partial<StoredDeviceCredential>;
   try {
     parsed = JSON.parse(value) as Partial<StoredDeviceCredential>;
@@ -51,6 +51,10 @@ const store = new SecureStore<StoredDeviceCredential>({
 
 export async function loadDeviceCredential(): Promise<StoredDeviceCredential | null> {
   return (await store.load())?.value ?? null;
+}
+
+export async function peekDeviceCredential(): Promise<StoredDeviceCredential | null> {
+  return (await store.peek())?.value ?? null;
 }
 
 export async function saveDeviceCredential(

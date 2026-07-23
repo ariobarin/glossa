@@ -32,6 +32,7 @@ const healthy: DoctorDependencies = {
   checkGit: async () => true,
   fetchHealthz: async () => true,
   probeCredentials: async () => "present" as const,
+  probeDeviceCredential: async () => "present" as const,
 };
 
 test("reports a ready machine with every check passing", async () => {
@@ -39,7 +40,7 @@ test("reports a ready machine with every check passing", async () => {
   assert.equal(checks.every((c) => c.status === "pass"), true);
   assert.deepEqual(
     checks.map((c) => c.name),
-    ["Node.js", "Git", "Relay", "Sign-in"],
+    ["Node.js", "Git", "Relay", "Sign-in", "Device"],
   );
 });
 
@@ -87,6 +88,7 @@ test("reports malformed endpoint configuration as a structured failure", async (
       throw new Error("GLOSSA_RELAY_ORIGIN must contain only an origin.");
     },
     probeCredentials: async () => "present" as const,
+    probeDeviceCredential: async () => "present" as const,
   });
   const relay = checks.find((c) => c.name === "Relay");
   assert.equal(relay?.status, "fail");
@@ -102,6 +104,7 @@ test("reports malformed endpoint configuration as a structured failure", async (
       throw new Error("bad origin");
     },
     probeCredentials: async () => "present" as const,
+    probeDeviceCredential: async () => "present" as const,
   }, () => undefined), false);
 });
 
@@ -123,6 +126,33 @@ test("fails the sign-in check when stored credentials are unreadable", async () 
   assert.match(signIn?.nextStep ?? "", /glossa logout/);
   const ok = await runDoctor(false, deps, () => undefined);
   assert.equal(ok, false);
+});
+
+test("warns when this computer has not enrolled a device yet", async () => {
+  const checks = await runDoctorChecks({
+    ...healthy,
+    probeDeviceCredential: async () => "absent" as const,
+  });
+  const device = checks.find((c) => c.name === "Device");
+  assert.equal(device?.status, "warn");
+  assert.match(device?.nextStep ?? "", /device-name/);
+  assert.equal(await runDoctor(false, {
+    ...healthy,
+    probeDeviceCredential: async () => "absent" as const,
+  }, () => undefined), true);
+});
+
+test("fails when stored device credentials are unreadable", async () => {
+  const deps = {
+    ...healthy,
+    probeDeviceCredential: async () => "error" as const,
+  };
+  const checks = await runDoctorChecks(deps);
+  const device = checks.find((c) => c.name === "Device");
+  assert.equal(device?.status, "fail");
+  assert.match(device?.detail ?? "", /unreadable/);
+  assert.match(device?.nextStep ?? "", /device\.json|credential store/);
+  assert.equal(await runDoctor(false, deps, () => undefined), false);
 });
 
 test("fails the node check below the supported version", async () => {

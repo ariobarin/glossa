@@ -1,6 +1,7 @@
 import { execFile } from "node:child_process";
 import { promisify } from "node:util";
 import { peekCredentials } from "./config-store.js";
+import { peekDeviceCredential } from "./device-store.js";
 import {
   loadRelayEndpoints,
   type RelayEndpoints,
@@ -30,6 +31,7 @@ export interface DoctorDependencies {
   checkGit?: () => Promise<boolean>;
   fetchHealthz?: (origin: string) => Promise<boolean>;
   probeCredentials?: () => Promise<CredentialProbe>;
+  probeDeviceCredential?: () => Promise<CredentialProbe>;
 }
 
 export function nodeVersionSatisfies(version: string): boolean {
@@ -112,6 +114,11 @@ export async function runDoctorChecks(
   const credentialState = await probeCredentials();
   checks.push(signInCheck(credentialState));
 
+  const probeDeviceCredential =
+    dependencies.probeDeviceCredential ?? defaultProbeDeviceCredential;
+  const deviceCredentialState = await probeDeviceCredential();
+  checks.push(deviceCredentialCheck(deviceCredentialState));
+
   return checks;
 }
 
@@ -132,6 +139,31 @@ function signInCheck(state: CredentialProbe): DoctorCheck {
     status: "fail",
     detail: "Stored credentials are unreadable.",
     nextStep: 'Run "glossa logout" to clear them, then start Glossa again.',
+  };
+}
+
+function deviceCredentialCheck(state: CredentialProbe): DoctorCheck {
+  if (state === "present") {
+    return {
+      name: "Device",
+      status: "pass",
+      detail: "Device credentials are readable.",
+    };
+  }
+  if (state === "absent") {
+    return {
+      name: "Device",
+      status: "warn",
+      detail: "No device is enrolled on this computer yet.",
+      nextStep: 'Run "glossa --device-name <name> ." inside a workspace to enroll it.',
+    };
+  }
+  return {
+    name: "Device",
+    status: "fail",
+    detail: "Stored device credentials are unreadable.",
+    nextStep:
+      "Remove the local Glossa device credential from the operating-system credential store (or the device.json fallback), then start Glossa again to re-enroll.",
   };
 }
 
@@ -194,6 +226,16 @@ async function defaultProbeCredentials(): Promise<CredentialProbe> {
   } catch {
     // A malformed credential store would also break glossa start/status, so
     // surface it as a failure rather than masking it as "not signed in".
+    return "error";
+  }
+}
+
+async function defaultProbeDeviceCredential(): Promise<CredentialProbe> {
+  try {
+    return (await peekDeviceCredential()) !== null ? "present" : "absent";
+  } catch {
+    // Startup consumes this credential, so malformed local state must make
+    // doctor fail instead of declaring the machine ready.
     return "error";
   }
 }
