@@ -10,7 +10,10 @@ export interface HudActivity {
 
 export interface HudDevice {
   id: string;
-  label: string;
+  name: string;
+  platform: string;
+  lastSeen: string;
+  status: string;
 }
 
 export interface HudStatus {
@@ -96,14 +99,18 @@ export function applyHudEvent(state: HudState, event: ManagedSessionEvent): HudS
   return { ...state, activities: [...state.activities.slice(-7), activity] };
 }
 
-function style(enabled: boolean, code: string, value: string): string {
-  return enabled ? `\u001b[${code}m${value}\u001b[0m` : value;
-}
+const ANSI_BASE = "\u001b[22;38;2;244;241;251;48;2;17;16;22m";
+const PALETTE = {
+  ink: "38;2;244;241;251",
+  muted: "38;2;170;164;181",
+  purple: "38;2;128;84;255",
+  purpleReadable: "38;2;173;152;255",
+  coral: "38;2;255;102;95",
+  line: "38;2;92;85;110",
+} as const;
 
-function renderTitle(width: number, color: boolean): string {
-  const title = "Glossa";
-  const padding = " ".repeat(Math.max(0, Math.floor((width - title.length) / 2)));
-  return `${padding}${style(color, "38;2;120;77;250;1", title)}`;
+function style(enabled: boolean, code: string, value: string): string {
+  return enabled ? `\u001b[${code}m${value}${ANSI_BASE}` : value;
 }
 
 function truncate(value: string, width: number): string {
@@ -128,6 +135,29 @@ function wrapText(value: string, width: number): string[] {
   return lines;
 }
 
+function sectionTitle(label: string, color: boolean): string {
+  return style(color, `${PALETTE.purpleReadable};1`, label.toUpperCase());
+}
+
+function renderHeader(view: HudView, usable: number, color: boolean): string[] {
+  const brand = "Glossa";
+  const fullViewLabel = {
+    session: "SESSION",
+    activity: "ACTIVITY",
+    status: "ACCOUNT & DEVICES",
+    help: "KEYBOARD",
+  }[view];
+  const viewLabel = truncate(
+    fullViewLabel,
+    Math.max(4, usable - brand.length - 1),
+  );
+  const gap = " ".repeat(Math.max(1, usable - brand.length - viewLabel.length));
+  return [
+    `${style(color, `${PALETTE.purple};1`, brand)}${gap}${style(color, PALETTE.muted, viewLabel)}`,
+    style(color, PALETTE.line, "─".repeat(usable)),
+  ];
+}
+
 function connectionCopy(state: HudState): { glyph: string; label: string; detail: string } {
   if (state.connection === "connected") {
     return {
@@ -150,100 +180,219 @@ function connectionCopy(state: HudState): { glyph: string; label: string; detail
 
 function renderSession(state: HudState, usable: number, color: boolean): string[] {
   const copy = connectionCopy(state);
+  const statusTone =
+    state.connection === "connected"
+      ? PALETTE.purpleReadable
+      : state.connection === "error"
+        ? PALETTE.coral
+        : PALETTE.muted;
   const lines = [
-    `${style(color, state.connection === "connected" ? "32;1" : "36;1", copy.glyph)} ${style(color, "1", copy.label)}`,
-    `  ${truncate(copy.detail, usable)}`,
     "",
-    `${style(color, "2", "Workspace")}  ${truncate(state.workspace, Math.max(8, usable - 11))}`,
+    style(color, `${statusTone};1`, `${copy.glyph} ${copy.label}`),
+    ...wrapText(copy.detail, usable).map((line) => style(color, PALETTE.muted, line)),
     "",
-    style(color, "1", "Authority"),
-    ...wrapText(
-      "Files may be modified and commands have the full environment and permissions of this account.",
-      usable,
-    ).map((line) => `  ${line}`),
+    sectionTitle("Workspace", color),
+    style(color, PALETTE.ink, truncate(state.workspace, usable)),
   ];
   if (state.deviceName) {
-    lines.push(`${style(color, "2", "Device")}     ${truncate(state.deviceName, Math.max(8, usable - 11))}`);
+    lines.push(
+      style(color, PALETTE.muted, `Device  ${truncate(state.deviceName, Math.max(8, usable - 8))}`),
+    );
   }
+  lines.push(
+    "",
+    sectionTitle("Authority", color),
+    ...wrapText("Full account permissions", Math.max(8, usable - 2)).map((line, index) =>
+      `${index === 0 ? style(color, `${PALETTE.coral};1`, "!") : " "} ${style(color, PALETTE.ink, line)}`
+    ),
+    "",
+    ...wrapText(
+      "Connected clients may modify files and run commands with this account's environment and permissions.",
+      Math.max(12, usable - 2),
+    ).map((line) => `  ${style(color, PALETTE.muted, line)}`),
+  );
   const latest = state.activities.at(-1);
   lines.push(
     "",
+    sectionTitle("Latest activity", color),
     latest
-      ? `${style(color, "2", "Latest")}     ${truncate(latest.label, Math.max(8, usable - 11))}`
-      : style(color, "2", "No tool activity yet."),
+      ? `${style(color, latest.ok === false ? PALETTE.coral : PALETTE.purpleReadable, latest.ok === false ? "×" : "•")} ${style(color, PALETTE.ink, truncate(latest.label, Math.max(8, usable - 2)))}`
+      : style(color, PALETTE.muted, "No tool activity yet."),
   );
   return lines;
 }
 
 function renderActivity(state: HudState, usable: number, color: boolean): string[] {
-  const lines = [style(color, "1", "Recent activity")];
+  const lines = ["", sectionTitle("Recent activity", color)];
   if (state.activities.length === 0) {
-    lines.push("", style(color, "2", "No tool activity yet."));
+    lines.push("", style(color, PALETTE.muted, "No tool activity yet."));
   }
   for (const activity of state.activities.slice(-8)) {
-    const outcome = activity.ok === false ? style(color, "31", "×") : style(color, "2", "·");
+    const outcome =
+      activity.ok === false
+        ? style(color, PALETTE.coral, "×")
+        : style(color, activity.ok === true ? PALETTE.purpleReadable : PALETTE.muted, "•");
     lines.push(
-      `${outcome} ${truncate(activity.label, Math.max(8, usable - 16))}  ${style(color, "2", activity.requestId.slice(0, 8))}`,
+      "",
+      `${outcome} ${style(color, PALETTE.ink, truncate(activity.label, Math.max(8, usable - 2)))}`,
+      `  ${style(color, PALETTE.muted, `Request ${activity.requestId.slice(0, 8)}`)}`,
     );
   }
   return lines;
 }
 
 function renderStatus(state: HudState, usable: number, color: boolean): string[] {
-  const lines = [style(color, "1", "Status"), ""];
+  const lines = ["", sectionTitle("Account", color)];
   if (state.statusLoading) {
-    lines.push("Loading account and devices…");
+    lines.push("", style(color, PALETTE.muted, "Loading account and devices…"));
     return lines;
   }
   if (!state.status) {
-    lines.push(style(color, "2", "Status is not loaded."));
+    lines.push("", style(color, PALETTE.muted, "Status is not loaded."));
     return lines;
   }
   lines.push(
-    `${style(color, "2", "Account")}    ${truncate(state.status.account, Math.max(8, usable - 11))}`,
-    `${style(color, "2", "Relay")}      ${truncate(state.status.relay, Math.max(8, usable - 11))}`,
-    `${style(color, "2", "Workers")}    ${state.status.activeWorkers ?? "unavailable"}`,
+    style(color, PALETTE.ink, truncate(state.status.account, usable)),
+    style(color, PALETTE.muted, truncate(state.status.relay, usable)),
     "",
-    style(color, "1", "Devices"),
+    sectionTitle("Active workspaces", color),
+    style(
+      color,
+      PALETTE.ink,
+      state.status.activeWorkers === null
+        ? "Unavailable"
+        : String(state.status.activeWorkers),
+    ),
+    "",
+    sectionTitle(`Devices  ${state.status.devices.length}`, color),
   );
   if (state.status.devices.length === 0) {
-    lines.push(style(color, "2", "  No devices enrolled."));
+    lines.push("", style(color, PALETTE.muted, "No devices enrolled."));
   }
   state.status.devices.slice(0, 9).forEach((device, index) => {
-    lines.push(`  ${index + 1}. ${truncate(device.label, Math.max(8, usable - 5))}`);
+    const statusTone =
+      device.status.includes("active")
+        ? PALETTE.purpleReadable
+        : device.status === "revoked"
+          ? PALETTE.coral
+          : PALETTE.muted;
+    lines.push(
+      "",
+      `${style(color, `${PALETTE.purpleReadable};1`, String(index + 1).padStart(2))}  ${style(color, `${PALETTE.ink};1`, truncate(device.name, Math.max(8, usable - 4)))}`,
+      `    ${style(color, statusTone, device.status)}`,
+      `    ${style(color, PALETTE.muted, truncate(`${device.platform}  •  seen ${device.lastSeen}`, Math.max(8, usable - 4)))}`,
+    );
   });
   return lines;
 }
 
-function renderHelp(color: boolean): string[] {
+function helpRows(
+  key: string,
+  label: string,
+  usable: number,
+  color: boolean,
+  tone: string = PALETTE.purpleReadable,
+): string[] {
+  const indent = " ".repeat(key.length + 2);
+  return wrapText(label, Math.max(8, usable - indent.length)).map((line, index) =>
+    index === 0
+      ? `${style(color, `${tone};1`, key)}  ${line}`
+      : `${indent}${line}`
+  );
+}
+
+function renderHelp(usable: number, color: boolean): string[] {
   return [
-    style(color, "1", "Keys"),
     "",
-    "  d  recent activity",
-    "  s  account and devices",
-    "  r  revoke a device",
-    "  l  sign out",
-    "  u  update Glossa",
-    "  ?  close help",
-    "  q  disconnect and quit",
+    sectionTitle("Navigate", color),
+    ...helpRows("D", "Recent activity", usable, color),
+    ...helpRows("S", "Account and devices", usable, color),
+    ...helpRows("?", "Close help", usable, color),
+    "",
+    sectionTitle("Manage", color),
+    ...helpRows("R", "Revoke a device from the status view", usable, color),
+    ...helpRows("L", "Sign out", usable, color),
+    ...helpRows("U", "Update Glossa", usable, color),
+    "",
+    sectionTitle("Session", color),
+    ...helpRows("Q", "Disconnect and quit", usable, color, PALETTE.coral),
+    ...helpRows("Ctrl+C", "Disconnect and quit", usable, color, PALETTE.coral),
   ];
 }
 
-function promptText(state: HudState): string | undefined {
-  if (state.busy) return "Working…";
+function promptText(state: HudState): { message: string; choices?: string } | undefined {
+  if (state.busy) return { message: "Working…" };
   if (!state.prompt) return undefined;
-  if (state.prompt.type === "logout") return "Sign out and disconnect?  y yes  n cancel";
-  if (state.prompt.type === "update") return "Disconnect and update Glossa?  y yes  n cancel";
-  if (state.prompt.type === "revoke-select") return "Press a device number to revoke, or Esc to cancel.";
+  if (state.prompt.type === "logout") {
+    return { message: "Sign out and disconnect?", choices: "Y confirm  N cancel" };
+  }
+  if (state.prompt.type === "update") {
+    return { message: "Disconnect and update Glossa?", choices: "Y confirm  N cancel" };
+  }
+  if (state.prompt.type === "revoke-select") {
+    return { message: "Choose a device number to revoke.", choices: "Esc cancel" };
+  }
   const device = state.status?.devices[state.prompt.deviceIndex];
-  return `Revoke ${device?.label ?? "this device"}?  y yes  n cancel`;
+  return {
+    message: `Revoke ${device?.name ?? "this device"}?`,
+    choices: "Y confirm  N cancel",
+  };
 }
 
-function footer(state: HudState): string {
-  if (state.view === "status") return "r revoke  l sign out  u update  Esc back  q disconnect";
-  if (state.view === "activity") return "d back  s status  ? help  q disconnect";
-  if (state.view === "help") return "? back  q disconnect";
-  return "d activity  s status  ? help  q disconnect";
+interface HudHint {
+  key: string;
+  label: string;
+}
+
+function footerHints(state: HudState): HudHint[] {
+  if (state.view === "status") {
+    return [
+      { key: "R", label: "Revoke" },
+      { key: "L", label: "Sign out" },
+      { key: "U", label: "Update" },
+      { key: "Esc", label: "Session" },
+      { key: "Q", label: "Disconnect" },
+    ];
+  }
+  if (state.view === "activity") {
+    return [
+      { key: "D", label: "Session" },
+      { key: "S", label: "Status" },
+      { key: "?", label: "Help" },
+      { key: "Q", label: "Disconnect" },
+    ];
+  }
+  if (state.view === "help") {
+    return [
+      { key: "?", label: "Session" },
+      { key: "Q", label: "Disconnect" },
+    ];
+  }
+  return [
+    { key: "D", label: "Activity" },
+    { key: "S", label: "Status" },
+    { key: "?", label: "Help" },
+    { key: "Q", label: "Disconnect" },
+  ];
+}
+
+function renderFooter(state: HudState, usable: number, color: boolean): string[] {
+  const rows: HudHint[][] = [[]];
+  let rowLength = 0;
+  for (const hint of footerHints(state)) {
+    const tokenLength = hint.key.length + hint.label.length + 1;
+    if (rows.at(-1)!.length > 0 && rowLength + 3 + tokenLength > usable) {
+      rows.push([]);
+      rowLength = 0;
+    }
+    rows.at(-1)!.push(hint);
+    rowLength += (rowLength > 0 ? 3 : 0) + tokenLength;
+  }
+  return rows.map((row) =>
+    row.map((hint) =>
+      `${style(color, `${PALETTE.purpleReadable};1`, hint.key)} ${style(color, PALETTE.muted, hint.label)}`
+    ).join("   ")
+  );
 }
 
 export function renderHud(
@@ -251,18 +400,36 @@ export function renderHud(
   width = 80,
   color = !process.env.NO_COLOR,
 ): string {
-  const usable = Math.max(24, width - 4);
-  const lines = [renderTitle(width, color), ""];
+  const usable = Math.max(20, width - 4);
+  const margin = width >= 24 ? "  " : "";
+  const lines = [...renderHeader(state.view, usable, color)];
   if (state.view === "activity") lines.push(...renderActivity(state, usable, color));
   else if (state.view === "status") lines.push(...renderStatus(state, usable, color));
-  else if (state.view === "help") lines.push(...renderHelp(color));
+  else if (state.view === "help") lines.push(...renderHelp(usable, color));
   else lines.push(...renderSession(state, usable, color));
 
-  if (state.notice) lines.push("", style(color, "33", truncate(state.notice, usable)));
+  if (state.notice) {
+    lines.push(
+      "",
+      style(color, PALETTE.line, "─".repeat(usable)),
+      ...wrapText(`! ${state.notice}`, usable).map((line) => style(color, PALETTE.coral, line)),
+    );
+  }
   const prompt = promptText(state);
-  if (prompt) lines.push("", style(color, "1", truncate(prompt, usable)));
-  lines.push("", style(color, "2", footer(state)));
-  return lines.join("\n");
+  if (prompt) {
+    lines.push(
+      "",
+      style(color, PALETTE.line, "─".repeat(usable)),
+      style(color, `${PALETTE.coral};1`, truncate(prompt.message, usable)),
+    );
+    if (prompt.choices) lines.push(style(color, PALETTE.muted, prompt.choices));
+  }
+  lines.push(
+    "",
+    style(color, PALETTE.line, "─".repeat(usable)),
+    ...renderFooter(state, usable, color),
+  );
+  return lines.map((line) => line ? `${margin}${line}` : "").join("\n");
 }
 
 export async function runSessionHud(
@@ -280,10 +447,11 @@ export async function runSessionHud(
   let state = initialHudState(actions.workspace);
   let exitAction: HudExitAction = "quit";
   let stopUi: (() => void) | undefined;
+  const color = !process.env.NO_COLOR;
 
   const render = (): void => {
-    const view = renderHud(state, output.columns ?? 80);
-    output.write(`\u001b[H\u001b[2J${view}`);
+    const view = renderHud(state, output.columns ?? 80, color);
+    output.write(`${color ? ANSI_BASE : ""}\u001b[H\u001b[2J${view}`);
   };
 
   const loadStatus = async (): Promise<void> => {
@@ -379,7 +547,7 @@ export async function runSessionHud(
           render();
           void actions.revokeDevice(device.id).then(async () => {
             if (controller.signal.aborted) return;
-            state = { ...state, busy: false, notice: `Revoked ${device.label}.` };
+            state = { ...state, busy: false, notice: `Revoked ${device.name}.` };
             render();
             await loadStatus();
           }).catch((error: unknown) => {
@@ -442,6 +610,6 @@ export async function runSessionHud(
     process.removeListener("SIGTERM", stopFromSignal);
     input.setRawMode(wasRaw);
     input.pause();
-    output.write("\u001b[?25h\u001b[?1049l");
+    output.write("\u001b[0m\u001b[?25h\u001b[?1049l");
   }
 }

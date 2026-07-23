@@ -5,7 +5,11 @@ import { loadAuthConfig } from "./auth-config.js";
 import { ensureSignedIn } from "./auth-login.js";
 import { parseInvocation, UsageError } from "./cli-options.js";
 import { loadCredentials, type StoredCredentials } from "./config-store.js";
-import { formatDeviceRow } from "./device-format.js";
+import {
+  deviceStatus,
+  formatDeviceRow,
+  formatRelativeTime,
+} from "./device-format.js";
 import { logoutFromGlossa } from "./logout.js";
 import {
   listDevices,
@@ -107,7 +111,10 @@ async function loadHudStatus(signal: AbortSignal): Promise<HudStatus> {
     ...status,
     devices: status.devices.map((device) => ({
       id: device.id,
-      label: formatDeviceRow(device),
+      name: device.name,
+      platform: device.platform ?? "Unknown platform",
+      lastSeen: formatRelativeTime(device.lastSeenAt),
+      status: deviceStatus(device),
     })),
   };
 }
