@@ -95,7 +95,8 @@
 </blockquote>
 </section><section class="doc-section">
 <h2 id="step-1-install-glossa"><a class="heading-anchor" href="#step-1-install-glossa" aria-label="Link to Step 1: Install Glossa"></a>Step 1: Install Glossa</h2>
-<p>Open PowerShell and install the current beta:</p>
+<p>Open PowerShell and install the current beta with either method.</p>
+<p>Hosted installer:</p>
 <div class="code-block">
   <button class="copy-button" type="button" data-copy-target="docs-quickstart-code-1" aria-label="Copy code">
     <span class="copy-tooltip" aria-hidden="true">Copy</span>
@@ -103,24 +104,31 @@
   <pre><code class="language-shell" id="docs-quickstart-code-1">irm https://glossa.sh/install | iex
 </code></pre>
 </div>
-<p>The installer checks Windows, Node.js, and npm, then installs and verifies
-Glossa. If you prefer to review it before running:</p>
+<p>Direct npm install:</p>
 <div class="code-block">
   <button class="copy-button" type="button" data-copy-target="docs-quickstart-code-2" aria-label="Copy code">
     <span class="copy-tooltip" aria-hidden="true">Copy</span>
   </button>
-  <pre><code class="language-shell" id="docs-quickstart-code-2">irm https://glossa.sh/install -OutFile install.ps1
-Get-Content .\install.ps1
-.\install.ps1
+  <pre><code class="language-shell" id="docs-quickstart-code-2">npm install --global @ariobarin/glossa@beta
 </code></pre>
 </div>
-<p>The direct npm fallback is
-<code>npm install --global @ariobarin/glossa@beta</code>. Confirm the command is available:</p>
+<p>The installer checks Windows, Node.js, and npm, then installs and verifies
+Glossa. If you prefer to review it before running:</p>
 <div class="code-block">
   <button class="copy-button" type="button" data-copy-target="docs-quickstart-code-3" aria-label="Copy code">
     <span class="copy-tooltip" aria-hidden="true">Copy</span>
   </button>
-  <pre><code class="language-shell" id="docs-quickstart-code-3">glossa --version
+  <pre><code class="language-shell" id="docs-quickstart-code-3">irm https://glossa.sh/install -OutFile install.ps1
+Get-Content .\install.ps1
+.\install.ps1
+</code></pre>
+</div>
+<p>Confirm the command is available:</p>
+<div class="code-block">
+  <button class="copy-button" type="button" data-copy-target="docs-quickstart-code-4" aria-label="Copy code">
+    <span class="copy-tooltip" aria-hidden="true">Copy</span>
+  </button>
+  <pre><code class="language-shell" id="docs-quickstart-code-4">glossa --version
 </code></pre>
 </div>
 <p>Afterward, <code>glossa update</code> installs the newest beta. <code>glossa upgrade</code> is an
@@ -129,10 +137,10 @@ alias.</p>
 <h2 id="step-2-start-a-workspace"><a class="heading-anchor" href="#step-2-start-a-workspace" aria-label="Link to Step 2: Start a workspace"></a>Step 2: Start a workspace</h2>
 <p>Open a terminal in the folder where you want ChatGPT to work. On this computer&#39;s first enrollment, choose a recognizable device name:</p>
 <div class="code-block">
-  <button class="copy-button" type="button" data-copy-target="docs-quickstart-code-4" aria-label="Copy code">
+  <button class="copy-button" type="button" data-copy-target="docs-quickstart-code-5" aria-label="Copy code">
     <span class="copy-tooltip" aria-hidden="true">Copy</span>
   </button>
-  <pre><code class="language-shell" id="docs-quickstart-code-4">glossa --device-name &quot;Ari&#39;s workstation&quot; .
+  <pre><code class="language-shell" id="docs-quickstart-code-5">glossa --device-name &quot;my-workstation&quot; .
 </code></pre>
 </div>
 <p><code>--device-name</code> is used only during initial enrollment. Later starts reuse the enrolled name; use <code>glossa devices rename &lt;id&gt; &lt;name&gt;</code> to change it. <code>glossa start .</code> is the explicit form. You can start more workers in other terminals to expose additional workspaces from the same computer.</p>
@@ -157,10 +165,10 @@ alias.</p>
 <li>Name the app <strong>Glossa</strong> and enter this MCP server URL:</li>
 </ol>
 <div class="code-block">
-  <button class="copy-button" type="button" data-copy-target="docs-quickstart-code-5" aria-label="Copy code">
+  <button class="copy-button" type="button" data-copy-target="docs-quickstart-code-6" aria-label="Copy code">
     <span class="copy-tooltip" aria-hidden="true">Copy</span>
   </button>
-  <pre><code class="language-text" id="docs-quickstart-code-5">https://mcp.glossa.sh/mcp
+  <pre><code class="language-text" id="docs-quickstart-code-6">https://mcp.glossa.sh/mcp
 </code></pre>
 </div>
 <ol start="4">
@@ -181,10 +189,10 @@ alias.</p>
 <li>Name the app <strong>Glossa</strong> and enter this MCP server URL:</li>
 </ol>
 <div class="code-block">
-  <button class="copy-button" type="button" data-copy-target="docs-quickstart-code-6" aria-label="Copy code">
+  <button class="copy-button" type="button" data-copy-target="docs-quickstart-code-7" aria-label="Copy code">
     <span class="copy-tooltip" aria-hidden="true">Copy</span>
   </button>
-  <pre><code class="language-text" id="docs-quickstart-code-6">https://mcp.glossa.sh/mcp
+  <pre><code class="language-text" id="docs-quickstart-code-7">https://mcp.glossa.sh/mcp
 </code></pre>
 </div>
 <ol start="5">
@@ -200,10 +208,10 @@ alias.</p>
 <h2 id="step-4-verify-the-connection"><a class="heading-anchor" href="#step-4-verify-the-connection" aria-label="Link to Step 4: Verify the connection"></a>Step 4: Verify the connection</h2>
 <p>In another terminal, check the account, relay, enrolled device, and active worker:</p>
 <div class="code-block">
-  <button class="copy-button" type="button" data-copy-target="docs-quickstart-code-7" aria-label="Copy code">
+  <button class="copy-button" type="button" data-copy-target="docs-quickstart-code-8" aria-label="Copy code">
     <span class="copy-tooltip" aria-hidden="true">Copy</span>
   </button>
-  <pre><code class="language-shell" id="docs-quickstart-code-7">glossa status
+  <pre><code class="language-shell" id="docs-quickstart-code-8">glossa status
 </code></pre>
 </div>
 <div class="audience-switcher" data-audience-switcher>
@@ -216,10 +224,10 @@ alias.</p>
 <h3 id="try-a-personal-read"><a class="heading-anchor" href="#try-a-personal-read" aria-label="Link to Try a personal read"></a>Try a personal read</h3>
 <p>In ChatGPT, select Glossa and send:</p>
 <div class="code-block">
-  <button class="copy-button" type="button" data-copy-target="docs-quickstart-code-8" aria-label="Copy code">
+  <button class="copy-button" type="button" data-copy-target="docs-quickstart-code-9" aria-label="Copy code">
     <span class="copy-tooltip" aria-hidden="true">Copy</span>
   </button>
-  <pre><code class="language-text" id="docs-quickstart-code-8">Use Glossa to list my connected devices, then read package.json from my active workspace.
+  <pre><code class="language-text" id="docs-quickstart-code-9">Use Glossa to list my connected devices, then read package.json from my active workspace.
 </code></pre>
 </div>
 <p>If ChatGPT blocks a write or command tool, that is the current Pro plan boundary rather than a worker connection failure.</p>
@@ -228,10 +236,10 @@ alias.</p>
 <h3 id="try-the-full-workspace-flow"><a class="heading-anchor" href="#try-the-full-workspace-flow" aria-label="Link to Try the full workspace flow"></a>Try the full workspace flow</h3>
 <p>Start with a read-only check:</p>
 <div class="code-block">
-  <button class="copy-button" type="button" data-copy-target="docs-quickstart-code-9" aria-label="Copy code">
+  <button class="copy-button" type="button" data-copy-target="docs-quickstart-code-10" aria-label="Copy code">
     <span class="copy-tooltip" aria-hidden="true">Copy</span>
   </button>
-  <pre><code class="language-text" id="docs-quickstart-code-9">Use Glossa to list my connected devices, then read package.json from my active workspace.
+  <pre><code class="language-text" id="docs-quickstart-code-10">Use Glossa to list my connected devices, then read package.json from my active workspace.
 </code></pre>
 </div>
 <p>When that works, test a small edit inside a disposable repository and review ChatGPT&#39;s confirmation before it runs.</p>
