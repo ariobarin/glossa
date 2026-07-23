@@ -551,18 +551,23 @@ p {
   line-height: 1.6;
 }
 
-.audience-switcher {
-  margin: 26px 0 8px;
+.docs-switcher {
+  max-width: 720px;
+  margin: 24px 0 10px;
 }
 
-.docs-content .audience-prompt {
+.docs-switcher-nested {
+  margin-top: 22px;
+}
+
+.docs-content .docs-switcher-label {
   margin-bottom: 11px;
   color: var(--ink);
   font-size: 13px;
   font-weight: 700;
 }
 
-.audience-tabs {
+.docs-tabs {
   display: flex;
   gap: 2px;
   width: fit-content;
@@ -573,8 +578,8 @@ p {
   background: #0d0c11;
 }
 
-.audience-tabs button {
-  min-width: 118px;
+.docs-tabs button {
+  min-width: 104px;
   min-height: 36px;
   padding: 0 16px;
   border: 0;
@@ -587,21 +592,31 @@ p {
   transition: background-color 140ms ease, color 140ms ease;
 }
 
-.audience-tabs button:hover {
+.docs-tabs button:hover {
   color: var(--ink);
 }
 
-.audience-tabs button[aria-selected="true"] {
+.docs-tabs button:focus-visible {
+  outline: 2px solid var(--coral);
+  outline-offset: 2px;
+}
+
+.docs-tabs button[aria-selected="true"] {
   background: var(--accent-soft);
   color: var(--purple-readable);
 }
 
-.audience-panel {
-  margin-top: 22px;
+.docs-tab-panel {
+  margin-top: 20px;
 }
 
-.audience-panel[hidden] {
+.docs-tab-panel[hidden] {
   display: none;
+}
+
+.docs-tab-panel > :last-child,
+.docs-tab-panel > .docs-switcher > :last-child {
+  margin-bottom: 0;
 }
 
 .code-block {
@@ -888,13 +903,14 @@ p {
     font-size: 11px;
   }
 
-  .audience-tabs {
+  .docs-tabs {
     width: 100%;
   }
 
-  .audience-tabs button {
+  .docs-tabs button {
     min-width: 0;
     flex: 1;
+    padding-inline: 10px;
   }
 
   .docs-content h2 {

@@ -1,29 +1,26 @@
 # Open beta guide
 
-Glossa is currently a Windows-first open beta. Start with a disposable Git repository that does not contain credentials or important work.
+Glossa is currently an open beta for Windows, macOS, and Linux. Start with a folder that does not contain credentials or important work.
 
 ## Requirements
 
-- Windows with Git, Node.js 22.9 or newer, and npm
-- A disposable Git repository
-- ChatGPT Pro on the web for read and fetch tools only, or ChatGPT Business, Enterprise, or Edu for full MCP access
-- For managed workspaces, an admin, owner, or authorized Enterprise/Edu role with permission to create a custom app in Developer Mode
+- Node.js 22.9 or newer and npm
+- A local folder you want ChatGPT to work in
+- Developer Mode available in ChatGPT
 
-Glossa is not listed in the public plugin directory yet, so add it as a custom app in Developer Mode during the open beta. Personal Pro accounts can inspect a workspace with read-oriented tools. File writes and commands require Business, Enterprise, or Edu because OpenAI currently limits full MCP actions to managed workspaces.
+Glossa is not listed in the public plugin directory yet, so add it as a custom app in Developer Mode during the open beta. The setup flow is the same for any account with Developer Mode. A managed workspace may require its admin to enable Developer Mode or grant access first.
 
 ## Install and connect
 
-Install the beta CLI with either method.
-
-Hosted installer:
+On Windows, install the beta CLI with the hosted PowerShell installer:
 
 ```powershell
 irm https://glossa.sh/install | iex
 ```
 
-Direct npm install:
+On Windows, macOS, or Linux, install directly from npm:
 
-```powershell
+```shell
 npm install --global @ariobarin/glossa@beta
 ```
 
@@ -41,10 +38,10 @@ an alias.
 
 ## Start a worker
 
-Change to a disposable repository and start Glossa. On this computer's first enrollment, choose a recognizable device name:
+Change to the folder you want to expose and start Glossa. The folder does not need to be a Git repository. On this computer's first enrollment, choose a recognizable device name:
 
-```powershell
-Set-Location C:\path\to\a\test-repo
+```shell
+cd path/to/a/test-folder
 glossa --device-name "my-workstation" .
 ```
 
@@ -54,13 +51,13 @@ To try the experimental compact session HUD instead, run `glossa ui .`. It immed
 
 Glossa opens Google sign-in automatically when needed. `glossa login` is available as an optional preflight. Choose the Google account you want to use for Glossa. After sign-in, the terminal prints the exposed root, device name, connection state, and security warning. On the first successful managed-relay connection on a computer, it also prints the ChatGPT quickstart link. A `connect-hint-shown` marker in the local Glossa config directory suppresses that hint on later runs. Leave that terminal open while using Glossa. Press Ctrl+C to disconnect.
 
-Starting Glossa authorizes connected clients to modify files inside the exposed root and run commands with the full environment and permissions of your Windows account. Do not expose your home directory, a drive root, or a repository containing credentials.
+Starting Glossa authorizes connected clients to modify files inside the exposed root and run commands with the full environment and permissions of your operating-system account. Do not expose your home directory, a filesystem root, or a folder containing credentials.
 
 ## Enable Developer Mode and add Glossa
 
-1. Follow OpenAI's [Developer Mode guide](https://help.openai.com/en/articles/12584461-developer-mode-and-full-mcp-connectors-in-chatgpt-beta) for your plan and workspace role.
-2. Open **Settings > Plugins**, choose **Developer mode**, and enable **Developer mode** under **Security and login**. If your workspace has an **Apps** settings page instead, use **Settings > Apps > Advanced Settings**.
-3. Authorized users can choose **Settings > Apps > Create**. Business admins and owners can instead choose **Workspace settings > Apps > Create**.
+1. Follow OpenAI's [Developer Mode guide](https://help.openai.com/en/articles/12584461-developer-mode-and-full-mcp-connectors-in-chatgpt-beta).
+2. Open **Settings > Apps > Advanced Settings** and enable **Developer Mode**. If your account shows **Plugins** settings instead, use **Settings > Plugins > Developer mode**.
+3. Choose **Settings > Apps > Create**. In a managed workspace, an admin may need to enable Developer Mode or grant access first.
 4. Name the custom app **Glossa**, enter `https://mcp.glossa.sh/mcp` as the MCP server endpoint, and choose OAuth authentication.
 5. Choose **Scan Tools**, complete authorization using the same Google account as the worker, wait for the scan to finish, then choose **Create**.
 
@@ -77,16 +74,16 @@ List my connected devices.
 The result should include one online device with root path `.`. Then try a harmless read:
 
 ```text
-Open my connected Glossa workspace and read README.md.
+Use Glossa to read a file that exists in my active workspace.
 ```
 
-Only test writes and commands inside the disposable repository.
+Only test writes and commands inside a folder you are comfortable modifying.
 
 ## Troubleshooting
 
 - Run `glossa status` to validate Google login, relay access, enrolled devices, and active workers.
-- Run `glossa doctor` to check Node.js, Git, relay reachability, sign-in state, and the local device credential before reporting a problem.
-- No Create option: confirm your plan supports full MCP apps and your workspace role has Developer Mode access.
+- Run `glossa doctor` to check Node.js, relay reachability, sign-in state, and the local device credential before reporting a problem.
+- No Create option: confirm Developer Mode is enabled and your workspace role has access.
 - No online devices: confirm the `glossa` terminal is still running.
 - App setup cannot discover tools: confirm `https://mcp.glossa.sh/healthz` returns `{"ok":true,"service":"glossa-relay"}`.
 - OAuth loops or expires: reopen the custom Glossa app and authorize it again.

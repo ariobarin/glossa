@@ -1,13 +1,13 @@
 # @ariobarin/glossa
 
 This package contains the `glossa` executable. Node.js 22.9 or newer is required.
-Install the open beta with either the hosted installer:
+On Windows, install the open beta with the hosted PowerShell installer:
 
 ```powershell
 irm https://glossa.sh/install | iex
 ```
 
-Or install directly from npm:
+On Windows, macOS, or Linux, install directly from npm:
 
 ```powershell
 npm install --global @ariobarin/glossa@beta
@@ -15,8 +15,8 @@ npm install --global @ariobarin/glossa@beta
 
 Then choose a recognizable name during this computer's first enrollment:
 
-```powershell
-Set-Location C:\path\to\a\repository
+```shell
+cd path/to/a/project
 glossa --device-name "my-workstation" .
 ```
 
@@ -27,7 +27,7 @@ Glossa opens Google sign-in automatically when needed using OAuth Device Authori
 
 OAuth and device credentials use the operating-system credential store. If it is unavailable, Glossa warns before using a restricted credential file.
 
-`--device-name` is used only during initial enrollment. Later starts reuse the enrolled name; use `glossa devices rename <id> <name>` to change it. Without the option, the first managed session enrolls the computer under its hostname. Running `glossa` inside a Git worktree exposes only that worktree root. `glossa start .` is the explicit form. Each process registers an independent workspace, so the same computer may expose several workspaces at once. The process prints the canonical root, connection state, shell authority warning, and write or command activity. Press Ctrl+C to disconnect.
+`--device-name` is used only during initial enrollment. Later starts reuse the enrolled name; use `glossa devices rename <id> <name>` to change it. Without the option, the first managed session enrolls the computer under its hostname. Running `glossa` inside a Git worktree uses that worktree root by default; outside Git, it uses the current directory. `glossa start .` always selects the current directory explicitly. Each process registers an independent workspace, so the same computer may expose several workspaces at once. The process prints the canonical root, connection state, shell authority warning, and write or command activity. Press Ctrl+C to disconnect.
 
 The experimental `glossa ui .` command opens a compact live session HUD and immediately exposes the selected workspace. Press `d` for recent activity, `?` for help, and `q` to disconnect. The screen keeps the worker-account authority warning visible.
 

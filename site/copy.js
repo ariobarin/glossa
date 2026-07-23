@@ -49,54 +49,52 @@ if (copyPageButton) {
   });
 }
 
-const audienceSwitchers = document.querySelectorAll("[data-audience-switcher]");
+const docsTabSets = document.querySelectorAll("[data-docs-tabs]");
 
-if (audienceSwitchers.length > 0) {
-  const queryAudience = new URLSearchParams(window.location.search).get("audience");
-  const storedAudience = window.localStorage.getItem("glossa-doc-audience");
-  const initialAudience = ["personal", "workspace"].includes(queryAudience)
-    ? queryAudience
-    : ["personal", "workspace"].includes(storedAudience)
-      ? storedAudience
-      : "personal";
+for (const tabSet of docsTabSets) {
+  const tabs = [...tabSet.querySelectorAll(":scope > .docs-tabs > [data-docs-tab]")];
+  const panels = [...tabSet.querySelectorAll(":scope > [data-docs-tab-panel]")];
+  const storageKey = tabSet.dataset.tabsStorage;
+  const values = tabs.map((tab) => tab.dataset.docsTab);
+  const storedValue = storageKey ? window.localStorage.getItem(storageKey) : null;
+  const selectedTab = tabs.find((tab) => tab.getAttribute("aria-selected") === "true");
+  const initialValue = values.includes(storedValue)
+    ? storedValue
+    : selectedTab?.dataset.docsTab ?? values[0];
 
-  const selectAudience = (audience, updateUrl = true) => {
-    for (const switcher of audienceSwitchers) {
-      for (const tab of switcher.querySelectorAll("[data-audience-tab]")) {
-        const selected = tab.dataset.audienceTab === audience;
-        tab.setAttribute("aria-selected", String(selected));
-        tab.tabIndex = selected ? 0 : -1;
-      }
-
-      for (const panel of switcher.querySelectorAll("[data-audience-panel]")) {
-        panel.hidden = panel.dataset.audiencePanel !== audience;
-      }
+  const selectTab = (value) => {
+    for (const tab of tabs) {
+      const selected = tab.dataset.docsTab === value;
+      tab.setAttribute("aria-selected", String(selected));
+      tab.tabIndex = selected ? 0 : -1;
     }
 
-    window.localStorage.setItem("glossa-doc-audience", audience);
-    if (updateUrl) {
-      const url = new URL(window.location.href);
-      url.searchParams.set("audience", audience);
-      window.history.replaceState({}, "", url);
+    for (const panel of panels) {
+      panel.hidden = panel.dataset.docsTabPanel !== value;
     }
+
+    if (storageKey) window.localStorage.setItem(storageKey, value);
   };
 
-  selectAudience(initialAudience, false);
+  selectTab(initialValue);
 
-  for (const switcher of audienceSwitchers) {
-    const tabs = [...switcher.querySelectorAll("[data-audience-tab]")];
-    for (const tab of tabs) {
-      tab.addEventListener("click", () => selectAudience(tab.dataset.audienceTab));
-      tab.addEventListener("keydown", (event) => {
-        if (!["ArrowLeft", "ArrowRight"].includes(event.key)) return;
-        event.preventDefault();
-        const direction = event.key === "ArrowRight" ? 1 : -1;
-        const nextIndex = (tabs.indexOf(tab) + direction + tabs.length) % tabs.length;
-        const nextTab = tabs[nextIndex];
-        selectAudience(nextTab.dataset.audienceTab);
-        nextTab.focus();
-      });
-    }
+  for (const tab of tabs) {
+    tab.addEventListener("click", () => selectTab(tab.dataset.docsTab));
+    tab.addEventListener("keydown", (event) => {
+      const navigationKeys = ["ArrowLeft", "ArrowRight", "Home", "End"];
+      if (!navigationKeys.includes(event.key)) return;
+      event.preventDefault();
+
+      const currentIndex = tabs.indexOf(tab);
+      const nextIndex = event.key === "Home"
+        ? 0
+        : event.key === "End"
+          ? tabs.length - 1
+          : (currentIndex + (event.key === "ArrowRight" ? 1 : -1) + tabs.length) % tabs.length;
+      const nextTab = tabs[nextIndex];
+      selectTab(nextTab.dataset.docsTab);
+      nextTab.focus();
+    });
   }
 }
 

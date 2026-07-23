@@ -93,57 +93,6 @@ function addHeadingIds(html) {
   });
 }
 
-function renderAudienceSwitchers(source) {
-  const replacements = new Map();
-  let index = 0;
-  const prepared = source.replace(
-    /<!-- audience-switcher:start -->([\s\S]*?)<!-- audience-switcher:end -->/g,
-    (_, content) => {
-      const personalMarker = "<!-- audience:personal -->";
-      const workspaceMarker = "<!-- audience:workspace -->";
-      const personalStart = content.indexOf(personalMarker);
-      const workspaceStart = content.indexOf(workspaceMarker);
-
-      if (personalStart === -1 || workspaceStart === -1 || workspaceStart < personalStart) {
-        throw new Error("Audience switchers need personal and workspace sections");
-      }
-
-      index += 1;
-      const token = `audience-switcher-${index}`;
-      const personal = content
-        .slice(personalStart + personalMarker.length, workspaceStart)
-        .trim();
-      const workspace = content
-        .slice(workspaceStart + workspaceMarker.length)
-        .trim();
-      const personalId = `${token}-personal`;
-      const workspaceId = `${token}-workspace`;
-
-      replacements.set(token, `<div class="audience-switcher" data-audience-switcher>
-  <p class="audience-prompt">Which ChatGPT setup are you using?</p>
-  <div class="audience-tabs" role="tablist" aria-label="ChatGPT setup">
-    <button id="${personalId}-tab" type="button" role="tab" aria-selected="true" aria-controls="${personalId}" data-audience-tab="personal">Personal</button>
-    <button id="${workspaceId}-tab" type="button" role="tab" aria-selected="false" aria-controls="${workspaceId}" data-audience-tab="workspace" tabindex="-1">Workspace</button>
-  </div>
-  <div id="${personalId}" class="audience-panel" role="tabpanel" aria-labelledby="${personalId}-tab" data-audience-panel="personal">
-${marked.parse(personal, { gfm: true })}  </div>
-  <div id="${workspaceId}" class="audience-panel" role="tabpanel" aria-labelledby="${workspaceId}-tab" data-audience-panel="workspace" hidden>
-${marked.parse(workspace, { gfm: true })}  </div>
-</div>`);
-
-      return `<doc-audience-placeholder data-id="${token}"></doc-audience-placeholder>`;
-    },
-  );
-
-  let html = marked.parse(prepared, { gfm: true });
-  for (const [token, replacement] of replacements) {
-    const placeholder = `<doc-audience-placeholder data-id="${token}"></doc-audience-placeholder>`;
-    html = html.replace(`<p>${placeholder}</p>`, replacement);
-  }
-
-  return html;
-}
-
 function groupSections(html) {
   const parts = html.split(/(?=<h2 id=")/);
   return parts.map((part) => (
@@ -230,7 +179,9 @@ function renderPage(page, route, sourceLabel) {
     .split("-")
     .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
     .join(" ");
-  const renderedBody = addHeadingIds(addCopyButtons(renderAudienceSwitchers(page.body), route));
+  const renderedBody = addHeadingIds(
+    addCopyButtons(marked.parse(page.body, { gfm: true }), route),
+  );
   const body = groupSections(renderedBody);
   const sectionNavigation = renderSectionNavigation(renderedBody);
   const sidebar = renderDocsSidebar(route);

@@ -1,13 +1,9 @@
-import { execFile } from "node:child_process";
-import { promisify } from "node:util";
 import { peekCredentials } from "./config-store.js";
 import { peekDeviceCredential } from "./device-store.js";
 import {
   loadRelayEndpoints,
   type RelayEndpoints,
 } from "./relay-client.js";
-
-const execFileAsync = promisify(execFile);
 
 export const MIN_NODE_MAJOR = 22;
 export const MIN_NODE_MINOR = 9;
@@ -28,7 +24,6 @@ export interface DoctorDependencies {
   nodeVersion?: string;
   endpoints?: RelayEndpoints;
   loadEndpoints?: () => RelayEndpoints;
-  checkGit?: () => Promise<boolean>;
   fetchHealthz?: (origin: string) => Promise<boolean>;
   probeCredentials?: () => Promise<CredentialProbe>;
   probeDeviceCredential?: () => Promise<CredentialProbe>;
@@ -60,15 +55,6 @@ export async function runDoctorChecks(
       ...(nodeOk ? {} : { nextStep: `Install Node.js ${MIN_NODE_MAJOR}.${MIN_NODE_MINOR} or newer and restart your terminal.` }),
     },
   ];
-
-  const checkGit = dependencies.checkGit ?? defaultCheckGit;
-  const gitOk = await checkGit();
-  checks.push({
-    name: "Git",
-    status: gitOk ? "pass" : "fail",
-    detail: gitOk ? "Git is installed." : "Git was not found.",
-    ...(gitOk ? {} : { nextStep: "Install Git from https://git-scm.com/ and restart your terminal." }),
-  });
 
   let endpoints = dependencies.endpoints;
   if (!endpoints) {
@@ -196,15 +182,6 @@ export async function runDoctor(
   const checks = await runDoctorChecks(dependencies);
   log(formatDoctorResult(checks, json));
   return checks.every((check) => check.status !== "fail");
-}
-
-async function defaultCheckGit(): Promise<boolean> {
-  try {
-    await execFileAsync("git", ["--version"], { windowsHide: true });
-    return true;
-  } catch {
-    return false;
-  }
 }
 
 async function defaultFetchHealthz(origin: string): Promise<boolean> {

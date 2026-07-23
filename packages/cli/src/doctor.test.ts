@@ -29,7 +29,6 @@ const healthy: DoctorDependencies = {
     relayOrigin: "https://mcp.glossa.test",
     workerOrigin: "https://mcp.glossa.test",
   },
-  checkGit: async () => true,
   fetchHealthz: async () => true,
   probeCredentials: async () => "present" as const,
   probeDeviceCredential: async () => "present" as const,
@@ -40,20 +39,16 @@ test("reports a ready machine with every check passing", async () => {
   assert.equal(checks.every((c) => c.status === "pass"), true);
   assert.deepEqual(
     checks.map((c) => c.name),
-    ["Node.js", "Git", "Relay", "Sign-in", "Device"],
+    ["Node.js", "Relay", "Sign-in", "Device"],
   );
 });
 
-test("fails on missing git and unreachable relay", async () => {
+test("fails on an unreachable relay", async () => {
   const checks = await runDoctorChecks({
     ...healthy,
-    checkGit: async () => false,
     fetchHealthz: async () => false,
   });
-  const git = checks.find((c) => c.name === "Git");
   const relay = checks.find((c) => c.name === "Relay");
-  assert.equal(git?.status, "fail");
-  assert.ok(git?.nextStep);
   assert.equal(relay?.status, "fail");
   assert.ok(relay?.detail.includes("not reachable"));
 });
@@ -83,7 +78,6 @@ test("fails when a separate worker endpoint is unreachable", async () => {
 test("reports malformed endpoint configuration as a structured failure", async () => {
   const checks = await runDoctorChecks({
     nodeVersion: "24.13.0",
-    checkGit: async () => true,
     loadEndpoints: () => {
       throw new Error("GLOSSA_RELAY_ORIGIN must contain only an origin.");
     },
@@ -99,7 +93,6 @@ test("reports malformed endpoint configuration as a structured failure", async (
   assert.equal(json.checks.find((check: { name: string }) => check.name === "Relay").status, "fail");
   assert.equal(await runDoctor(true, {
     nodeVersion: "24.13.0",
-    checkGit: async () => true,
     loadEndpoints: () => {
       throw new Error("bad origin");
     },
