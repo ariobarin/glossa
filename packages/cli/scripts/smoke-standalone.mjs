@@ -24,25 +24,12 @@ const version = run(["--version"]);
 assert.equal(version.status, 0, version.stderr);
 assert.equal(version.stdout.trim(), packageJson.version);
 
-const help = run(["help"]);
+const help = run(["--help"]);
 assert.equal(help.status, 0, help.stderr);
 assert.match(help.stdout, /Usage:/);
-
-const completions = run(["completions", "powershell"]);
-assert.equal(completions.status, 0, completions.stderr);
-assert.match(completions.stdout, /Register-ArgumentCompleter/);
-
-const doctor = run(["doctor", "--json"]);
-const report = JSON.parse(doctor.stdout);
-assert.deepEqual(report.checks[0], {
-  name: "Runtime",
-  status: "pass",
-  detail: "Self-contained Glossa executable.",
-});
-for (const name of ["Sign-in", "Device"]) {
-  const check = report.checks.find((candidate) => candidate.name === name);
-  assert.ok(check, `${name} check was missing`);
-  assert.notEqual(check.status, "fail", `${name}: ${check.detail}`);
+for (const command of ["status", "devices", "update", "login", "logout"]) {
+  assert.match(help.stdout, new RegExp(`glossa ${command}`));
 }
+assert.doesNotMatch(help.stdout, /glossa (?:ui|doctor|completions)\b/);
 
 console.log(`Standalone smoke passed for ${executable}.`);
