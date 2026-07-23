@@ -11,6 +11,7 @@ import {
   listDevices,
   loadRelayEndpoints,
   revokeDevice,
+  type RelayDevice,
 } from "./relay-client.js";
 import { runSessionHud, type HudStatus } from "./ui-hud.js";
 import { updateGlossa } from "./update.js";
@@ -25,9 +26,16 @@ const HELP = `Glossa ${VERSION}
 
 Usage:
   glossa [directory]
+  glossa status [--json]
+  glossa devices [--json]
+  glossa devices revoke <id>
+  glossa update
+  glossa login
+  glossa logout
   glossa --version
 
-Glossa opens one workspace in an interactive terminal.
+Running glossa opens one workspace in an interactive terminal.
+Direct commands remain available for scripts and quick checks.
 
 Keys:
   d  recent activity
@@ -68,7 +76,14 @@ async function authenticatedCredentials(
   );
 }
 
-async function loadHudStatus(signal: AbortSignal): Promise<HudStatus> {
+interface StatusDetails {
+  account: string;
+  relay: string;
+  activeWorkers: number | null;
+  devices: RelayDevice[];
+}
+
+async function loadStatusDetails(signal?: AbortSignal): Promise<StatusDetails> {
   const initial = await authenticatedCredentials(signal);
   const { credentials, profile } = await loadUserProfile(initial);
   const endpoints = loadRelayEndpoints();
@@ -82,16 +97,52 @@ async function loadHudStatus(signal: AbortSignal): Promise<HudStatus> {
     activeWorkers: workerCountsCurrent
       ? devices.reduce((sum, device) => sum + device.activeWorkers!, 0)
       : null,
-    devices: devices.map((device) => ({
+    devices,
+  };
+}
+
+async function loadHudStatus(signal: AbortSignal): Promise<HudStatus> {
+  const status = await loadStatusDetails(signal);
+  return {
+    ...status,
+    devices: status.devices.map((device) => ({
       id: device.id,
       label: formatDeviceRow(device),
     })),
   };
 }
 
-async function revokeHudDevice(deviceId: string): Promise<void> {
+async function revokeKnownDevice(deviceId: string): Promise<void> {
   const credentials = await authenticatedCredentials();
   await revokeDevice(loadRelayEndpoints(), credentials, deviceId);
+}
+
+async function showStatus(json: boolean): Promise<void> {
+  const status = await loadStatusDetails();
+  if (json) {
+    console.log(JSON.stringify({ ...status, connected: true }, null, 2));
+    return;
+  }
+  console.log(`Signed in as ${status.account}.`);
+  console.log(`Relay connected: ${status.relay}`);
+  console.log(
+    status.activeWorkers === null
+      ? "Active workspaces: unavailable"
+      : `Active workspaces: ${status.activeWorkers}`,
+  );
+  if (status.devices.length === 0) {
+    console.log("No devices enrolled.");
+  } else {
+    for (const device of status.devices) console.log(formatDeviceRow(device));
+  }
+}
+
+async function showDevices(json: boolean): Promise<void> {
+  const credentials = await authenticatedCredentials();
+  const devices = await listDevices(loadRelayEndpoints(), credentials);
+  if (json) console.log(JSON.stringify({ devices }, null, 2));
+  else if (devices.length === 0) console.log("No devices enrolled.");
+  else for (const device of devices) console.log(formatDeviceRow(device));
 }
 
 async function runWorkspace(
@@ -110,7 +161,7 @@ async function runWorkspace(
       });
     },
     loadStatus: loadHudStatus,
-    revokeDevice: revokeHudDevice,
+    revokeDevice: revokeKnownDevice,
   });
 
   if (exitAction === "logout") await logoutFromGlossa();
@@ -123,8 +174,22 @@ async function main(): Promise<void> {
     console.log(HELP);
   } else if (invocation.command === "version") {
     console.log(VERSION);
-  } else {
+  } else if (invocation.command === "workspace") {
     await runWorkspace(invocation.path);
+  } else if (invocation.command === "status") {
+    await showStatus(invocation.json);
+  } else if (invocation.command === "login") {
+    await authenticatedCredentials();
+    console.log("Signed in to Glossa.");
+  } else if (invocation.command === "logout") {
+    await logoutFromGlossa();
+  } else if (invocation.command === "update") {
+    updateGlossa();
+  } else if (invocation.action === "list") {
+    await showDevices(invocation.json);
+  } else {
+    await revokeKnownDevice(invocation.deviceId);
+    console.log(`Revoked device ${invocation.deviceId}. Running workspaces on it are disconnected.`);
   }
 }
 

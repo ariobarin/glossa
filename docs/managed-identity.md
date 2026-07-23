@@ -28,9 +28,9 @@ Never commit the Google client secret, an Auth0 Management API token, or an expo
 
 ## Account switching
 
-Pressing `l` and confirming inside Glossa deletes the CLI's local OAuth credentials, disconnects the workspace, and opens Auth0's browser logout endpoint. To switch Google accounts:
+Pressing `l` and confirming inside Glossa, or running `glossa logout`, deletes the CLI's local OAuth credentials and opens Auth0's browser logout endpoint. To switch Google accounts:
 
-1. Press `l` in Glossa and confirm.
+1. Press `l` in Glossa and confirm, or run `glossa logout`.
 2. Stop any other Glossa sessions with `q` or Ctrl+C.
 3. In ChatGPT, open Glossa under **Settings > Plugins**, disconnect it, and connect it again. Use **Settings > Apps** if that is the label your workspace shows.
 4. Choose the intended Google account during ChatGPT authorization.

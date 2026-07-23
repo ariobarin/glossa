@@ -36,7 +36,7 @@ Get-Content .\install.ps1
 .\install.ps1
 ```
 
-After Glossa starts, press `u` to update from the beta channel.
+After Glossa starts, press `u` to update from the beta channel. You can also run `glossa update` directly.
 
 ## Start a worker
 
@@ -78,18 +78,18 @@ Only test writes and commands inside the disposable repository.
 
 ## Troubleshooting
 
-- Press `s` in Glossa to check the account, relay, enrolled devices, and active workers.
+- Press `s` in Glossa or run `glossa status` to check the account, relay, enrolled devices, and active workers.
 - No Create option: confirm your plan supports full MCP apps and your workspace role has Developer Mode access.
 - No online devices: confirm the `glossa` terminal is still running.
 - App setup cannot discover tools: confirm `https://mcp.glossa.sh/healthz` returns `{"ok":true,"service":"glossa-relay"}`.
 - OAuth loops or expires: reopen the custom Glossa app and authorize it again.
-- Wrong Google account: press `l` in Glossa and confirm, open Glossa under **Settings > Plugins** in ChatGPT and disconnect it, then reconnect and sign in on both sides with the same Google account. Use **Settings > Apps** if that is the label your workspace shows.
+- Wrong Google account: press `l` in Glossa and confirm, or run `glossa logout`. Open Glossa under **Settings > Plugins** in ChatGPT and disconnect it, then reconnect and sign in on both sides with the same Google account. Use **Settings > Apps** if that is the label your workspace shows.
 - Account access fails: open a GitHub issue without including tokens, credentials, or local paths.
 
 ## Disconnect
 
 Press `q` or Ctrl+C in the worker terminal. The device remains enrolled for later sessions, but it is offline and cannot access the local workspace while the worker is stopped.
 
-Press `l` and confirm to sign out locally and in the browser.
+Press `l` and confirm, or run `glossa logout`, to sign out locally and in the browser.
 
-Press `s` to list enrolled computers, then `r` to revoke one.
+Press `s` to list enrolled computers, then `r` to revoke one. The direct forms are `glossa devices` and `glossa devices revoke <id>`.

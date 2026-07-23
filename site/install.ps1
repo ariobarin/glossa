@@ -45,7 +45,8 @@ function Invoke-GlossaInstaller {
     }
 
     Write-Host "Installed Glossa $version."
-    Write-Host "Next: open a project and run glossa"
+    Write-Host "Next: open a project and run glossa."
+    Write-Host "Inside Glossa, press ? for controls."
 }
 
 Invoke-GlossaInstaller
