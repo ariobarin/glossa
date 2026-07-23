@@ -32,7 +32,7 @@ Set-Location C:\path\to\a\project
 glossa
 ```
 
-`glossa start .` is the explicit form. Pass `--device-name <name>` on the first start to give the computer a recognizable name in the device list. You can run additional workers in other terminals to expose more workspaces from the same computer. Use `glossa status` to verify login, relay access, enrolled devices, and active workers.
+`glossa start .` is the explicit form. Pass `--device-name <name>` on the first start to give the computer a recognizable name in the device list. You can run additional workers in other terminals to expose more workspaces from the same computer. Use `glossa status` to verify login, relay access, enrolled devices, and active workers. Each device row lists its platform and when the relay last saw it, so stale enrollments are easy to spot.
 
 On the first successful managed-relay connection on a computer, Glossa prints the ChatGPT quickstart link once. It records a `connect-hint-shown` marker in the local Glossa config directory so later starts stay quiet.
 
