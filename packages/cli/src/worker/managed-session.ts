@@ -1,5 +1,9 @@
 import type { WorkerJob, WorkerResult } from "@glossa/protocol";
-import { type FetchLike, validCredentials } from "../auth-session.js";
+import {
+  accessTokenSubject,
+  type FetchLike,
+  validCredentials,
+} from "../auth-session.js";
 import { loadCredentials, type StoredCredentials } from "../config-store.js";
 import { announceConnectHint, connectHintStore, shouldShowConnectHint } from "../first-run.js";
 import {
@@ -113,6 +117,7 @@ function visibleWorker(worker: LocalWorker, options: ManagedSessionOptions): Wor
 
 export interface ManagedDeviceDependencies {
   credentials?: StoredCredentials;
+  accessTokenSubject?: typeof accessTokenSubject;
   loadCredentials?: typeof loadCredentials;
   validCredentials?: typeof validCredentials;
   loadDeviceCredential?: typeof loadDeviceCredential;
@@ -132,10 +137,11 @@ export async function deviceForSession(
   const loadDevice = dependencies.loadDeviceCredential ?? loadDeviceCredential;
   const loadLogin = dependencies.loadCredentials ?? loadCredentials;
   const validate = dependencies.validCredentials ?? validCredentials;
+  const subjectFor = dependencies.accessTokenSubject ?? accessTokenSubject;
   const removeDevice = dependencies.deleteDeviceCredential ?? deleteDeviceCredential;
-  const ownsDevice = dependencies.accountOwnsDevice ?? accountOwnsDevice;
   const enroll = dependencies.enrollDevice ?? enrollDevice;
   const saveDevice = dependencies.saveDeviceCredential ?? saveDeviceCredential;
+  const ownsDevice = dependencies.accountOwnsDevice ?? accountOwnsDevice;
   const name = dependencies.defaultDeviceName ?? defaultDeviceName;
   const baseFetch = dependencies.fetch ?? fetch;
   const fetchRequest: FetchLike = signal
@@ -145,33 +151,53 @@ export async function deviceForSession(
   signal?.throwIfAborted();
   const stored = await loadDevice();
   let credentials = dependencies.credentials;
-  if (!credentials) {
+  const currentCredentials = async (): Promise<StoredCredentials> => {
+    if (credentials) return credentials;
     const loaded = await loadLogin();
     if (!loaded) throw new Error("Not signed in. Run Glossa again to sign in.");
     credentials = await validate(loaded.credentials, { fetch: fetchRequest });
-  }
-  signal?.throwIfAborted();
+    return credentials;
+  };
+
   if (stored?.relayOrigin === endpoints.relayOrigin) {
+    const current = await currentCredentials();
+    const accountSubject = subjectFor(current);
+    if (stored.accountSubject === accountSubject) return stored;
     if (
-      await ownsDevice(
-        endpoints,
-        credentials,
-        stored.deviceId,
-        fetchRequest,
-      )
+      stored.accountSubject === undefined &&
+      await ownsDevice(endpoints, current, stored.deviceId, fetchRequest)
     ) {
-      return stored;
+      const migrated = { ...stored, accountSubject };
+      await saveDevice(migrated);
+      return migrated;
     }
     await removeDevice();
   }
+
+  signal?.throwIfAborted();
+  const current = await currentCredentials();
   const enrolled = await enroll(
     endpoints,
-    credentials,
+    current,
     name(),
     fetchRequest,
   );
-  await saveDevice(enrolled);
-  return enrolled;
+  const bound = {
+    ...enrolled,
+    accountSubject: subjectFor(current),
+  };
+  await saveDevice(bound);
+  return bound;
+}
+
+export async function reenrollRejectedDevice(
+  endpoints: RelayEndpoints,
+  dependencies: ManagedDeviceDependencies = {},
+  signal?: AbortSignal,
+): Promise<StoredDeviceCredential> {
+  const remove = dependencies.deleteDeviceCredential ?? deleteDeviceCredential;
+  await remove();
+  return await deviceForSession(endpoints, dependencies, signal);
 }
 
 function statusMessage(status: RemoteWorkerStatus, previous: RemoteWorkerStatus["state"] | undefined): string {
@@ -184,6 +210,46 @@ function statusMessage(status: RemoteWorkerStatus, previous: RemoteWorkerStatus[
     return `${prefix}: ${status.error.message} Retrying automatically.`;
   }
   return "Disconnected from Glossa.";
+}
+
+async function connectRemoteWorker(
+  endpoints: RelayEndpoints,
+  device: StoredDeviceCredential,
+  worker: LocalWorker,
+  options: ManagedSessionOptions,
+  signal: AbortSignal,
+): Promise<void> {
+  let connectionState: RemoteWorkerStatus["state"] | undefined;
+  await new RemoteWorker({
+    origin: endpoints.workerOrigin,
+    deviceToken: device.token,
+    worker: visibleWorker(worker, options),
+    signal,
+    onStatus(status) {
+      if (status.state !== "retrying" || connectionState !== "retrying") {
+        report(options, { type: "status", status }, statusMessage(status, connectionState));
+      } else {
+        options.onEvent?.({ type: "status", status });
+      }
+      if (status.state === "connected" && status.legacyRelay) {
+        report(
+          options,
+          { type: "notice", message: "The relay needs an update before this computer can expose several workspaces at once." },
+          "The relay needs an update before this computer can expose several workspaces at once.",
+        );
+      }
+      if (
+        status.state === "connected" &&
+        !status.reconnected &&
+        shouldShowConnectHint(endpoints.relayOrigin)
+      ) {
+        void announceConnectHint(connectHintStore(), (message) => {
+          report(options, { type: "notice", message }, message);
+        }).catch(() => undefined);
+      }
+      connectionState = status.state;
+    },
+  }).run();
 }
 
 export async function runManagedSession(
@@ -204,7 +270,7 @@ export async function runManagedSession(
   }
 
   try {
-    const device = await deviceForSession(
+    let device = await deviceForSession(
       endpoints,
       options.credentials ? { credentials: options.credentials } : {},
       controller.signal,
@@ -225,37 +291,32 @@ export async function runManagedSession(
       );
     }
 
-    let connectionState: RemoteWorkerStatus["state"] | undefined;
-    await new RemoteWorker({
-      origin: endpoints.workerOrigin,
-      deviceToken: device.token,
-      worker: visibleWorker(worker, options),
-      signal: controller.signal,
-      onStatus(status) {
-        if (status.state !== "retrying" || connectionState !== "retrying") {
-          report(options, { type: "status", status }, statusMessage(status, connectionState));
-        } else {
-          options.onEvent?.({ type: "status", status });
-        }
-        if (status.state === "connected" && status.legacyRelay) {
-          report(
-            options,
-            { type: "notice", message: "The relay needs an update before this computer can expose several workspaces at once." },
-            "The relay needs an update before this computer can expose several workspaces at once.",
-          );
-        }
+    let recoveredRejectedDevice = false;
+    while (!controller.signal.aborted) {
+      try {
+        await connectRemoteWorker(
+          endpoints,
+          device,
+          worker,
+          options,
+          controller.signal,
+        );
+        break;
+      } catch (error) {
         if (
-          status.state === "connected" &&
-          !status.reconnected &&
-          shouldShowConnectHint(endpoints.relayOrigin)
+          !(error instanceof DeviceRejectedError) ||
+          recoveredRejectedDevice
         ) {
-          void announceConnectHint(connectHintStore(), (message) => {
-            report(options, { type: "notice", message }, message);
-          }).catch(() => undefined);
+          throw error;
         }
-        connectionState = status.state;
-      },
-    }).run();
+        recoveredRejectedDevice = true;
+        device = await reenrollRejectedDevice(
+          endpoints,
+          options.credentials ? { credentials: options.credentials } : {},
+          controller.signal,
+        );
+      }
+    }
   } catch (error) {
     if (error instanceof DeviceRejectedError) {
       await deleteDeviceCredential();

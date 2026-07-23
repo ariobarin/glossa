@@ -47,6 +47,22 @@ export class SessionExpiredError extends Error {
   }
 }
 
+export function accessTokenSubject(credentials: StoredCredentials): string {
+  try {
+    const parts = credentials.accessToken.split(".");
+    if (parts.length !== 3) throw new Error();
+    const payload = JSON.parse(
+      Buffer.from(parts[1]!, "base64url").toString("utf8"),
+    ) as { sub?: unknown };
+    if (typeof payload.sub !== "string" || payload.sub.length === 0) {
+      throw new Error();
+    }
+    return payload.sub;
+  } catch {
+    throw new Error("Glossa could not identify the signed-in account.");
+  }
+}
+
 function sessionExpiredError(): SessionExpiredError {
   return new SessionExpiredError();
 }

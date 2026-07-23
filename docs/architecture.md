@@ -54,6 +54,12 @@ gld_<device-id>_<random-256-bit-secret>
 
 The database stores the device ID, account ID, salt, and scrypt hash. Worker requests authenticate the device token over HTTPS. One device can be revoked without affecting the user's other devices or MCP authorizations.
 
+The CLI binds each locally stored device credential to the subject in the
+current Auth0 access token. Normal startup can therefore reject an account
+switch locally and let worker registration validate the device token without a
+separate device-list request. A legacy unbound credential receives one
+account-scoped ownership check before the CLI saves that binding.
+
 ## State ownership
 
 ### Postgres

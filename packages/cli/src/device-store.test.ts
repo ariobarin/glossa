@@ -48,3 +48,27 @@ test("read-only device probes reject malformed credential files", async (context
 
   await assert.rejects(store.peek(), /Stored Glossa device credentials are invalid/);
 });
+
+test("accepts legacy and account-bound device credentials", () => {
+  const legacy = {
+    relayOrigin: "https://mcp.glossa.test",
+    deviceId: "00000000-0000-4000-8000-000000000001",
+    deviceName: "Workstation",
+    token: "gld_00000000-0000-4000-8000-000000000001_secret",
+  };
+  assert.deepEqual(parseDeviceCredential(JSON.stringify(legacy)), legacy);
+  assert.equal(
+    parseDeviceCredential(JSON.stringify({
+      ...legacy,
+      accountSubject: "google-oauth2|account-1",
+    })).accountSubject,
+    "google-oauth2|account-1",
+  );
+  assert.throws(
+    () => parseDeviceCredential(JSON.stringify({
+      ...legacy,
+      accountSubject: "",
+    })),
+    /Stored Glossa device credentials are invalid/,
+  );
+});

@@ -1,6 +1,10 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { loadUserProfile, validCredentials } from "./auth-session.js";
+import {
+  accessTokenSubject,
+  loadUserProfile,
+  validCredentials,
+} from "./auth-session.js";
 import type { StoredCredentials } from "./config-store.js";
 
 function credentials(overrides: Partial<StoredCredentials> = {}): StoredCredentials {
@@ -15,6 +19,20 @@ function credentials(overrides: Partial<StoredCredentials> = {}): StoredCredenti
     ...overrides,
   };
 }
+
+test("reads the account subject from an Auth0 access token", () => {
+  const payload = Buffer.from(JSON.stringify({
+    sub: "google-oauth2|account-1",
+  })).toString("base64url");
+  assert.equal(
+    accessTokenSubject(credentials({ accessToken: `header.${payload}.signature` })),
+    "google-oauth2|account-1",
+  );
+  assert.throws(
+    () => accessTokenSubject(credentials()),
+    /could not identify the signed-in account/,
+  );
+});
 
 test("aborts a pending credential refresh through the supplied signal", async () => {
   const controller = new AbortController();
