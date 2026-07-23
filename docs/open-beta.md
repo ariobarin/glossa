@@ -21,14 +21,14 @@ npm install --global @ariobarin/glossa@beta
 
 ## Start a worker
 
-Change to a disposable repository and start Glossa:
+Change to a disposable repository and start Glossa. On this computer's first enrollment, choose a recognizable device name:
 
 ```powershell
 Set-Location C:\path\to\a\test-repo
-glossa
+glossa --device-name "Ari's workstation" .
 ```
 
-You can also run `glossa start .`. Start more workers in other terminals when you want to expose several workspaces from the same computer. Pass `--device-name <name>` to name this computer the first time it enrolls, so it is easy to tell apart in `glossa devices list`.
+`--device-name` is used only during initial enrollment. Later starts reuse the enrolled name; use `glossa devices rename <id> <name>` to change it. `glossa start .` is the explicit form. Start more workers in other terminals when you want to expose several workspaces from the same computer.
 
 To try the experimental compact session HUD instead, run `glossa ui .`. It immediately starts the worker, shows connection and tool activity, and keeps the worker-account authority warning visible. Press `d` for details, `?` for help, or `q` to disconnect.
 
@@ -65,7 +65,7 @@ Only test writes and commands inside the disposable repository.
 ## Troubleshooting
 
 - Run `glossa status` to validate Google login, relay access, enrolled devices, and active workers.
-- Run `glossa doctor` to check Node.js, Git, relay reachability, and sign-in state before reporting a problem.
+- Run `glossa doctor` to check Node.js, Git, relay reachability, sign-in state, and the local device credential before reporting a problem.
 - No Create option: confirm your plan supports full MCP apps and your workspace role has Developer Mode access.
 - No online devices: confirm the `glossa` terminal is still running.
 - App setup cannot discover tools: confirm `https://mcp.glossa.sh/healthz` returns `{"ok":true,"service":"glossa-relay"}`.
