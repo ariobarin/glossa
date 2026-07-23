@@ -16,6 +16,7 @@ import {
 import { formatDeviceRow } from "./device-format.js";
 import { logoutFromGlossa } from "./logout.js";
 import { noActiveWorkerHint } from "./status-guidance.js";
+import { updateGlossa } from "./update.js";
 import { runSessionHud } from "./ui-hud.js";
 import { runManagedSession } from "./worker/managed-session.js";
 import { selectExposureRoot } from "./worker/root-selection.js";
@@ -38,6 +39,7 @@ Usage:
   glossa devices rename <id> <name>
   glossa devices revoke <id>
   glossa completions <shell>
+  glossa update
   glossa login
   glossa logout [--browser]
   glossa --version
@@ -67,6 +69,9 @@ Lists, renames, or revokes computers enrolled with the current Google account.`,
   completions: `Usage: glossa completions <shell>
 
 Prints a completion script for powershell, bash, zsh, or fish. Source it from your shell profile, for example: glossa completions powershell | Out-String | Invoke-Expression.`,
+  update: `Usage: glossa update
+
+Updates the global Glossa installation from the npm beta channel. glossa upgrade is an alias.`,
   login: `Usage: glossa login
 
 Ensures the CLI has a valid Google session. Starting Glossa also signs in automatically.`,
@@ -218,6 +223,8 @@ async function main(): Promise<void> {
     await logoutFromGlossa({ browser: invocation.browser });
   } else if (invocation.command === "completions") {
     console.log(completionScript(invocation.shell));
+  } else if (invocation.command === "update") {
+    updateGlossa();
   } else if (invocation.action === "list") {
     await showDevices(invocation.json);
   } else if (invocation.action === "rename") {

@@ -17,14 +17,27 @@ Make sure you have:
 Open PowerShell and install the current beta:
 
 ```shell
-npm install --global @ariobarin/glossa@beta
+irm https://glossa.sh/install | iex
 ```
 
-Confirm the command is available:
+The installer checks Windows, Node.js, and npm, then installs and verifies
+Glossa. If you prefer to review it before running:
+
+```shell
+irm https://glossa.sh/install -OutFile install.ps1
+Get-Content .\install.ps1
+.\install.ps1
+```
+
+The direct npm fallback is
+`npm install --global @ariobarin/glossa@beta`. Confirm the command is available:
 
 ```shell
 glossa --version
 ```
+
+Afterward, `glossa update` installs the newest beta. `glossa upgrade` is an
+alias.
 
 ## Step 2: Start a workspace
 

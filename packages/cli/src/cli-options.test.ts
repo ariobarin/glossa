@@ -18,6 +18,16 @@ test("keeps login optional and automatic startup separate", () => {
   assert.deepEqual(parseInvocation(["login", "--help"]), { command: "help", topic: "login" });
 });
 
+test("parses update and its upgrade alias without account state", () => {
+  assert.deepEqual(parseInvocation(["update"]), { command: "update" });
+  assert.deepEqual(parseInvocation(["upgrade"]), { command: "update" });
+  assert.deepEqual(parseInvocation(["update", "--help"]), {
+    command: "help",
+    topic: "update",
+  });
+  assert.throws(() => parseInvocation(["update", "--beta"]), UsageError);
+});
+
 test("rejects unknown commands and ignored status options", () => {
   assert.throws(() => parseInvocation(["frobnicate"]), UsageError);
   assert.throws(() => parseInvocation(["status", "--bogus"]), UsageError);
@@ -38,6 +48,7 @@ test("suggests the intended command for close typos", () => {
   assert.match(message("startt"), /Did you mean "start"\?/);
   assert.match(message("dev"), /Did you mean "devices"\?/);
   assert.match(message("uio"), /Did you mean "ui"\?/);
+  assert.match(message("updat"), /Did you mean "update"\?/);
 });
 
 test("does not suggest a command for unrelated input", () => {
