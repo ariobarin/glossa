@@ -110,6 +110,50 @@ function likelyDirectory(value: string): boolean {
   );
 }
 
+const KNOWN_COMMANDS = ["ui", "start", "status", "devices", "login", "logout"] as const;
+
+function editDistance(a: string, b: string): number {
+  const m = a.length;
+  const n = b.length;
+  if (m === 0) return n;
+  if (n === 0) return m;
+  let previous = Array.from({ length: n + 1 }, (_, index) => index);
+  for (let i = 1; i <= m; i += 1) {
+    const current = [i];
+    for (let j = 1; j <= n; j += 1) {
+      const cost = a[i - 1] === b[j - 1] ? 0 : 1;
+      current[j] = Math.min(
+        previous[j]! + 1,
+        current[j - 1]! + 1,
+        previous[j - 1]! + cost,
+      );
+    }
+    previous = current;
+  }
+  return previous[n]!;
+}
+
+export function suggestCommand(input: string): string | undefined {
+  const lower = input.toLowerCase();
+  if (lower.length >= 3) {
+    const prefixMatches = KNOWN_COMMANDS.filter((command) => command.startsWith(lower));
+    if (prefixMatches.length === 1) return prefixMatches[0];
+  }
+  let best: string | undefined;
+  let bestDistance = Infinity;
+  for (const command of KNOWN_COMMANDS) {
+    const distance = editDistance(lower, command);
+    if (distance < bestDistance) {
+      bestDistance = distance;
+      best = command;
+    }
+  }
+  if (best && bestDistance <= 3 && bestDistance <= Math.ceil(lower.length / 2)) {
+    return best;
+  }
+  return undefined;
+}
+
 export function parseInvocation(args: string[]): CliInvocation {
   const [command, ...options] = args;
   if (!command) return parseWorkspaceCommand("start", []);
@@ -159,5 +203,10 @@ export function parseInvocation(args: string[]): CliInvocation {
   if (command === "--") return parseWorkspaceCommand("start", options);
   if (command.startsWith("-")) return parseWorkspaceCommand("start", args);
   if (likelyDirectory(command)) return parseWorkspaceCommand("start", args);
-  throw new UsageError(`Unknown command: ${command}`);
+  const suggestion = suggestCommand(command);
+  throw new UsageError(
+    suggestion
+      ? `Unknown command: ${command}. Did you mean "${suggestion}"?`
+      : `Unknown command: ${command}`,
+  );
 }
