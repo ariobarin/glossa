@@ -6,6 +6,7 @@ import type { Transport } from "@modelcontextprotocol/sdk/shared/transport.js";
 import { z } from "zod";
 import {
   cancelCommandRequestSchema,
+  editFileRequestSchema,
   getCommandRequestSchema,
   readFileRequestSchema,
   runCommandRequestSchema,
@@ -26,6 +27,7 @@ const deviceIdSchema = z
   .strict();
 const readFileInputSchema = readFileRequestSchema.extend(deviceIdSchema.shape);
 const writeFileInputSchema = writeFileRequestSchema.extend(deviceIdSchema.shape);
+const editFileInputSchema = editFileRequestSchema.safeExtend(deviceIdSchema.shape);
 const runCommandInputSchema = runCommandRequestSchema.safeExtend(
   deviceIdSchema.shape,
 );
@@ -83,6 +85,21 @@ const writeFileOutputSchema = z
       .describe("UTF-8 byte length written."),
   })
   .strict();
+const editFileOutputSchema = writeFileOutputSchema
+  .extend({
+    replacements: z
+      .number()
+      .int()
+      .positive()
+      .describe("Number of exact replacements applied."),
+    diff: z
+      .string()
+      .describe("Unified diff of the affected lines after the edit."),
+    diffTruncated: z
+      .boolean()
+      .describe("Whether the returned diff exceeded its display limit."),
+  })
+  .strict();
 const commandOutputSchema = z
   .object({
     commandId: z
@@ -122,7 +139,7 @@ const commandOutputSchema = z
   })
   .strip();
 
-export const MCP_SERVER_VERSION = "0.1.0-beta.4";
+export const MCP_SERVER_VERSION = "0.1.0-beta.5";
 
 const safeWorkerMessages: Record<string, string> = {
   path_not_found: "The requested path does not exist.",
@@ -132,6 +149,9 @@ const safeWorkerMessages: Record<string, string> = {
   file_too_large: "The request exceeds the text size limit.",
   not_text: "The file is not valid UTF-8 text.",
   stale_revision: "The file revision has changed.",
+  edit_not_found: "The edit target was not found.",
+  edit_ambiguous: "The edit target occurs more than once.",
+  edit_overlap: "The requested edits overlap.",
   command_busy: "Another command is already running on this device.",
   invalid_command: "The command request is invalid.",
   invalid_timeout: "The command timeout is invalid.",
@@ -343,10 +363,48 @@ function registerTools(
   );
 
   server.registerTool(
+    "edit_file",
+    {
+      title: "Edit File",
+      description: "Use after read_file to make one or more precise changes without replacing the entire file. Each oldText must occur exactly once in the original file, edits may not overlap, and expectedSha256 guards against concurrent changes. Returns the new hash and a unified diff.",
+      inputSchema: editFileInputSchema,
+      outputSchema: editFileOutputSchema,
+      _meta: toolMetadata,
+      annotations: {
+        readOnlyHint: false,
+        destructiveHint: true,
+        idempotentHint: false,
+        openWorldHint: false,
+      },
+    },
+    async ({ deviceId, path, edits, expectedSha256 }) => {
+      const job: WorkerJob = {
+        type: "edit_file",
+        requestId: randomUUID(),
+        path,
+        edits,
+        ...(expectedSha256 ? { expectedSha256 } : {}),
+      };
+      try {
+        const result = await executeJob(
+          state,
+          config,
+          accountId,
+          deviceId,
+          job,
+        );
+        return workerSuccess(result, editFileOutputSchema);
+      } catch (error) {
+        return routedError(error);
+      }
+    },
+  );
+
+  server.registerTool(
     "run_command",
     {
       title: "Run Command",
-      description: "Use when the task requires a Windows command, tests, builds, version control, or multi-file work. Starts a bounded process with the full authority, inherited environment, and network access of the worker account. The command may modify local or external systems.",
+      description: "Use when the task requires a Windows command, tests, builds, version control, or multi-file work. Starts a bounded process with the full authority, inherited environment, and network access of the worker account. It waits briefly for fast commands and returns their completed output immediately; longer commands return a handle for get_command. The command may modify local or external systems.",
       inputSchema: runCommandInputSchema,
       outputSchema: commandOutputSchema,
       _meta: toolMetadata,
@@ -357,7 +415,7 @@ function registerTools(
         openWorldHint: true,
       },
     },
-    async ({ deviceId, argv, shellCommand, stdin, timeoutMs }) => {
+    async ({ deviceId, argv, shellCommand, stdin, timeoutMs, waitMs }) => {
       const job: WorkerJob = {
         type: "run_command",
         requestId: randomUUID(),
@@ -365,6 +423,7 @@ function registerTools(
         ...(shellCommand ? { shellCommand } : {}),
         ...(stdin !== undefined ? { stdin } : {}),
         timeoutMs,
+        ...(waitMs === undefined ? {} : { waitMs }),
       };
       try {
         const result = await executeJob(
