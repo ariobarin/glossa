@@ -5,10 +5,9 @@ Glossa is currently an open beta for Windows, macOS, and Linux. Start with a fol
 ## Requirements
 
 - Node.js 22.9 or newer and npm
-- A local folder you want ChatGPT to work in
-- Developer Mode available in ChatGPT
+- Developer Mode enabled in ChatGPT
 
-Glossa is not listed in the public plugin directory yet, so add it as a custom app in Developer Mode during the open beta. The setup flow is the same for any account with Developer Mode. A managed workspace may require its admin to enable Developer Mode or grant access first.
+Glossa is not listed in the public plugin directory yet, so add it as a custom app through Developer Mode during the open beta.
 
 ## Install and connect
 
@@ -38,7 +37,7 @@ an alias.
 
 ## Start a worker
 
-Change to the folder you want to expose and start Glossa. The folder does not need to be a Git repository. On this computer's first enrollment, choose a recognizable device name:
+Change to the folder you want to expose and start Glossa. On this computer's first enrollment, choose a recognizable device name:
 
 ```shell
 cd path/to/a/test-folder
@@ -56,10 +55,10 @@ Starting Glossa authorizes connected clients to modify files inside the exposed 
 ## Enable Developer Mode and add Glossa
 
 1. Follow OpenAI's [Developer Mode guide](https://help.openai.com/en/articles/12584461-developer-mode-and-full-mcp-connectors-in-chatgpt-beta).
-2. Open **Settings > Apps > Advanced Settings** and enable **Developer Mode**. If your account shows **Plugins** settings instead, use **Settings > Plugins > Developer mode**.
-3. Choose **Settings > Apps > Create**. In a managed workspace, an admin may need to enable Developer Mode or grant access first.
+2. Open **Settings > Plugins/Apps** and enable **Developer Mode**.
+3. Choose **Create**.
 4. Name the custom app **Glossa**, enter `https://mcp.glossa.sh/mcp` as the MCP server endpoint, and choose OAuth authentication.
-5. Choose **Scan Tools**, complete authorization using the same Google account as the worker, wait for the scan to finish, then choose **Create**.
+5. Sign in with the same Google account as the worker, then choose **Create**.
 
 You do not need to create OAuth credentials, configure networking, or operate hosted infrastructure.
 

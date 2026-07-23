@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="description" content="Connect ChatGPT to one local folder through a worker that enforces file boundaries and runs commands on your computer." />
+    <meta name="description" content="Connect ChatGPT to a local workspace." />
     <meta name="theme-color" content="#111016" />
     <title>Quickstart | Glossa</title>
     <link rel="icon" href="/glossa-symbol.svg" type="image/svg+xml" />
@@ -67,7 +67,7 @@
           <h1>Quickstart</h1>
           <button class="copy-page-button" type="button" data-copy-page aria-label="Copy page link">Copy page</button>
         </div>
-        <p class="docs-summary">Connect ChatGPT to one local folder through a worker that enforces file boundaries and runs commands on your computer.</p>
+        <p class="docs-summary">Connect ChatGPT to a local workspace.</p>
       </header>
 
       <nav class="docs-toc" aria-label="On this page">
@@ -87,11 +87,10 @@
 <p>Make sure you have:</p>
 <ul>
 <li>Node.js 22.9 or newer</li>
-<li>A local folder you want ChatGPT to work in</li>
-<li><a href="https://help.openai.com/en/articles/12584461-developer-mode-and-full-mcp-connectors-in-chatgpt-beta">Developer Mode</a> available in ChatGPT</li>
+<li><a href="https://help.openai.com/en/articles/12584461-developer-mode-and-full-mcp-connectors-in-chatgpt-beta">Developer Mode</a> enabled in ChatGPT</li>
 </ul>
 <blockquote>
-<p>Glossa can change files and run commands inside the folder with the authority of your operating-system account. Start with a folder you can safely test, and never expose your home directory or a filesystem root. Review the <a href="/docs/security">security model</a> before enabling write actions.</p>
+<p>Glossa can modify files and run commands on your computer. Review the <a href="/docs/security">security model</a>.</p>
 </blockquote>
 </section><section class="doc-section">
 <h2 id="step-1-install-glossa"><a class="heading-anchor" href="#step-1-install-glossa" aria-label="Link to Step 1: Install Glossa"></a>Step 1: Install Glossa</h2>
@@ -157,13 +156,10 @@ Linux. Windows also has a hosted PowerShell installer.</p>
   <pre><code class="language-shell" id="docs-quickstart-code-5">glossa --version
 </code></pre>
 </div>
-<p>Afterward, <code>glossa update</code> installs the newest beta. <code>glossa upgrade</code> is an
-alias.</p>
+<p>Update later with <code>glossa update</code>.</p>
 </section><section class="doc-section">
 <h2 id="step-2-start-a-workspace"><a class="heading-anchor" href="#step-2-start-a-workspace" aria-label="Link to Step 2: Start a workspace"></a>Step 2: Start a workspace</h2>
-<p>Open a terminal in the folder where you want ChatGPT to work. The folder does
-not need to be a Git repository. On this computer&#39;s first enrollment, choose a
-recognizable device name:</p>
+<p>Open a terminal in the folder you want to expose, then run:</p>
 <div class="code-block">
   <button class="copy-button" type="button" data-copy-target="docs-quickstart-code-6" aria-label="Copy code">
     <span class="copy-tooltip" aria-hidden="true">Copy</span>
@@ -171,16 +167,14 @@ recognizable device name:</p>
   <pre><code class="language-shell" id="docs-quickstart-code-6">glossa --device-name &quot;my-workstation&quot; .
 </code></pre>
 </div>
-<p><code>--device-name</code> is used only during initial enrollment. Later starts reuse the enrolled name; use <code>glossa devices rename &lt;id&gt; &lt;name&gt;</code> to change it. <code>glossa start .</code> is the explicit form. You can start more workers in other terminals to expose additional workspaces from the same computer.</p>
 <blockquote>
-<p>Keep this terminal open. Closing it disconnects that local workspace from ChatGPT.</p>
+<p>Keep this terminal open while using Glossa.</p>
 </blockquote>
 </section><section class="doc-section">
 <h2 id="step-3-connect-chatgpt"><a class="heading-anchor" href="#step-3-connect-chatgpt" aria-label="Link to Step 3: Connect ChatGPT"></a>Step 3: Connect ChatGPT</h2>
-<p>The setup is the same for any ChatGPT account with Developer Mode.</p>
 <ol>
-<li>In ChatGPT web, open <strong>Settings &gt; Apps &gt; Advanced Settings</strong> and enable <strong>Developer Mode</strong>. If your account shows <strong>Plugins</strong> settings instead, use <strong>Settings &gt; Plugins &gt; Developer mode</strong>.</li>
-<li>Open <strong>Settings &gt; Apps &gt; Create</strong>.</li>
+<li>Open <strong>Settings &gt; Plugins/Apps</strong> and enable <strong>Developer Mode</strong>.</li>
+<li>Choose <strong>Create</strong>.</li>
 <li>Name the app <strong>Glossa</strong> and enter this MCP server URL:</li>
 </ol>
 <div class="code-block">
@@ -191,38 +185,27 @@ recognizable device name:</p>
 </code></pre>
 </div>
 <ol start="4">
-<li>Choose <strong>OAuth</strong>, then <strong>Scan Tools</strong>.</li>
-<li>Complete authorization with the same Google account used by the Glossa CLI, wait for the scan to finish, then choose <strong>Create</strong>.</li>
+<li>Choose <strong>OAuth</strong>.</li>
+<li>Sign in with the same Google account used by the Glossa CLI, then choose <strong>Create</strong>.</li>
 </ol>
-<p>If a workspace controls custom apps centrally, its admin may need to enable
-Developer Mode or grant access first.</p>
 </section><section class="doc-section">
 <h2 id="step-4-verify-the-connection"><a class="heading-anchor" href="#step-4-verify-the-connection" aria-label="Link to Step 4: Verify the connection"></a>Step 4: Verify the connection</h2>
-<p>In another terminal, check the account, relay, enrolled device, and active worker:</p>
+<p>In ChatGPT, select Glossa and send:</p>
 <div class="code-block">
   <button class="copy-button" type="button" data-copy-target="docs-quickstart-code-8" aria-label="Copy code">
     <span class="copy-tooltip" aria-hidden="true">Copy</span>
   </button>
-  <pre><code class="language-shell" id="docs-quickstart-code-8">glossa status
+  <pre><code class="language-text" id="docs-quickstart-code-8">Use Glossa to list my connected workspaces.
 </code></pre>
 </div>
-<p>In ChatGPT, select Glossa and send:</p>
-<div class="code-block">
-  <button class="copy-button" type="button" data-copy-target="docs-quickstart-code-9" aria-label="Copy code">
-    <span class="copy-tooltip" aria-hidden="true">Copy</span>
-  </button>
-  <pre><code class="language-text" id="docs-quickstart-code-9">Use Glossa to list my connected workspaces.
-</code></pre>
-</div>
-<p>When that works, ask ChatGPT to read a file that exists in the folder. Test
-writes and commands only when you are comfortable with the selected folder and
-review ChatGPT&#39;s confirmation before it runs.</p>
+<p>If Glossa lists the workspace, the connection is ready. Ask it to read a file
+next.</p>
 </section><section class="doc-section">
 <h2 id="what-next"><a class="heading-anchor" href="#what-next" aria-label="Link to What next"></a>What next</h2>
 <ul>
 <li>Read <a href="/docs/why">why Glossa works this way</a>.</li>
 <li>Review the complete <a href="/docs/security">security model</a>.</li>
-<li>Visit <a href="/support">support</a> if the worker, OAuth flow, or tool scan does not connect.</li>
+<li>Visit <a href="/support">support</a> if the worker, OAuth flow, or app does not connect.</li>
 </ul>
 </section>
       </article>

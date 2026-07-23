@@ -1,16 +1,15 @@
 # Quickstart
 
-Connect ChatGPT to one local folder through a worker that enforces file boundaries and runs commands on your computer.
+Connect ChatGPT to a local workspace.
 
 ## Before you begin
 
 Make sure you have:
 
 - Node.js 22.9 or newer
-- A local folder you want ChatGPT to work in
-- [Developer Mode](https://help.openai.com/en/articles/12584461-developer-mode-and-full-mcp-connectors-in-chatgpt-beta) available in ChatGPT
+- [Developer Mode](https://help.openai.com/en/articles/12584461-developer-mode-and-full-mcp-connectors-in-chatgpt-beta) enabled in ChatGPT
 
-> Glossa can change files and run commands inside the folder with the authority of your operating-system account. Start with a folder you can safely test, and never expose your home directory or a filesystem root. Review the [security model](/docs/security) before enabling write actions.
+> Glossa can modify files and run commands on your computer. Review the [security model](/docs/security).
 
 ## Step 1: Install Glossa
 
@@ -57,48 +56,32 @@ Confirm Glossa is available:
 glossa --version
 ```
 
-Afterward, `glossa update` installs the newest beta. `glossa upgrade` is an
-alias.
+Update later with `glossa update`.
 
 ## Step 2: Start a workspace
 
-Open a terminal in the folder where you want ChatGPT to work. The folder does
-not need to be a Git repository. On this computer's first enrollment, choose a
-recognizable device name:
+Open a terminal in the folder you want to expose, then run:
 
 ```shell
 glossa --device-name "my-workstation" .
 ```
 
-`--device-name` is used only during initial enrollment. Later starts reuse the enrolled name; use `glossa devices rename <id> <name>` to change it. `glossa start .` is the explicit form. You can start more workers in other terminals to expose additional workspaces from the same computer.
-
-> Keep this terminal open. Closing it disconnects that local workspace from ChatGPT.
+> Keep this terminal open while using Glossa.
 
 ## Step 3: Connect ChatGPT
 
-The setup is the same for any ChatGPT account with Developer Mode.
-
-1. In ChatGPT web, open **Settings > Apps > Advanced Settings** and enable **Developer Mode**. If your account shows **Plugins** settings instead, use **Settings > Plugins > Developer mode**.
-2. Open **Settings > Apps > Create**.
+1. Open **Settings > Plugins/Apps** and enable **Developer Mode**.
+2. Choose **Create**.
 3. Name the app **Glossa** and enter this MCP server URL:
 
 ```text
 https://mcp.glossa.sh/mcp
 ```
 
-4. Choose **OAuth**, then **Scan Tools**.
-5. Complete authorization with the same Google account used by the Glossa CLI, wait for the scan to finish, then choose **Create**.
-
-If a workspace controls custom apps centrally, its admin may need to enable
-Developer Mode or grant access first.
+4. Choose **OAuth**.
+5. Sign in with the same Google account used by the Glossa CLI, then choose **Create**.
 
 ## Step 4: Verify the connection
-
-In another terminal, check the account, relay, enrolled device, and active worker:
-
-```shell
-glossa status
-```
 
 In ChatGPT, select Glossa and send:
 
@@ -106,12 +89,11 @@ In ChatGPT, select Glossa and send:
 Use Glossa to list my connected workspaces.
 ```
 
-When that works, ask ChatGPT to read a file that exists in the folder. Test
-writes and commands only when you are comfortable with the selected folder and
-review ChatGPT's confirmation before it runs.
+If Glossa lists the workspace, the connection is ready. Ask it to read a file
+next.
 
 ## What next
 
 - Read [why Glossa works this way](/docs/why).
 - Review the complete [security model](/docs/security).
-- Visit [support](/support) if the worker, OAuth flow, or tool scan does not connect.
+- Visit [support](/support) if the worker, OAuth flow, or app does not connect.
