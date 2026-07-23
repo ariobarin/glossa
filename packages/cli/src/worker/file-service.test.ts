@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { mkdtemp, mkdir, readFile, rm, symlink, writeFile } from "node:fs/promises";
+import { chmod, mkdtemp, mkdir, readFile, rm, stat, symlink, writeFile } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import test from "node:test";
@@ -112,6 +112,31 @@ test("rejects absent, ambiguous, overlapping, and stale edits", async (context) 
   );
   assert.equal((await files.readText("note.txt")).sha256, original.sha256);
 });
+
+test(
+  "preserves executable and regular file modes during edits",
+  { skip: process.platform === "win32" },
+  async (context) => {
+    const root = await temporaryDirectory(context);
+    const files = new FileService(await PathPolicy.create(root));
+
+    for (const mode of [0o755, 0o644]) {
+      const relativePath = `mode-${mode.toString(8)}.txt`;
+      const target = path.join(root, relativePath);
+      await writeFile(target, "before", "utf8");
+      await chmod(target, mode);
+      const original = await files.readText(relativePath);
+
+      await files.editText(
+        relativePath,
+        [{ oldText: "before", newText: "after" }],
+        original.sha256,
+      );
+
+      assert.equal((await stat(target)).mode & 0o777, mode);
+    }
+  },
+);
 
 test("writes atomically and rejects stale revisions", async (context) => {
   const root = await temporaryDirectory(context);
