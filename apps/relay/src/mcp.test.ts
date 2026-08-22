@@ -102,15 +102,34 @@ function assertFieldDescriptions(schema: JsonSchemaNode, label: string): void {
   }
 }
 
-function testConfig(publicOrigin = "https://mcp.glossa.sh") {
+function testConfig(
+  publicOrigin = "https://mcp.glossa.sh",
+  environment: NodeJS.ProcessEnv = {},
+) {
   return loadConfig({
     NODE_ENV: "test",
     DATABASE_URL: "postgres://test:test@localhost:5432/test",
     GLOSSA_PUBLIC_ORIGIN: publicOrigin,
     GLOSSA_AUTH0_ISSUER: "https://identity.glossa.test/",
     GLOSSA_AUTH0_AUDIENCE: "https://mcp.glossa.test/",
+    ...environment,
   });
 }
+
+test("bounds relay request timeout below hosted ceiling", () => {
+  assert.equal(testConfig().GLOSSA_RELAY_REQUEST_TIMEOUT_MS, 20_000);
+  assert.equal(
+    testConfig("https://mcp.glossa.sh", {
+      GLOSSA_RELAY_REQUEST_TIMEOUT_MS: "20000",
+    }).GLOSSA_RELAY_REQUEST_TIMEOUT_MS,
+    20_000,
+  );
+  assert.throws(() =>
+    testConfig("https://mcp.glossa.sh", {
+      GLOSSA_RELAY_REQUEST_TIMEOUT_MS: "20001",
+    }),
+  );
+});
 
 test("publishes reviewable MCP tool contracts", async (context) => {
   const state = new RouterState();
@@ -1286,19 +1305,31 @@ test("reserves relay headroom for maximum command status waits", async (context)
   const session = state.register(accountId, deviceId, "Test PC", workerId, {
     accessProfile: "system",
   });
-  const server = createMcpServer(testConfig(), state, accountId);
-  const client = new Client({ name: "glossa-command-wait-test", version: "1.0.0" });
-  const [clientTransport, serverTransport] = InMemoryTransport.createLinkedPair();
-  context.after(async () => {
-    await Promise.allSettled([client.close(), server.close()]);
-  });
-  await server.connect(serverTransport);
-  await client.connect(clientTransport);
 
-  for (const [requestedWaitMs, expectedWaitMs] of [
-    [15_000, 13_000],
-    [12_000, 12_000],
-  ] as const) {
+  async function assertDispatchedWait(
+    relayTimeoutMs: number | undefined,
+    requestedWaitMs: number,
+    expectedWaitMs: number,
+  ): Promise<void> {
+    const config = testConfig(
+      "https://mcp.glossa.sh",
+      relayTimeoutMs === undefined
+        ? {}
+        : { GLOSSA_RELAY_REQUEST_TIMEOUT_MS: String(relayTimeoutMs) },
+    );
+    const server = createMcpServer(config, state, accountId);
+    const client = new Client({
+      name: "glossa-command-wait-test",
+      version: "1.0.0",
+    });
+    const [clientTransport, serverTransport] =
+      InMemoryTransport.createLinkedPair();
+    context.after(async () => {
+      await Promise.allSettled([client.close(), server.close()]);
+    });
+    await server.connect(serverTransport);
+    await client.connect(clientTransport);
+
     const call = client.callTool({
       name: "get_command",
       arguments: {
@@ -1334,6 +1365,10 @@ test("reserves relay headroom for maximum command status waits", async (context)
     );
     assert.equal((result.content as unknown[]).length, 1);
   }
+
+  await assertDispatchedWait(undefined, 15_000, 15_000);
+  await assertDispatchedWait(undefined, 12_000, 12_000);
+  await assertDispatchedWait(18_000, 15_000, 13_000);
 });
 
 test("presents elapsed progress for quiet running command checks", async (context) => {
