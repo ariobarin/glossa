@@ -1,5 +1,6 @@
 import { spawn, type ChildProcessWithoutNullStreams } from "node:child_process";
 import { randomUUID } from "node:crypto";
+import { performance } from "node:perf_hooks";
 import { StringDecoder } from "node:string_decoder";
 import { setTimeout as delay } from "node:timers/promises";
 import {
@@ -40,6 +41,7 @@ export interface CommandSnapshot {
   commandId: string;
   status: CommandStatus;
   sequence: number;
+  elapsedMs: number;
   startedAt: string;
   finishedAt?: string;
   exitCode?: number | null;
@@ -91,7 +93,9 @@ interface CommandRecord {
   sequence: number;
   changeWaiters: Set<() => void>;
   startedAt: number;
+  startedMonotonicMs: number;
   finishedAt?: number;
+  finishedMonotonicMs?: number;
   exitCode?: number | null;
   signal?: NodeJS.Signals | null;
   stdout: CapturedStream;
@@ -556,6 +560,7 @@ export class CommandService {
       sequence: 0,
       changeWaiters: new Set(),
       startedAt: Date.now(),
+      startedMonotonicMs: performance.now(),
       stdout: emptyCapture(),
       stderr: emptyCapture(),
       stdoutScanTail: Buffer.alloc(0),
@@ -584,6 +589,7 @@ export class CommandService {
       if (record.timeout) clearTimeout(record.timeout);
       record.status = "failed";
       record.finishedAt = Date.now();
+      record.finishedMonotonicMs = performance.now();
       recordCommandOutput(record, "stderr", Buffer.from(error.message, "utf8"));
       markChanged(record);
       record.complete();
@@ -593,6 +599,7 @@ export class CommandService {
       if (record.status !== "running") return;
       if (record.timeout) clearTimeout(record.timeout);
       record.finishedAt = Date.now();
+      record.finishedMonotonicMs = performance.now();
       record.exitCode = exitCode;
       record.signal = signal;
       record.status = record.requestedTerminal ?? (exitCode === 0 ? "succeeded" : "failed");
@@ -757,6 +764,13 @@ export class CommandService {
       commandId: record.id,
       status: record.status,
       sequence: record.sequence,
+      elapsedMs: Math.max(
+        0,
+        Math.floor(
+          (record.finishedMonotonicMs ?? performance.now()) -
+            record.startedMonotonicMs,
+        ),
+      ),
       startedAt: new Date(record.startedAt).toISOString(),
       stdout: output.stdout.content,
       stderr: output.stderr.content,
