@@ -408,6 +408,79 @@ test("Activity shows elapsed command progress only when output is quiet", async 
   assert.equal(returned[2]?.output?.preview, "waiting");
 });
 
+test("Activity retains valid command metadata only for get_command", async () => {
+  const jobs: WorkerJob[] = [
+    {
+      type: "get_command",
+      requestId: "00000000-0000-4000-8000-000000000041",
+      commandId: "00000000-0000-4000-8000-000000000042",
+    },
+    {
+      type: "get_command",
+      requestId: "00000000-0000-4000-8000-000000000043",
+      commandId: "00000000-0000-4000-8000-000000000042",
+    },
+    {
+      type: "get_command",
+      requestId: "00000000-0000-4000-8000-000000000044",
+      commandId: "00000000-0000-4000-8000-000000000042",
+    },
+    {
+      type: "run_command",
+      requestId: "00000000-0000-4000-8000-000000000045",
+      argv: ["node", "script.js"],
+      timeoutMs: 30_000,
+    },
+    {
+      type: "get_command",
+      requestId: "00000000-0000-4000-8000-000000000046",
+      commandId: "00000000-0000-4000-8000-000000000042",
+    },
+  ];
+  const sequences = [4, -1, 1.5, 8, 9];
+  const events: unknown[] = [];
+  let calls = 0;
+  const originalError = console.error;
+  console.error = () => undefined;
+  try {
+    const worker = visibleWorker(
+      {
+        async handle(requestedJob) {
+          const index = calls++;
+          const sequence = sequences[index]!;
+          return {
+            requestId: requestedJob.requestId,
+            ok: true,
+            value: {
+              commandId: index === 4
+                ? "00000000-0000-4000-8000-000000000047"
+                : "00000000-0000-4000-8000-000000000042",
+              status: "running",
+              sequence,
+            },
+          };
+        },
+      },
+      { onEvent: (event) => events.push(event) },
+    );
+    for (const job of jobs) await worker.handle(job);
+  } finally {
+    console.error = originalError;
+  }
+
+  const returned = events.filter((event) =>
+    typeof event === "object" && event !== null && "phase" in event && event.phase === "returned"
+  ) as Array<{ output?: { commandId?: string; sequence?: number } }>;
+  assert.deepEqual(
+    returned.map((event) => event.output?.sequence),
+    [4, undefined, undefined, undefined, undefined],
+  );
+  assert.deepEqual(
+    returned.map((event) => event.output?.commandId),
+    ["00000000-0000-4000-8000-000000000042", undefined, undefined, undefined, undefined],
+  );
+});
+
 test("bounds command output previews and marks truncation", async () => {
   const job: WorkerJob = {
     type: "run_command",

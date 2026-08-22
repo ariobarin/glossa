@@ -128,6 +128,226 @@ test("activity history is bounded to 9,999 entries", () => {
   assert.equal(state.activities.at(-1)!.requestId, "request-10002");
 });
 
+test("coalesces only unchanged command polls with a valid sequence", () => {
+  const commandId = "00000000-0000-4000-8000-000000000051";
+  const otherCommandId = "00000000-0000-4000-8000-000000000052";
+  const job = (requestId: string, id = commandId) => ({
+    type: "get_command" as const,
+    requestId,
+    commandId: id,
+  });
+  const started = (requestId: string, id = commandId) => ({
+    type: "activity" as const,
+    phase: "started" as const,
+    job: job(requestId, id),
+  });
+  const returned = (
+    requestId: string,
+    output: {
+      commandId?: string;
+      kind: "success" | "error" | "running";
+      preview?: string;
+      sequence?: number;
+    },
+    ok = true,
+    id = commandId,
+  ) => ({
+    type: "activity" as const,
+    phase: "returned" as const,
+    job: job(requestId, id),
+    ok,
+    output,
+  });
+
+  let state = applyHudEvent(connectedState(), started("request-command-1"));
+  assert.equal(state.activities.length, 1);
+  assert.equal(state.activities[0]!.state, "working");
+  state = applyHudEvent(
+    state,
+    returned("request-command-1", {
+      commandId,
+      kind: "running",
+      preview: "working",
+      sequence: 3,
+    }),
+  );
+  assert.equal(state.activities.length, 1);
+
+  const retained = state.activities[0]!;
+  state = {
+    ...state,
+    activitySelection: retained.requestId,
+    activityBrowseAnchor: retained.requestId,
+  };
+  const beforeRepeat = state;
+  state = applyHudEvent(state, started("request-command-2"));
+  assert.strictEqual(state, beforeRepeat);
+  state = applyHudEvent(
+    state,
+    returned("request-command-2", {
+      commandId,
+      kind: "running",
+      preview: "working",
+      sequence: 3,
+    }),
+  );
+  assert.strictEqual(state, beforeRepeat);
+  assert.deepEqual(state.activities[0], retained);
+  assert.equal(state.activitySelection, retained.requestId);
+  assert.equal(state.activityBrowseAnchor, retained.requestId);
+
+  state = applyHudEvent(state, started("request-command-3"));
+  assert.strictEqual(state, beforeRepeat);
+  state = applyHudEvent(
+    state,
+    returned("request-command-3", {
+      commandId,
+      kind: "running",
+      preview: "working",
+      sequence: 4,
+    }),
+  );
+  assert.equal(state.activities.length, 2);
+  assert.equal(state.activities[1]!.requestId, "request-command-3");
+
+  state = applyHudEvent(state, started("request-command-4"));
+  assert.equal(state.activities.length, 2);
+  state = applyHudEvent(
+    state,
+    returned("request-command-4", {
+      commandId,
+      kind: "running",
+      preview: "more output",
+      sequence: 4,
+    }),
+  );
+  assert.equal(state.activities.length, 3);
+  state = applyHudEvent(state, started("request-command-5"));
+  assert.equal(state.activities.length, 3);
+  state = applyHudEvent(
+    state,
+    returned("request-command-5", {
+      commandId,
+      kind: "success",
+      preview: "more output",
+      sequence: 4,
+    }),
+  );
+  assert.equal(state.activities.length, 4);
+
+  state = applyHudEvent(state, started("request-command-6", otherCommandId));
+  assert.equal(state.activities.length, 5);
+  state = applyHudEvent(
+    state,
+    returned(
+      "request-command-6",
+      {
+        commandId: otherCommandId,
+        kind: "running",
+        preview: "more output",
+        sequence: 4,
+      },
+      true,
+      otherCommandId,
+    ),
+  );
+  assert.equal(state.activities.length, 5);
+
+  state = applyHudEvent(state, started("request-command-7"));
+  assert.equal(state.activities.length, 5);
+  state = applyHudEvent(
+    state,
+    returned("request-command-7", { kind: "success", preview: "more output" }),
+  );
+  assert.equal(state.activities.length, 6);
+  assert.equal(state.activities[5]!.requestId, "request-command-7");
+
+  state = applyHudEvent(state, started("request-command-8"));
+  assert.equal(state.activities.length, 6);
+  state = applyHudEvent(
+    state,
+    returned(
+      "request-command-8",
+      { commandId, kind: "error", preview: "poll failed", sequence: 4 },
+      false,
+    ),
+  );
+  assert.equal(state.activities.length, 7);
+  assert.equal(state.activities[6]!.requestId, "request-command-8");
+});
+
+test("coalesces command polls after call metadata expires", () => {
+  const commandId = "00000000-0000-4000-8000-000000000061";
+  const retained = {
+    tool: "get_command" as const,
+    summary: {
+      target: `command ${commandId}`,
+      details: [],
+      truncation: "middle" as const,
+    },
+    callUnavailable: "expired" as const,
+    output: {
+      commandId,
+      kind: "running" as const,
+      preview: "working",
+      sequence: 7,
+    },
+    requestId: "request-retained-command",
+    state: "returned" as const,
+    startedAt: 100,
+    updatedAt: 200,
+  };
+  const beforeRepeat = {
+    ...connectedState(),
+    activities: [retained],
+    activitySelection: retained.requestId,
+    activityBrowseAnchor: retained.requestId,
+  };
+  const job = {
+    type: "get_command" as const,
+    requestId: "request-repeat-command",
+    commandId,
+  };
+
+  const legacyState = {
+    ...beforeRepeat,
+    activities: [{
+      ...retained,
+      output: { kind: "running" as const, preview: "working", sequence: 7 },
+    }],
+  };
+  const legacyStarted = applyHudEvent(legacyState, {
+    type: "activity",
+    phase: "started",
+    job,
+  });
+  assert.equal(legacyStarted.activities.length, 2);
+  assert.equal(legacyStarted.activities[1]!.requestId, job.requestId);
+
+  const started = applyHudEvent(beforeRepeat, {
+    type: "activity",
+    phase: "started",
+    job,
+  });
+  assert.strictEqual(started, beforeRepeat);
+  const returned = applyHudEvent(started, {
+    type: "activity",
+    phase: "returned",
+    job,
+    ok: true,
+    output: {
+      commandId,
+      kind: "running",
+      preview: "working",
+      sequence: 7,
+    },
+  });
+  assert.strictEqual(returned, beforeRepeat);
+  assert.deepEqual(returned.activities[0], retained);
+  assert.equal(returned.activitySelection, retained.requestId);
+  assert.equal(returned.activityBrowseAnchor, retained.requestId);
+});
+
 test("shows the selected access boundary in the workspace screen", () => {
   const session = applyHudEvent(initialHudState("."), {
     type: "session",
